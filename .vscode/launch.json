@@ -1,0 +1,45 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "seeking_my_place",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "seeking_my_place (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "seeking_my_place (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "google_maps_in_flutter",
+            "cwd": "google_maps_in_flutter",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "google_maps_in_flutter (profile mode)",
+            "cwd": "google_maps_in_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "google_maps_in_flutter (release mode)",
+            "cwd": "google_maps_in_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
