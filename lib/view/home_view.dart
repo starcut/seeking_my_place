@@ -7,11 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:seeking_my_place/view/place_register_view.dart';
+import 'package:seeking_my_place/view/setting_view.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/viewmodel/provider/home_view_model_notifier_provider.dart';
-
-
-import 'setting_view.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
@@ -33,6 +32,14 @@ class HomeView extends ConsumerWidget {
                       MaterialPageRoute(builder: (context) => SettingView())
                   )
                 }),
+                IconButton(
+                    icon: const Icon(Icons.add_location_alt_outlined),
+                    onPressed: () => {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => PlaceRegisterView())
+                      )
+                    }),
               ],
             ),
             body: ref.watch(homeViewModelNotifierProvider).when(
@@ -67,14 +74,14 @@ class HomeView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
           SizedBox(
-              width: MediaQuery.of(context).size.width,  // or use fixed size like 20
+              width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height - 300,
               child: GoogleMap(
-                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                  new Factory<OneSequenceGestureRecognizer>(
-                        () => new EagerGestureRecognizer(),
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                  Factory<OneSequenceGestureRecognizer>(
+                        () => EagerGestureRecognizer(),
                   ),
-                ].toSet(),
+                },
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: CameraPosition(
                   target: _center,
