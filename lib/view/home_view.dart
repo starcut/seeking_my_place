@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/entity/favorite_place_entity.dart';
-import 'package:seeking_my_place/viewmodel/provider/home_view_model_notifier_provider.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/viewmodel/provider/home_view_model_notifier_provider.dart';
+
 
 import 'setting_view.dart';
 
@@ -35,14 +41,14 @@ class HomeView extends ConsumerWidget {
                         itemCount: homeModel.favoritePlaces.length,
                         itemBuilder: (_, index) {
                           final favoritePlace = homeModel.favoritePlaces[index];
-                          return favoritePlaceList(favoritePlace);
+                          return favoritePlaceList(context, favoritePlace);
                         }),
                 error: (error, _) => const Center(child: Text('通信エラー')),
                 loading: () =>
                 const Center(child: CircularProgressIndicator()))));
   }
 
-  Widget favoritePlaceList(FavoritePlaceEntity favoritePlaceEntity) {
+  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
     late GoogleMapController mapController;
 
     final LatLng _center = const LatLng(45.521563, -122.677433);
@@ -60,13 +66,22 @@ class HomeView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              GoogleMap(
+          SizedBox(
+              width: MediaQuery.of(context).size.width,  // or use fixed size like 20
+              height: MediaQuery.of(context).size.height - 300,
+              child: GoogleMap(
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                  new Factory<OneSequenceGestureRecognizer>(
+                        () => new EagerGestureRecognizer(),
+                  ),
+                ].toSet(),
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: CameraPosition(
                   target: _center,
                   zoom: 11.0,
                 ),
-              ),
+              )
+          ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
@@ -86,6 +101,10 @@ class HomeView extends ConsumerWidget {
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {
+      var response = await http.get(uri);
+      print("---------");
+      print(response.body);
+      print("---------");
       await launchUrl(uri);
     } else {
       debugPrint('Cloud not launch: $url');
