@@ -1,24 +1,27 @@
 class PurposeEntity {
   final int id;
-  final String purpose;
+  final String purposeName;
   final DateTime registerAt;
   final DateTime updateAt;
 
   PurposeEntity({
     required this.id,
-    required this.purpose,
+    required this.purposeName,
     required this.registerAt,
     required this.updateAt,
   });
 
   factory PurposeEntity.fromData(dynamic data) {
     final int id = data['id'];
-    final String purpose = data['purpose_name'];
+    final String purposeName = data['purpose_name'];
     final DateTime registerAt = DateTime.parse(data['register_at']);
     final DateTime updateAt = DateTime.parse(data['updated_at']);
 
     final model = PurposeEntity(
-        id: id, purpose: purpose, registerAt: registerAt, updateAt: updateAt);
+        id: id,
+        purposeName: purposeName,
+        registerAt: registerAt,
+        updateAt: updateAt);
     return model;
   }
 }

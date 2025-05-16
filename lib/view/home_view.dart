@@ -1,11 +1,9 @@
-import 'package:dartz/dartz_unsafe.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/model/home_model.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -28,9 +26,6 @@ class HomeView extends ConsumerWidget {
         ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
     repository.then((homeModel) {
       purposeList = homeModel.purposeLists;
-      purposeList.forEach((purpose) {
-        print(purpose.purpose);
-      });
     });
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
@@ -45,7 +40,8 @@ class HomeView extends ConsumerWidget {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => SettingView()))
+                                  builder: (context) =>
+                                      SettingView(purposeList: purposeList)))
                         }),
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),
@@ -123,9 +119,6 @@ class HomeView extends ConsumerWidget {
 
     if (await canLaunchUrl(uri)) {
       var response = await http.get(uri);
-      print("---------");
-      print(response.body);
-      print("---------");
       await launchUrl(uri);
     } else {
       debugPrint('Cloud not launch: $url');

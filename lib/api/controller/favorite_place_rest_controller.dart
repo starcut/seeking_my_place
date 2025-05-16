@@ -41,16 +41,12 @@ class FavoritePlaceRestController implements HomeViewRestControllerImpl {
           await rootBundle.loadString("json/dummy_purpose_list.json");
       final response = json.decode(dummy);
       response.forEach((key, value) => _dummy = _dummy + '$key: $value \x0A');
-      // final response = await dio.get(apiUrl);
       final List<dynamic> data = response['purpose_list'];
       final models = HomeModel();
       for (dynamic item in data) {
         final model = PurposeEntity.fromData(item);
         models.purposeLists.add(model);
       }
-      print("---");
-      print(models);
-      print("---");
       return models;
     } on Exception catch (exception) {
       throw Exception(exception);
