@@ -4,5 +4,5 @@ import 'package:seeking_my_place/api/controller/favorite_place_rest_controller_i
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 
 final favoritePlaceRestControllerProvider =
-    Provider<FavoritePlaceRestControllerImpl>(
+    Provider<HomeViewRestControllerImpl>(
         (ref) => FavoritePlaceRestController(dio: ref.read(dioProvider)));

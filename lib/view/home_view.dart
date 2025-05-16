@@ -1,8 +1,11 @@
+import 'package:dartz/dartz_unsafe.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:seeking_my_place/model/home_model.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -12,11 +15,23 @@ import 'package:seeking_my_place/view/setting_view.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/viewmodel/provider/home_view_model_notifier_provider.dart';
 
+import 'dart:async';
+
 class HomeView extends ConsumerWidget {
-  const HomeView({super.key});
+  HomeView({super.key});
+
+  late List<PurposeEntity> purposeList;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final repository =
+        ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
+    repository.then((homeModel) {
+      purposeList = homeModel.purposeLists;
+      purposeList.forEach((purpose) {
+        print(purpose.purpose);
+      });
+    });
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
         home: Scaffold(
@@ -25,37 +40,37 @@ class HomeView extends ConsumerWidget {
               title: const Text(''),
               actions: [
                 IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () => {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SettingView())
-                  )
-                }),
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SettingView()))
+                        }),
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),
                     onPressed: () => {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => PlaceRegisterView())
-                      )
-                    }),
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PlaceRegisterView()))
+                        }),
               ],
             ),
             body: ref.watch(homeViewModelNotifierProvider).when(
-                data: (homeModel) =>
-                    ListView.builder(
-                        itemCount: homeModel.favoritePlaces.length,
-                        itemBuilder: (_, index) {
-                          final favoritePlace = homeModel.favoritePlaces[index];
-                          return favoritePlaceList(context, favoritePlace);
-                        }),
+                data: (homeModel) => ListView.builder(
+                    itemCount: homeModel.favoritePlaces.length,
+                    itemBuilder: (_, index) {
+                      final favoritePlace = homeModel.favoritePlaces[index];
+                      return favoritePlaceList(context, favoritePlace);
+                    }),
                 error: (error, _) => const Center(child: Text('通信エラー')),
                 loading: () =>
-                const Center(child: CircularProgressIndicator()))));
+                    const Center(child: CircularProgressIndicator()))));
   }
 
-  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
+  Widget favoritePlaceList(
+      BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
     late GoogleMapController mapController;
 
     final LatLng _center = const LatLng(45.521563, -122.677433);
@@ -68,27 +83,26 @@ class HomeView extends ConsumerWidget {
       child: Container(
           padding: const EdgeInsets.all(12.0),
           decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-          ),
+              border:
+                  Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-          SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height - 300,
-              child: GoogleMap(
-                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                  Factory<OneSequenceGestureRecognizer>(
+              SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height - 300,
+                  child: GoogleMap(
+                    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                      Factory<OneSequenceGestureRecognizer>(
                         () => EagerGestureRecognizer(),
-                  ),
-                },
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _center,
-                  zoom: 11.0,
-                ),
-              )
-          ),
+                      ),
+                    },
+                    onMapCreated: _onMapCreated,
+                    initialCameraPosition: CameraPosition(
+                      target: _center,
+                      zoom: 11.0,
+                    ),
+                  )),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(

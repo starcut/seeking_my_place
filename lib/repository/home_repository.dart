@@ -4,7 +4,7 @@ import 'package:seeking_my_place/model/home_model.dart';
 import 'package:seeking_my_place/repository/interface/home_repository_impl.dart';
 
 class HomeRepository implements HomeRepositoryImpl {
-  final FavoritePlaceRestControllerImpl repository;
+  final HomeViewRestControllerImpl repository;
   HomeRepository({required this.repository});
 
   @override
@@ -13,6 +13,17 @@ class HomeRepository implements HomeRepositoryImpl {
       final data = await repository.getFavoritePlaceData();
       return data;
     } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
+
+  @override
+  Future<HomeModel> getPurposeListData() async {
+    try {
+      final data = await repository.getPurposeListData();
+      return data;
+    } on Exception catch (exception) {
+      debugPrint("HomeRepository getPurposeListData error");
       throw Exception(exception);
     }
   }
