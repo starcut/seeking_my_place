@@ -40,8 +40,7 @@ class HomeView extends ConsumerWidget {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      SettingView(purposeList: purposeList)))
+                                  builder: (context) => SettingView()))
                         }),
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),

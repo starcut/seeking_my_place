@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeking_my_place/viewmodel/provider/setting_view_model_notifier_provider.dart';
 
-class SettingView extends StatelessWidget {
-  SettingView({super.key, required this.purposeList});
-
-  late List<PurposeEntity> purposeList = [];
+class SettingView extends ConsumerWidget {
+  const SettingView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text("設定"),
         ),
-        body: ListView.builder(
-            itemCount: purposeList.length + 1,
-            itemBuilder: (_, index) {
-              if (index < purposeList.length) {
-                final purpose = purposeList[index];
-                return PurposeListCell(purpose.purposeName);
-              } else {
-                return NewPurposeRegisterCell(context);
-              }
-            }));
+        body: ref.watch(settingViewModelNotifierProvider).when(
+            data: (settingModel) => ListView.builder(
+                itemCount: settingModel.purposeLists.length + 1,
+                itemBuilder: (_, index) {
+                  if (index < settingModel.purposeLists.length) {
+                    final purpose = settingModel.purposeLists[index];
+                    return purposeListCell(purpose.purposeName);
+                  } else {
+                    return newPurposeRegisterCell(context, ref);
+                  }
+                }),
+            error: (error, _) => const Center(child: Text('通信エラー')),
+            loading: () => const Center(child: CircularProgressIndicator())));
   }
 
-  Widget PurposeListCell(String purposeName) => GestureDetector(
+  Widget purposeListCell(String purposeName) => GestureDetector(
         child: Container(
             padding: const EdgeInsets.all(12.0),
             decoration: const BoxDecoration(
@@ -45,7 +47,7 @@ class SettingView extends StatelessWidget {
             )),
       );
 
-  Widget NewPurposeRegisterCell(BuildContext context) {
+  Widget newPurposeRegisterCell(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       child: Container(
           padding: const EdgeInsets.all(12.0),
@@ -65,41 +67,45 @@ class SettingView extends StatelessWidget {
             ],
           )),
       onTap: () {
-        showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                title: const Text("使用目的を入力してください"),
-                content: const TextField(
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    hintText: "使用目的",
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                      onPressed: () {
-                        print("登録処理");
-                        Navigator.pop(context);
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white10,
-                        foregroundColor: Colors.cyan,
-                      ),
-                      child: const Text("登録")),
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white10,
-                        foregroundColor: Colors.red,
-                      ),
-                      child: const Text("キャンセル"))
-                ],
-              );
-            });
+        registerDialog(context, ref);
       },
     );
+  }
+
+  void registerDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title: const Text("使用目的を入力してください"),
+            content: const TextField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: "使用目的",
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    ref.read(settingViewModelInsertDataProvider("作業"));
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white10,
+                    foregroundColor: Colors.cyan,
+                  ),
+                  child: const Text("登録")),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white10,
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text("キャンセル"))
+            ],
+          );
+        });
   }
 }

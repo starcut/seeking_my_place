@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/model/home_model.dart';
-import 'package:seeking_my_place/repository/provider/home_repository_provoder.dart';
+import 'package:seeking_my_place/repository/provider/home_repository_provider.dart';
 import 'package:seeking_my_place/viewmodel/home_view_model.dart';
 
 final homeViewModelNotifierProvider = FutureProvider<HomeModel>((ref) async {
