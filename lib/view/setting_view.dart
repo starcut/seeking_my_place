@@ -94,6 +94,7 @@ class SettingView extends ConsumerWidget {
                   onPressed: () {
                     ref.read(
                         settingViewModelInsertDataProvider(_inputPurposeName));
+                    ref.invalidate(settingViewModelNotifierProvider);
                     Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
