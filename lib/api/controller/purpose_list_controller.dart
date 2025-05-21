@@ -6,9 +6,15 @@ import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final purposeListControllerProvider =
+    Provider<PurposeListControllerImpl>((ref) => PurposeListController());
+
 class PurposeListController implements PurposeListControllerImpl {
-  late Database _database;
-  late String databasePath;
+  static late Database _database;
+  static late String _databasePath;
+
   @override
   Future<void> initDatabaseExecute() async {
     try {
@@ -20,7 +26,7 @@ class PurposeListController implements PurposeListControllerImpl {
     }
 
     try {
-      _database = await openDatabase(
+      PurposeListController._database = await openDatabase(
         'seeking_place.db',
         version: 1,
         onCreate: (Database db, int version) async {
@@ -40,28 +46,14 @@ class PurposeListController implements PurposeListControllerImpl {
     SettingModel model = SettingModel();
 
     try {
-      _database = await openDatabase(
-        'seeking_place.db',
-        version: 1,
-        onCreate: (Database db, int version) async {
-          return await db.execute(
-              '''CREATE TABLE IF NOT EXISTS purpose_tag (id INTEGER PRIMARY KEY, purpose_name TEXT, register_at DATETIME, updated_at DATETIME)''');
-        },
-      );
-    } on Exception catch (exception) {
-      debugPrint("PurposeListController initDatabase error");
-      Exception(exception);
-    }
-
-    try {
       // var exist = await databaseExists(databasePath);
       // if (!exist) {
       //   print("データベースが存在しません");
       //   return model;
       // }
 
-      List<Map<String, Object?>> records =
-          await _database.rawQuery('SELECT * FROM purpose_tag;');
+      List<Map<String, Object?>> records = await PurposeListController._database
+          .rawQuery('SELECT * FROM purpose_tag;');
       List<PurposeEntity> purposeList = [];
       for (var record in records) {
         PurposeEntity purpose = PurposeEntity.fromMap(record);
@@ -81,7 +73,7 @@ class PurposeListController implements PurposeListControllerImpl {
   Future<void> insertPurposeDataExecute(String purposeName) async {
     try {
       debugPrint("insertPurposeDataExecute start");
-      await _database.transaction((txn) async {
+      await PurposeListController._database.transaction((txn) async {
         await txn.rawInsert('INSERT INTO purpose_tag '
             '(purpose_name, register_at, updated_at) '
             'VALUES '
@@ -96,8 +88,8 @@ class PurposeListController implements PurposeListControllerImpl {
   @override
   Future<int> deletePurposeDataExecute(int id) async {
     try {
-      int deleteCount =
-          await _database.rawDelete('DELETE FROM purpose_tag WHERE id = $id');
+      int deleteCount = await PurposeListController._database
+          .rawDelete('DELETE FROM purpose_tag WHERE id = $id');
       return deleteCount;
     } on Exception catch (exception) {
       debugPrint("PurposeListController initDatabase error");

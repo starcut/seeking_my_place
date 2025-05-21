@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:seeking_my_place/api/controller/favorite_place_rest_controller.dart';
 import 'package:seeking_my_place/api/controller/favorite_place_rest_controller_impl.dart';
 import 'package:seeking_my_place/model/home_model.dart';
 import 'package:seeking_my_place/repository/interface/home_repository_impl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final homeRepositoryProvider = Provider<HomeRepositoryImpl>((ref) =>
+    HomeRepository(repository: ref.read(favoritePlaceRestControllerProvider)));
 
 class HomeRepository implements HomeRepositoryImpl {
   final HomeViewRestControllerImpl repository;

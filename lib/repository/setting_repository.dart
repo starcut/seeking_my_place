@@ -1,9 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:seeking_my_place/api/controller/purpose_list_controller.dart';
 import 'package:seeking_my_place/api/controller/purpose_list_controller_impl.dart';
 import 'package:seeking_my_place/model/setting_model.dart';
 import 'package:seeking_my_place/repository/interface/setting_repository_impl.dart';
+
+final settingRepositoryProvider = Provider<SettingRepositoryImpl>((ref) {
+  return SettingRepository(repository: ref.read(purposeListControllerProvider));
+});
 
 class SettingRepository implements SettingRepositoryImpl {
   final PurposeListControllerImpl repository;

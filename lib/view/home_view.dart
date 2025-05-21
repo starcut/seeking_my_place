@@ -11,9 +11,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
-import 'package:seeking_my_place/viewmodel/provider/home_view_model_notifier_provider.dart';
 
 import 'dart:async';
+
+import '../viewmodel/home_view_model.dart';
 
 class HomeView extends ConsumerWidget {
   HomeView({super.key});

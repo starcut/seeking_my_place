@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/viewmodel/provider/setting_view_model_notifier_provider.dart';
+import 'package:seeking_my_place/viewmodel/setting_view_model.dart';
 
 class SettingView extends ConsumerWidget {
-  const SettingView({super.key});
+  SettingView({super.key});
+
+  String _inputPurposeName = "";
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,16 +80,20 @@ class SettingView extends ConsumerWidget {
         builder: (_) {
           return AlertDialog(
             title: const Text("使用目的を入力してください"),
-            content: const TextField(
-              decoration: InputDecoration(
+            content: TextField(
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: "使用目的",
               ),
+              onChanged: (text) {
+                _inputPurposeName = text;
+              },
             ),
             actions: <Widget>[
               TextButton(
                   onPressed: () {
-                    ref.read(settingViewModelInsertDataProvider("作業"));
+                    ref.read(
+                        settingViewModelInsertDataProvider(_inputPurposeName));
                     Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
