@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/api/controller/favorite_place_rest_controller_impl.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/model/home_model.dart';
-
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final favoritePlaceRestControllerProvider =
     Provider<HomeViewRestControllerImpl>(

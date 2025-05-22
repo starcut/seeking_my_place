@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:seeking_my_place/model/home_model.dart';
 import 'package:seeking_my_place/repository/home_repository.dart';
 import 'package:seeking_my_place/repository/interface/home_repository_impl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final homeViewModelNotifierProvider = FutureProvider<HomeModel>((ref) async {
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));

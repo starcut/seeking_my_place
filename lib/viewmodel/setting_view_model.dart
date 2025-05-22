@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/model/setting_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/repository/interface/setting_repository_impl.dart';
 import 'package:seeking_my_place/repository/setting_repository.dart';
 
@@ -14,17 +15,21 @@ final settingViewModelNotifierProvider =
 });
 
 final settingViewModelSelectByIdNotifierProvider =
-    Provider.family<SettingModel, int>((ref, id) {
-  final viewModel =
-      SettingViewModel(repository: ref.read(settingRepositoryProvider));
-  debugPrint(
-      "settingViewModelSelectByIdNotifierProvider after SettingViewModel");
-  viewModel.selectById(id);
-  debugPrint("selectById after SettingViewModel");
-  debugPrint(
-      "updated purpose name: ${viewModel.purposeData.selectedPurposeData.purposeName}");
-  return viewModel.purposeData;
+    StateNotifierProvider<PurposeData, SettingModel>((ref) {
+  return PurposeData(ref);
 });
+
+class PurposeData extends StateNotifier<SettingModel> {
+  PurposeData(this.ref) : super(SettingModel());
+
+  final Ref ref;
+
+  Future<SettingModel> getPurposeList(int id) {
+    final repository = ref.read(settingRepositoryProvider);
+    final settingModel = repository.selectPurposeDataById(id);
+    return settingModel;
+  }
+}
 
 final settingViewModelInsertDataProvider =
     Provider.family<void, String>((ref, purposeName) {

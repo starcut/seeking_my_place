@@ -122,16 +122,21 @@ class SettingView extends ConsumerWidget {
                   onPressed: () {
                     if (_inputPurposeName.isNotEmpty) {
                       if (entity != null) {
-                        SettingModel purposeData = ref.read(
-                            settingViewModelSelectByIdNotifierProvider(
-                                entity.id));
-                        // debugPrint(
-                        //     "entity1:::: ${purposeData.selectedPurposeData}");
-                        debugPrint("purposeData != null");
-                        // purposeData.purposeName = _inputPurposeName;
-                        // debugPrint("update to: ${purposeData.purposeName}");
-                        // ref.read(
-                        //     settingViewModelUpdateDataProvider(purposeData));
+                        var purposeData = ref
+                            .read(settingViewModelSelectByIdNotifierProvider
+                                .notifier)
+                            .getPurposeList(entity.id);
+                        purposeData.then((settingModel) {
+                          debugPrint(
+                              "entity1:::: ${settingModel.selectedPurposeData}");
+                          debugPrint("purposeData != null");
+                          settingModel.selectedPurposeData.purposeName =
+                              _inputPurposeName;
+                          debugPrint(
+                              "update to: ${settingModel.selectedPurposeData.purposeName}");
+                          ref.read(settingViewModelUpdateDataProvider(
+                              settingModel.selectedPurposeData));
+                        });
                       }
                     } else {
                       ref.read(settingViewModelInsertDataProvider(

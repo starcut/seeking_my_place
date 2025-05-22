@@ -1,12 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:seeking_my_place/model/setting_model.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:seeking_my_place/api/controller/purpose_list_controller_impl.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
-import 'dart:io';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqflite/sqflite.dart';
 
 final purposeListControllerProvider =
     Provider<PurposeListControllerImpl>((ref) => PurposeListController());
@@ -109,7 +110,7 @@ class PurposeListController implements PurposeListControllerImpl {
     try {
       await PurposeListController._database.rawUpdate(
           'UPDATE purpose_tag SET purpose_name = ?, updated_at = ? WHERE id = ?',
-          [entity.purposeName, DateTime.now(), entity.id]);
+          [entity.purposeName, DateTime.now().toString(), entity.id]);
     } on Exception catch (exception) {
       debugPrint("PurposeListController updatePurposeDataExecute error");
       Exception(exception);

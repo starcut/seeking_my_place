@@ -1,20 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:seeking_my_place/entity/purpose_entity.dart';
-
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
-
-import 'dart:async';
-
-import '../viewmodel/home_view_model.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:seeking_my_place/viewmodel/home_view_model.dart';
 
 class HomeView extends ConsumerWidget {
   HomeView({super.key});
