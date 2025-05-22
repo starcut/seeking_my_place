@@ -9,18 +9,28 @@ class SettingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final model = ref.watch(settingViewModelNotifierProvider);
+
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text("設定"),
         ),
-        body: ref.watch(settingViewModelNotifierProvider).when(
+        body: model.when(
             data: (settingModel) => ListView.builder(
                 itemCount: settingModel.purposeLists.length + 1,
                 itemBuilder: (_, index) {
                   if (index < settingModel.purposeLists.length) {
                     final purpose = settingModel.purposeLists[index];
-                    return purposeListCell(purpose.purposeName);
+                    return Dismissible(
+                        key: UniqueKey(),
+                        onDismissed: (DismissDirection direction) {
+                          debugPrint("${purpose.id} ${purpose.purposeName}削除");
+                          ref.read(
+                              settingViewModelDeleteDataProvider(purpose.id));
+                          ref.invalidate(settingViewModelNotifierProvider);
+                        },
+                        child: purposeListCell(purpose.purposeName));
                   } else {
                     return newPurposeRegisterCell(context, ref);
                   }

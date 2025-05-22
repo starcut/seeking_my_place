@@ -18,6 +18,13 @@ final settingViewModelInsertDataProvider =
   viewModel.insertPurposeData(purposeName);
 });
 
+final settingViewModelDeleteDataProvider =
+    Provider.family<void, int>((ref, id) {
+  final viewModel =
+      SettingViewModel(repository: ref.read(settingRepositoryProvider));
+  viewModel.deletePurposeData(id);
+});
+
 class SettingViewModel {
   final SettingRepositoryImpl repository;
 
@@ -41,6 +48,15 @@ class SettingViewModel {
     try {
       await repository.initDatabase();
       await repository.insertPurposeData(purposeName);
+    } on Exception catch (exception) {
+      Exception(exception);
+    }
+  }
+
+  Future deletePurposeData(int id) async {
+    try {
+      await repository.initDatabase();
+      await repository.deletePurposeData(id);
     } on Exception catch (exception) {
       Exception(exception);
     }
