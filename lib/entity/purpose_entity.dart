@@ -1,6 +1,6 @@
 class PurposeEntity {
   final int id;
-  final String purposeName;
+  String purposeName;
   final DateTime registerAt;
   final DateTime updateAt;
 

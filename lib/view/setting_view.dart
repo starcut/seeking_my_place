@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:seeking_my_place/model/setting_model.dart';
 import 'package:seeking_my_place/viewmodel/setting_view_model.dart';
 
 class SettingView extends ConsumerWidget {
@@ -30,7 +32,7 @@ class SettingView extends ConsumerWidget {
                               settingViewModelDeleteDataProvider(purpose.id));
                           ref.invalidate(settingViewModelNotifierProvider);
                         },
-                        child: purposeListCell(purpose.purposeName));
+                        child: purposeListCell(context, ref, purpose));
                   } else {
                     return newPurposeRegisterCell(context, ref);
                   }
@@ -39,7 +41,9 @@ class SettingView extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator())));
   }
 
-  Widget purposeListCell(String purposeName) => GestureDetector(
+  Widget purposeListCell(
+          BuildContext context, WidgetRef ref, PurposeEntity entity) =>
+      GestureDetector(
         child: Container(
             padding: const EdgeInsets.all(12.0),
             decoration: const BoxDecoration(
@@ -50,9 +54,18 @@ class SettingView extends ConsumerWidget {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Text(
-                    purposeName,
-                    style: const TextStyle(color: Colors.black, fontSize: 16.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        entity.purposeName,
+                        style: const TextStyle(
+                            color: Colors.black, fontSize: 16.0),
+                      ),
+                      IconButton(
+                          icon: const Icon(Icons.settings),
+                          onPressed: () =>
+                              {registerDialog(context, ref, entity)}),
+                    ],
                   ),
                 ),
               ],
@@ -79,18 +92,23 @@ class SettingView extends ConsumerWidget {
             ],
           )),
       onTap: () {
-        registerDialog(context, ref);
+        registerDialog(context, ref, null);
       },
     );
   }
 
-  void registerDialog(BuildContext context, WidgetRef ref) {
+  void registerDialog(
+      BuildContext context, WidgetRef ref, PurposeEntity? entity) {
+    final TextEditingController controller = TextEditingController();
+    controller.text = entity?.purposeName ?? "";
+
     showDialog(
         context: context,
         builder: (_) {
           return AlertDialog(
             title: const Text("使用目的を入力してください"),
             content: TextField(
+              controller: controller,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: "使用目的",
@@ -102,8 +120,23 @@ class SettingView extends ConsumerWidget {
             actions: <Widget>[
               TextButton(
                   onPressed: () {
-                    ref.read(
-                        settingViewModelInsertDataProvider(_inputPurposeName));
+                    if (_inputPurposeName.isNotEmpty) {
+                      if (entity != null) {
+                        SettingModel purposeData = ref.read(
+                            settingViewModelSelectByIdNotifierProvider(
+                                entity.id));
+                        // debugPrint(
+                        //     "entity1:::: ${purposeData.selectedPurposeData}");
+                        debugPrint("purposeData != null");
+                        // purposeData.purposeName = _inputPurposeName;
+                        // debugPrint("update to: ${purposeData.purposeName}");
+                        // ref.read(
+                        //     settingViewModelUpdateDataProvider(purposeData));
+                      }
+                    } else {
+                      ref.read(settingViewModelInsertDataProvider(
+                          _inputPurposeName));
+                    }
                     ref.invalidate(settingViewModelNotifierProvider);
                     Navigator.pop(context);
                   },

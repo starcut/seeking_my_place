@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:seeking_my_place/api/controller/purpose_list_controller.dart';
 import 'package:seeking_my_place/api/controller/purpose_list_controller_impl.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/model/setting_model.dart';
 import 'package:seeking_my_place/repository/interface/setting_repository_impl.dart';
 
@@ -41,6 +42,20 @@ class SettingRepository implements SettingRepositoryImpl {
   }
 
   @override
+  Future<SettingModel> selectPurposeDataById(int id) async {
+    try {
+      initDatabase();
+      debugPrint("SettingRepository selectPurposeDataById() start");
+      final data = await repository.selectPurposeDataByIdExecute(id);
+      debugPrint("select by id: ${data.selectedPurposeData.purposeName}");
+      return data;
+    } on Exception catch (exception) {
+      debugPrint("SettingRepository selectAll error");
+      throw Exception(exception);
+    }
+  }
+
+  @override
   Future<void> insertPurposeData(String purposeName) async {
     try {
       debugPrint("SettingRepository insertPurposeData start");
@@ -48,6 +63,17 @@ class SettingRepository implements SettingRepositoryImpl {
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository insertPurposeData error");
+      throw Exception(exception);
+    }
+  }
+
+  @override
+  Future<void> updatePurposeData(PurposeEntity entity) async {
+    try {
+      initDatabase();
+      await repository.updatePurposeDataExecute(entity);
+    } on Exception catch (exception) {
+      debugPrint("SettingRepository updatePurposeData error");
       throw Exception(exception);
     }
   }

@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/model/setting_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/repository/interface/setting_repository_impl.dart';
@@ -11,11 +13,31 @@ final settingViewModelNotifierProvider =
   return viewModel.purposeList;
 });
 
+final settingViewModelSelectByIdNotifierProvider =
+    Provider.family<SettingModel, int>((ref, id) {
+  final viewModel =
+      SettingViewModel(repository: ref.read(settingRepositoryProvider));
+  debugPrint(
+      "settingViewModelSelectByIdNotifierProvider after SettingViewModel");
+  viewModel.selectById(id);
+  debugPrint("selectById after SettingViewModel");
+  debugPrint(
+      "updated purpose name: ${viewModel.purposeData.selectedPurposeData.purposeName}");
+  return viewModel.purposeData;
+});
+
 final settingViewModelInsertDataProvider =
     Provider.family<void, String>((ref, purposeName) {
   final viewModel =
       SettingViewModel(repository: ref.read(settingRepositoryProvider));
   viewModel.insertPurposeData(purposeName);
+});
+
+final settingViewModelUpdateDataProvider =
+    Provider.family<void, PurposeEntity>((ref, entity) {
+  final viewModel =
+      SettingViewModel(repository: ref.read(settingRepositoryProvider));
+  viewModel.updatePurposeData(entity);
 });
 
 final settingViewModelDeleteDataProvider =
@@ -33,6 +55,9 @@ class SettingViewModel {
   late SettingModel _purposeList;
   SettingModel get purposeList => _purposeList;
 
+  late SettingModel _purposeData;
+  SettingModel get purposeData => _purposeData;
+
   bool isLoading = false;
 
   Future selectAll() async {
@@ -44,10 +69,28 @@ class SettingViewModel {
     }
   }
 
+  Future selectById(int id) async {
+    try {
+      debugPrint("selectById(id: $id) start");
+      _purposeData = await repository.selectPurposeDataById(id);
+      debugPrint(
+          "_purposeData: ${_purposeData.selectedPurposeData.purposeName}");
+    } on Exception catch (exception) {
+      Exception(exception);
+    }
+  }
+
   Future insertPurposeData(String purposeName) async {
     try {
-      await repository.initDatabase();
       await repository.insertPurposeData(purposeName);
+    } on Exception catch (exception) {
+      Exception(exception);
+    }
+  }
+
+  Future updatePurposeData(PurposeEntity entity) async {
+    try {
+      await repository.updatePurposeData(entity);
     } on Exception catch (exception) {
       Exception(exception);
     }
@@ -55,7 +98,6 @@ class SettingViewModel {
 
   Future deletePurposeData(int id) async {
     try {
-      await repository.initDatabase();
       await repository.deletePurposeData(id);
     } on Exception catch (exception) {
       Exception(exception);
