@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/model/setting_model.dart';
-import 'package:seeking_my_place/viewmodel/setting_view_model.dart';
+import 'package:seeking_my_place/view_model/setting_view_model.dart';
 
 class SettingView extends ConsumerWidget {
   SettingView({super.key});
@@ -19,11 +18,11 @@ class SettingView extends ConsumerWidget {
           title: const Text("設定"),
         ),
         body: model.when(
-            data: (settingModel) => ListView.builder(
-                itemCount: settingModel.purposeLists.length + 1,
+            data: (purposeLists) => ListView.builder(
+                itemCount: purposeLists.length + 1,
                 itemBuilder: (_, index) {
-                  if (index < settingModel.purposeLists.length) {
-                    final purpose = settingModel.purposeLists[index];
+                  if (index < purposeLists.length) {
+                    final purpose = purposeLists[index];
                     return Dismissible(
                         key: UniqueKey(),
                         onDismissed: (DismissDirection direction) {
@@ -126,16 +125,18 @@ class SettingView extends ConsumerWidget {
                             .read(settingViewModelSelectByIdNotifierProvider
                                 .notifier)
                             .getPurposeList(entity.id);
-                        purposeData.then((settingModel) {
+                        purposeData.then((selectedPurposeData) {
                           debugPrint(
-                              "entity1:::: ${settingModel.selectedPurposeData}");
+                              "entity1:::: ${selectedPurposeData}");
                           debugPrint("purposeData != null");
-                          settingModel.selectedPurposeData.purposeName =
+                          selectedPurposeData?.purposeName =
                               _inputPurposeName;
                           debugPrint(
-                              "update to: ${settingModel.selectedPurposeData.purposeName}");
-                          ref.read(settingViewModelUpdateDataProvider(
-                              settingModel.selectedPurposeData));
+                              "update to: ${selectedPurposeData?.purposeName}");
+                          if (selectedPurposeData != null) {
+                            ref.read(settingViewModelUpdateDataProvider(
+                                selectedPurposeData));
+                          }
                         });
                       }
                     } else {

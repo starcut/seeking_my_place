@@ -3,24 +3,20 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:seeking_my_place/api/controller/purpose_list_controller.dart';
-import 'package:seeking_my_place/api/controller/purpose_list_controller_impl.dart';
+import 'package:seeking_my_place/api/controller/purpose_list_service.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/model/setting_model.dart';
-import 'package:seeking_my_place/repository/interface/setting_repository_impl.dart';
 
-final settingRepositoryProvider = Provider<SettingRepositoryImpl>((ref) {
-  return SettingRepository(repository: ref.read(purposeListControllerProvider));
+final settingRepositoryProvider = Provider<SettingRepository>((ref) {
+  return SettingRepository(service: ref.read(purposeListControllerProvider));
 });
 
-class SettingRepository implements SettingRepositoryImpl {
-  final PurposeListControllerImpl repository;
-  SettingRepository({required this.repository});
+class SettingRepository {
+  final PurposeListService service;
+  SettingRepository({required this.service});
 
-  @override
   Future<void> initDatabase() async {
     try {
-      final data = await repository.initDatabaseExecute();
+      final data = await service.initDatabaseExecute();
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository initDatabase error");
@@ -28,12 +24,11 @@ class SettingRepository implements SettingRepositoryImpl {
     }
   }
 
-  @override
-  Future<SettingModel> selectAll() async {
+  Future<List<PurposeEntity>> selectAll() async {
     try {
       initDatabase();
       debugPrint("SettingRepository selectAll() start");
-      final data = await repository.selectAllExecute();
+      final data = await service.selectAllExecute();
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository selectAll error");
@@ -41,13 +36,12 @@ class SettingRepository implements SettingRepositoryImpl {
     }
   }
 
-  @override
-  Future<SettingModel> selectPurposeDataById(int id) async {
+  Future<PurposeEntity?> selectPurposeDataById(int id) async {
     try {
       initDatabase();
       debugPrint("SettingRepository selectPurposeDataById() start");
-      final data = await repository.selectPurposeDataByIdExecute(id);
-      debugPrint("select by id: ${data.selectedPurposeData.purposeName}");
+      final data = await service.selectPurposeDataByIdExecute(id);
+      debugPrint("select by id: ${data?.purposeName}");
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository selectAll error");
@@ -55,11 +49,10 @@ class SettingRepository implements SettingRepositoryImpl {
     }
   }
 
-  @override
   Future<void> insertPurposeData(String purposeName) async {
     try {
       debugPrint("SettingRepository insertPurposeData start");
-      final data = await repository.insertPurposeDataExecute(purposeName);
+      final data = await service.insertPurposeDataExecute(purposeName);
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository insertPurposeData error");
@@ -67,21 +60,19 @@ class SettingRepository implements SettingRepositoryImpl {
     }
   }
 
-  @override
   Future<void> updatePurposeData(PurposeEntity entity) async {
     try {
       initDatabase();
-      await repository.updatePurposeDataExecute(entity);
+      await service.updatePurposeDataExecute(entity);
     } on Exception catch (exception) {
       debugPrint("SettingRepository updatePurposeData error");
       throw Exception(exception);
     }
   }
 
-  @override
   Future<void> deletePurposeData(int id) async {
     try {
-      await repository.deletePurposeDataExecute(id);
+      await service.deletePurposeDataExecute(id);
     } on Exception catch (exception) {
       debugPrint("SettingRepository deletePurposeData error");
       throw Exception(exception);

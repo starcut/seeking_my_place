@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/gestures.dart';
@@ -12,7 +14,7 @@ import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/viewmodel/home_view_model.dart';
+import 'package:seeking_my_place/view_model/home_view_model.dart';
 
 class HomeView extends ConsumerWidget {
   HomeView({super.key});
@@ -23,8 +25,8 @@ class HomeView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repository =
         ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
-    repository.then((homeModel) {
-      purposeList = homeModel.purposeLists;
+    repository.then((purposeLists) {
+      purposeList = purposeLists;
     });
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
@@ -43,28 +45,34 @@ class HomeView extends ConsumerWidget {
                         }),
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),
-                    onPressed: () => {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => PlaceRegisterView()))
-                        }),
+                    onPressed: () async => {
+                    await FirebaseAnalytics.instance.logEvent(
+                          name: 'get_purpose_list',
+                        parameters: {
+                      'index': 0
+                      }),
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => PlaceRegisterView()))
+                    }),
               ],
             ),
-            body: ref.watch(homeViewModelNotifierProvider).when(
-                data: (homeModel) => ListView.builder(
-                    itemCount: homeModel.favoritePlaces.length,
-                    itemBuilder: (_, index) {
-                      final favoritePlace = homeModel.favoritePlaces[index];
-                      return favoritePlaceList(context, favoritePlace);
-                    }),
+            body: Column(children: [
+              ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) => ListView.builder(
+                itemCount: favoritePlaces.length,
+                itemBuilder: (_, index) {
+                  final favoritePlace = favoritePlaces[index];
+                  return favoritePlaceList(context, favoritePlace);
+                }),
                 error: (error, _) => const Center(child: Text('通信エラー')),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()))));
+                loading: () => const Center(child: CircularProgressIndicator()))
+              ],
+            )
+    ));
   }
 
-  Widget favoritePlaceList(
-      BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
+  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
     late GoogleMapController mapController;
 
     final LatLng _center = const LatLng(45.521563, -122.677433);
@@ -97,6 +105,14 @@ class HomeView extends ConsumerWidget {
                       zoom: 11.0,
                     ),
                   )),
+              // IconButton(
+              //     icon: const Icon(Icons.language),
+              //     onPressed: () => {
+              //       Navigator.push(
+              //           context,
+              //           MaterialPageRoute(
+              //               builder: (context) => SettingView()))
+              //     }),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(

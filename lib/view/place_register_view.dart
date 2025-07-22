@@ -94,7 +94,7 @@ class _PlaceRegisterViewState extends State<PlaceRegisterView> {
     var registerButton = OutlinedButton(
         onPressed: () {
           Navigator.pop(context);
-          // データベース登録
+          debugPrint("登録ボタン押下");
           },
         style: OutlinedButton.styleFrom(
             minimumSize: buttonSize,
