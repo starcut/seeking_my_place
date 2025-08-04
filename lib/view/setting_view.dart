@@ -26,7 +26,7 @@ class SettingView extends ConsumerWidget {
                     return Dismissible(
                         key: UniqueKey(),
                         onDismissed: (DismissDirection direction) {
-                          debugPrint("${purpose.id} ${purpose.purposeName}削除");
+                          debugPrint("${purpose.id} ${purpose.purposeText}削除");
                           ref.read(
                               settingViewModelDeleteDataProvider(purpose.id));
                           ref.invalidate(settingViewModelNotifierProvider);
@@ -56,7 +56,7 @@ class SettingView extends ConsumerWidget {
                   child: Row(
                     children: [
                       Text(
-                        entity.purposeName,
+                        entity.purposeText,
                         style: const TextStyle(
                             color: Colors.black, fontSize: 16.0),
                       ),
@@ -99,7 +99,7 @@ class SettingView extends ConsumerWidget {
   void registerDialog(
       BuildContext context, WidgetRef ref, PurposeEntity? entity) {
     final TextEditingController controller = TextEditingController();
-    controller.text = entity?.purposeName ?? "";
+    controller.text = entity?.purposeText ?? "";
 
     showDialog(
         context: context,
@@ -129,10 +129,10 @@ class SettingView extends ConsumerWidget {
                           debugPrint(
                               "entity1:::: ${selectedPurposeData}");
                           debugPrint("purposeData != null");
-                          selectedPurposeData?.purposeName =
+                          selectedPurposeData?.purposeText =
                               _inputPurposeName;
                           debugPrint(
-                              "update to: ${selectedPurposeData?.purposeName}");
+                              "update to: ${selectedPurposeData?.purposeText}");
                           if (selectedPurposeData != null) {
                             ref.read(settingViewModelUpdateDataProvider(
                                 selectedPurposeData));

@@ -41,7 +41,7 @@ class SettingRepository {
       initDatabase();
       debugPrint("SettingRepository selectPurposeDataById() start");
       final data = await service.selectPurposeDataByIdExecute(id);
-      debugPrint("select by id: ${data?.purposeName}");
+      debugPrint("select by id: ${data?.purposeText}");
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository selectAll error");

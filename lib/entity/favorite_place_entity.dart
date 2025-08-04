@@ -6,7 +6,7 @@ class FavoritePlaceEntity {
   final double longitude;
   final String url;
   final String category;
-  final String purpose;
+  final int purpose;
   final bool isVisited;
   final DateTime registerAt;
   final DateTime updateAt;
@@ -32,7 +32,7 @@ class FavoritePlaceEntity {
     final double longitude = data['longitude'];
     final String url = data['url'];
     final String category = data['category'];
-    final String purpose = data['purpose'];
+    final int purpose = data['purpose'];
     final bool isVisited = data['is_visited'];
     final DateTime registerAt = DateTime.parse(data['register_at']);
     final DateTime updateAt = DateTime.parse(data['update_at']);

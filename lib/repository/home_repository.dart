@@ -14,6 +14,7 @@ class HomeRepository {
 
   Future<List<FavoritePlaceEntity>> getFavoritePlaceData() async {
     try {
+      print("start repository getFavoritePlaceData");
       final data = await service.getFavoritePlaceData();
       return data;
     } on Exception catch (exception) {

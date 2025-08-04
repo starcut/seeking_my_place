@@ -77,7 +77,7 @@ class SettingViewModel {
       debugPrint("selectById(id: $id) start");
       _purposeData = await repository.selectPurposeDataById(id);
       debugPrint(
-          "_purposeData: ${_purposeData?.purposeName}");
+          "_purposeData: ${_purposeData?.purposeText}");
     } on Exception catch (exception) {
       Exception(exception);
     }

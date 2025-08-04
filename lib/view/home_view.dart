@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/gestures.dart';
@@ -46,11 +44,6 @@ class HomeView extends ConsumerWidget {
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),
                     onPressed: () async => {
-                    await FirebaseAnalytics.instance.logEvent(
-                          name: 'get_purpose_list',
-                        parameters: {
-                      'index': 0
-                      }),
                       Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -59,20 +52,32 @@ class HomeView extends ConsumerWidget {
               ],
             ),
             body: Column(children: [
-              ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) => ListView.builder(
-                itemCount: favoritePlaces.length,
-                itemBuilder: (_, index) {
-                  final favoritePlace = favoritePlaces[index];
-                  return favoritePlaceList(context, favoritePlace);
-                }),
-                error: (error, _) => const Center(child: Text('通信エラー')),
+              googleMapVIew(context),
+              ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
+                if (favoritePlaces.isEmpty) {
+                  return Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: const BoxDecoration(
+                          border:
+                          Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+                      child: Center(child: Text("お気に入り場所なし"))
+                  );
+                }
+                return ListView.builder(
+                    itemCount: favoritePlaces.length,
+                    itemBuilder: (_, index) {
+                      final favoritePlace = favoritePlaces[index];
+                      return favoritePlaceList(context, favoritePlace);
+                    });
+              },
+                error: (error, _) => const Center(child: Text('お気に入りの場所のデータベース読み込みエラー')),
                 loading: () => const Center(child: CircularProgressIndicator()))
-              ],
+            ],
             )
     ));
   }
 
-  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
+  Widget googleMapVIew(BuildContext context) {
     late GoogleMapController mapController;
 
     final LatLng _center = const LatLng(45.521563, -122.677433);
@@ -83,10 +88,10 @@ class HomeView extends ConsumerWidget {
 
     return GestureDetector(
       child: Container(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(0),
           decoration: const BoxDecoration(
               border:
-                  Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+              Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -96,7 +101,7 @@ class HomeView extends ConsumerWidget {
                   child: GoogleMap(
                     gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                       Factory<OneSequenceGestureRecognizer>(
-                        () => EagerGestureRecognizer(),
+                            () => EagerGestureRecognizer(),
                       ),
                     },
                     onMapCreated: _onMapCreated,
@@ -105,23 +110,32 @@ class HomeView extends ConsumerWidget {
                       zoom: 11.0,
                     ),
                   )),
-              // IconButton(
-              //     icon: const Icon(Icons.language),
-              //     onPressed: () => {
-              //       Navigator.push(
-              //           context,
-              //           MaterialPageRoute(
-              //               builder: (context) => SettingView()))
-              //     }),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  favoritePlaceEntity.placeName,
-                  style: const TextStyle(color: Colors.black, fontSize: 16.0),
-                ),
-              ),
             ],
           )),
+    );
+  }
+
+  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
+    return GestureDetector(
+      child: Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: const BoxDecoration(
+              border:
+                  Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+          child: Row(
+            children: [
+              Text(favoritePlaceEntity.placeName, style: const TextStyle(color: Colors.black, fontSize: 16.0)),
+              IconButton(
+                icon: const Icon(Icons.language),
+                onPressed: () => {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => SettingView()))
+                }),
+        ]
+          )
+      ),
       onTap: () {
         openWebPage(favoritePlaceEntity.url);
       },

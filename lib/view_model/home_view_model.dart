@@ -1,4 +1,3 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
@@ -7,6 +6,7 @@ import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/repository/home_repository.dart';
 
 final homeViewModelNotifierProvider = FutureProvider<List<FavoritePlaceEntity>>((ref) async {
+  print("start homeViewModelNotifierProvider");
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   await viewModel.getFavoritePlace();
   return viewModel.favoritePlaces;
@@ -24,13 +24,6 @@ class Purpose extends StateNotifier<int> {
 
   Future<List<PurposeEntity>> getPurposeList() async {
     debugPrint("getPurposeList");
-    await FirebaseAnalytics.instance.logEvent(
-      name: 'get_purpose_list',
-      parameters: {
-        'getPurposeList': 'OK'
-      },
-    );
-
     final repository = ref.read(homeRepositoryProvider);
     final homeModel = repository.getPurposeListData();
     return homeModel;
@@ -52,6 +45,7 @@ class HomeViewModel {
 
   Future getFavoritePlace() async {
     try {
+      print("start viewmodel getFavoritePlace");
       _favoritePlaces = await repository.getFavoritePlaceData();
     } on Exception catch (exception) {
       Exception(exception);
