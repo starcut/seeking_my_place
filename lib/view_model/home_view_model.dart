@@ -25,8 +25,8 @@ class Purpose extends StateNotifier<int> {
   Future<List<PurposeEntity>> getPurposeList() async {
     debugPrint("getPurposeList");
     final repository = ref.read(homeRepositoryProvider);
-    final homeModel = repository.getPurposeListData();
-    return homeModel;
+    final purposeList = await repository.getPurposeListDataRepository();
+    return purposeList;
   }
 }
 
@@ -54,7 +54,7 @@ class HomeViewModel {
 
   Future getPurposeListData() async {
     try {
-      _purposeList = await repository.getPurposeListData();
+      _purposeList = await repository.getPurposeListDataRepository();
       return _purposeList;
     } on Exception catch (exception) {
       debugPrint("HomeViewModel getPurposeList error");
@@ -63,9 +63,9 @@ class HomeViewModel {
     }
   }
 
-  Future getPurposeData() async {
+  Future getPurposeDataViewModel() async {
     try {
-      _purposeList = await repository.getPurposeListData();
+      _purposeList = await repository.getPurposeListDataRepository();
     } on Exception catch (exception) {
       debugPrint("HomeViewModel getPurposeList error");
       Exception(exception);

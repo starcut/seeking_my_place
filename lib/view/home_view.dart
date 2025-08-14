@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/view/place_register_view.dart';
@@ -21,11 +22,14 @@ class HomeView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final repository =
-        ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
-    repository.then((purposeLists) {
-      purposeList = purposeLists;
-    });
+    final viewModel =
+        ref.read(purposeListStateNotifierProvider.notifier);
+    final changeNotifier = ref.watch(changeNotifierProvider);
+    // final purposeList = viewModel.getPurposeList();
+    // purposeList.then((purposeLists) {
+    //   this.purposeList = purposeLists;
+    // });
+
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
         home: Scaffold(
@@ -53,25 +57,52 @@ class HomeView extends ConsumerWidget {
             ),
             body: Column(children: [
               googleMapVIew(context),
-              ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
-                if (favoritePlaces.isEmpty) {
-                  return Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: const BoxDecoration(
-                          border:
-                          Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
-                      child: Center(child: Text("お気に入り場所なし"))
+              Consumer(builder: (context, ref, _) {
+                return ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
+                  if (favoritePlaces.isEmpty) {
+                    return Container(
+                        padding: const EdgeInsets.all(12.0),
+                        decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+                        child: Center(child: Text("お気に入り場所なし"))
+                    );
+                  }
+                  return SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.5 - 120,
+                      child: CustomScrollView(
+                        // TODO: shrinkWrapはtrueだとメモリを食うため要修正
+                         shrinkWrap: true,
+                         slivers: [
+                           SliverList(
+                               delegate: SliverChildBuilderDelegate(
+                                 childCount: favoritePlaces.length,
+                                     (BuildContext context, int index) {
+                                   final favoritePlace = favoritePlaces[index];
+                                   return favoritePlaceList(context, favoritePlace);
+                                   },
+                               )
+                           ),
+                         ]
+                      )
                   );
-                }
-                return ListView.builder(
-                    itemCount: favoritePlaces.length,
-                    itemBuilder: (_, index) {
-                      final favoritePlace = favoritePlaces[index];
-                      return favoritePlaceList(context, favoritePlace);
-                    });
+                // return ListView.builder(
+                //     shrinkWrap: true,
+                //     itemCount: favoritePlaces.length,
+                //     itemBuilder: (_, index) {
+                //       final favoritePlace = favoritePlaces[index];
+                //       return favoritePlaceList(context, favoritePlace);
+                //     });
               },
-                error: (error, _) => const Center(child: Text('お気に入りの場所のデータベース読み込みエラー')),
-                loading: () => const Center(child: CircularProgressIndicator()))
+                  error: (error, _) {
+                    print("error");
+                    return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
+                  },
+                  loading: () {
+                    print("loading");
+                    return const Center(child: CircularProgressIndicator());
+                  });
+            })
             ],
             )
     ));
@@ -97,7 +128,7 @@ class HomeView extends ConsumerWidget {
             children: <Widget>[
               SizedBox(
                   width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height - 300,
+                  height: MediaQuery.of(context).size.height * 0.5,
                   child: GoogleMap(
                     gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                       Factory<OneSequenceGestureRecognizer>(

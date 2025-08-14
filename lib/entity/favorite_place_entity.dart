@@ -1,5 +1,5 @@
 class FavoritePlaceEntity {
-  final int id;
+  final int? id;
   final String placeName;
   final String address;
   final double latitude;
@@ -8,11 +8,11 @@ class FavoritePlaceEntity {
   final String category;
   final int purpose;
   final bool isVisited;
-  final DateTime registerAt;
-  final DateTime updateAt;
+  final DateTime? registerAt;
+  final DateTime? updateAt;
 
   FavoritePlaceEntity(
-      {required this.id,
+      {this.id,
       required this.placeName,
       required this.address,
       required this.latitude,
@@ -21,8 +21,8 @@ class FavoritePlaceEntity {
       required this.category,
       required this.purpose,
       required this.isVisited,
-      required this.registerAt,
-      required this.updateAt});
+      this.registerAt,
+      this.updateAt});
 
   factory FavoritePlaceEntity.fromData(dynamic data) {
     final int id = data['id'];
@@ -33,7 +33,7 @@ class FavoritePlaceEntity {
     final String url = data['url'];
     final String category = data['category'];
     final int purpose = data['purpose'];
-    final bool isVisited = data['is_visited'];
+    final bool isVisited = (data['is_visited'] > 0);
     final DateTime registerAt = DateTime.parse(data['register_at']);
     final DateTime updateAt = DateTime.parse(data['update_at']);
 

@@ -6,7 +6,7 @@ import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) =>
-    HomeRepository(service: ref.read(favoritePlaceRestControllerProvider)));
+    HomeRepository(service: ref.read(favoritePlaceServiceProvider)));
 
 class HomeRepository {
   final FavoritePlaceService service;
@@ -14,7 +14,6 @@ class HomeRepository {
 
   Future<List<FavoritePlaceEntity>> getFavoritePlaceData() async {
     try {
-      print("start repository getFavoritePlaceData");
       final data = await service.getFavoritePlaceData();
       return data;
     } on Exception catch (exception) {
@@ -22,9 +21,9 @@ class HomeRepository {
     }
   }
 
-  Future<List<PurposeEntity>> getPurposeListData() async {
+  Future<List<PurposeEntity>> getPurposeListDataRepository() async {
     try {
-      final data = await service.getPurposeListData();
+      final data = await service.getPurposeListDataService();
       return data;
     } on Exception catch (exception) {
       debugPrint("HomeRepository getPurposeListData error");

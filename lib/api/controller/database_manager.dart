@@ -110,10 +110,8 @@ class DatabaseManager {
       for (var record in records) {
         debugPrint("fromData: $record");
         FavoritePlaceEntity placeData = FavoritePlaceEntity.fromData(record);
-        debugPrint("id: ${placeData.id} title:${placeData.placeName}");
         placeList.add(placeData);
       }
-      print(placeList);
       return placeList;
     } on Exception catch (exception) {
       debugPrint("DatabaseManager selectAllPlaces error");
@@ -122,25 +120,28 @@ class DatabaseManager {
     }
   }
 
-  Future insertRegisterPlaceData(FavoritePlaceEntity placeData) async {
+  Future insertRegisterPlaceData(FavoritePlaceEntity favoritePlaceData) async {
     try {
-      debugPrint("DatabaseManager insertRegisterPlaceData start");
+      debugPrint("start: DatabaseManager insertRegisterPlaceData");
       await _database.transaction((txn) async {
-        await txn.rawInsert('INSERT INTO $tableNamePlaceList '
+        final sql = 'INSERT INTO $tableNamePlaceList '
             '($columnPlaceListPlaceName, $columnPlaceListAddress,'
             ' $columnPlaceListLatitude, $columnPlaceListLongitude,'
             ' $columnPlaceListUrl, $columnPlaceListPurpose,'
             ' $columnPlaceListCategory, $columnPlaceListIsVisited,'
             ' $columnPlaceListRegisterAt, $columnPlaceListUpdateAt) '
             'VALUES '
-            '("${placeData.placeName}", "${placeData.address}",'
-            ' ${placeData.latitude}, ${placeData.longitude},'
-            ' "${placeData.url}", ${placeData.purpose},'
-            ' "${placeData.category}", ${placeData.isVisited},'
-            ' "${DateTime.now().toString()}", "${DateTime.now().toString()}")');
+            '("${favoritePlaceData.placeName}", "${favoritePlaceData.address}",'
+            ' ${favoritePlaceData.latitude}, ${favoritePlaceData.longitude},'
+            ' "${favoritePlaceData.url}", ${favoritePlaceData.purpose},'
+            ' "${favoritePlaceData.category}", ${favoritePlaceData.isVisited},'
+            ' "${DateTime.now().toString()}", "${DateTime.now().toString()}")';
+        print(sql);
+        await txn.rawInsert(sql);
       });
+      debugPrint("end: DatabaseManager insertRegisterPlaceData");
     } on Exception catch (exception) {
-      debugPrint("DatabaseManager insertRegisterPlaceData error");
+      debugPrint("error: DatabaseManager insertRegisterPlaceData");
       debugPrint("$exception");
       Exception(exception);
     }
@@ -148,12 +149,12 @@ class DatabaseManager {
 
 
   Future<List<PurposeEntity>> selectAllPurposeMasterData() async {
-    debugPrint("selectAllPurposeMasterData() start");
+    debugPrint("start: selectAllPurposeMasterData()");
     try {
       var exist = await databaseExists(_databasePath);
 
       if (!exist) {
-        debugPrint("データベースが存在しません");
+        debugPrint("Not Found Database");
         return <PurposeEntity>[];
       }
 
@@ -168,19 +169,19 @@ class DatabaseManager {
       print(imageDataList);
       return imageDataList;
     } on Exception catch (exception) {
-      debugPrint("DatabaseManager selectAllPurposeMasterData error");
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData");
       debugPrint("$exception");
       return <PurposeEntity>[];
     }
   }
 
   Future<int> getCountPurposeMasterData() async {
-    debugPrint("getCountPurposeMasterData() start");
+    debugPrint("start: getCountPurposeMasterData()");
     try {
       var exist = await databaseExists(_databasePath);
 
       if (!exist) {
-        debugPrint("データベースが存在しません");
+        debugPrint("Not Found Database");
         return 0;
       }
 
@@ -189,7 +190,7 @@ class DatabaseManager {
       print(Sqflite.firstIntValue(countData) ?? 0);
       return Sqflite.firstIntValue(countData) ?? 0;
     } on Exception catch (exception) {
-      debugPrint("DatabaseManager getCountPurposeMasterData error");
+      debugPrint("error: DatabaseManager getCountPurposeMasterData");
       debugPrint("$exception");
       return 0;
     }
@@ -197,16 +198,16 @@ class DatabaseManager {
 
   Future insertPurpose(String purposeText) async {
     try {
-      debugPrint("DatabaseManager insertImage start");
+      debugPrint("start: DatabaseManager insertImage");
       await _database.transaction((txn) async {
         await txn.rawInsert('INSERT INTO $masterTableNamePurpose '
             '($columnMasterPurposeText) '
             'VALUES '
             '("$purposeText")');
       });
-      debugPrint("登録完了：${columnMasterPurposeText}");
+      debugPrint("register complete：${columnMasterPurposeText}");
     } on Exception catch (exception) {
-      debugPrint("DatabaseManager insertPurpose error");
+      debugPrint("error: DatabaseManager insertPurpose");
       debugPrint("$exception");
       Exception(exception);
     }
