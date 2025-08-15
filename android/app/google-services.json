@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "224955387832",
+    "project_id": "seeking-my-place",
+    "storage_bucket": "seeking-my-place.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224955387832:android:52af2723c01533ebb0494d",
+        "android_client_info": {
+          "package_name": "com.example.lock_image_storage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzXt1vIZqjd-peY3Sk78o8zcqtxxtkIXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224955387832:android:55859faf14012c6fb0494d",
+        "android_client_info": {
+          "package_name": "jp.co.seeking_star.seeking_my_place"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzXt1vIZqjd-peY3Sk78o8zcqtxxtkIXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

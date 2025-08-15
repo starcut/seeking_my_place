@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:seeking_my_place/api/controller/favorite_place_rest_controller_impl.dart';
-import 'package:seeking_my_place/model/home_model.dart';
-import 'package:seeking_my_place/repository/interface/home_repository_impl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeRepository implements HomeRepositoryImpl {
-  final FavoritePlaceRestControllerImpl repository;
-  HomeRepository({required this.repository});
+import 'package:seeking_my_place/api/controller/favorite_place_service.dart';
+import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 
-  @override
-  Future<HomeModel> getFavoritePlaceData() async {
+final homeRepositoryProvider = Provider<HomeRepository>((ref) =>
+    HomeRepository(service: ref.read(favoritePlaceServiceProvider)));
+
+class HomeRepository {
+  final FavoritePlaceService service;
+  HomeRepository({required this.service});
+
+  Future<List<FavoritePlaceEntity>> getFavoritePlaceData() async {
     try {
-      final data = await repository.getFavoritePlaceData();
+      final data = await service.getFavoritePlaceData();
       return data;
     } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
+
+  Future<List<PurposeEntity>> getPurposeListDataRepository() async {
+    try {
+      final data = await service.getPurposeListDataService();
+      return data;
+    } on Exception catch (exception) {
+      debugPrint("HomeRepository getPurposeListData error");
       throw Exception(exception);
     }
   }
