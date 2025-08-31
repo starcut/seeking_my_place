@@ -6,7 +6,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/view/place_register_view.dart';
@@ -22,41 +21,39 @@ class HomeView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel =
-        ref.read(purposeListStateNotifierProvider.notifier);
-    final changeNotifier = ref.watch(changeNotifierProvider);
-    // final purposeList = viewModel.getPurposeList();
-    // purposeList.then((purposeLists) {
-    //   this.purposeList = purposeLists;
-    // });
+    final purposeList = ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
+    purposeList.then((purposeLists) {
+      this.purposeList = purposeLists;
+    });
 
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
         home: Scaffold(
             appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+              backgroundColor: Theme
+                  .of(context)
+                  .colorScheme
+                  .inversePrimary,
               title: const Text(''),
               actions: [
                 IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () => {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SettingView()))
-                        }),
+                    onPressed: () =>
+                    {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => SettingView()))
+                    }),
                 IconButton(
                     icon: const Icon(Icons.add_location_alt_outlined),
-                    onPressed: () async => {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => PlaceRegisterView()))
+                    onPressed: () async =>
+                    {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => PlaceRegisterView()))
                     }),
               ],
             ),
             body: Column(children: [
-              googleMapVIew(context),
+              googleMapView(context, ref),
               Consumer(builder: (context, ref, _) {
                 return ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
                   if (favoritePlaces.isEmpty) {
@@ -72,50 +69,42 @@ class HomeView extends ConsumerWidget {
                       height: MediaQuery.of(context).size.height * 0.5 - 120,
                       child: CustomScrollView(
                         // TODO: shrinkWrapはtrueだとメモリを食うため要修正
-                         shrinkWrap: true,
-                         slivers: [
-                           SliverList(
-                               delegate: SliverChildBuilderDelegate(
-                                 childCount: favoritePlaces.length,
-                                     (BuildContext context, int index) {
-                                   final favoritePlace = favoritePlaces[index];
-                                   return favoritePlaceList(context, favoritePlace);
-                                   },
-                               )
-                           ),
-                         ]
+                          shrinkWrap: true,
+                          slivers: [
+                            SliverList(delegate: SliverChildBuilderDelegate(
+                              childCount: favoritePlaces.length, (BuildContext context, int index) {
+                              final favoritePlace = favoritePlaces[index];
+                              return favoritePlaceList(context, favoritePlace);
+                            },
+                            )
+                            ),
+                          ]
                       )
                   );
-                // return ListView.builder(
-                //     shrinkWrap: true,
-                //     itemCount: favoritePlaces.length,
-                //     itemBuilder: (_, index) {
-                //       final favoritePlace = favoritePlaces[index];
-                //       return favoritePlaceList(context, favoritePlace);
-                //     });
-              },
-                  error: (error, _) {
-                    print("error");
-                    return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
-                  },
-                  loading: () {
-                    print("loading");
-                    return const Center(child: CircularProgressIndicator());
-                  });
-            })
-            ],
-            )
-    ));
+                },
+                    error: (error, _) {
+                      print("error");
+                      return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
+                    },
+                    loading: () {
+                      print("loading");
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                );
+              })
+            ],)
+        )
+    );
   }
 
-  Widget googleMapVIew(BuildContext context) {
+  Widget googleMapView(BuildContext context, WidgetRef ref) {
     late GoogleMapController mapController;
 
-    final LatLng _center = const LatLng(45.521563, -122.677433);
-
-    void _onMapCreated(GoogleMapController controller) {
+    void _onMapCreated(GoogleMapController controller) async {
       mapController = controller;
     }
+
+    final currentLocation = ref.watch(homeViewModelCurrentLocationNotifierProvider);
 
     return GestureDetector(
       child: Container(
@@ -129,18 +118,29 @@ class HomeView extends ConsumerWidget {
               SizedBox(
                   width: MediaQuery.of(context).size.width,
                   height: MediaQuery.of(context).size.height * 0.5,
-                  child: GoogleMap(
-                    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                      Factory<OneSequenceGestureRecognizer>(
-                            () => EagerGestureRecognizer(),
+                  child: currentLocation.when(data: (currentLocation) {
+                    return GoogleMap(
+                      myLocationButtonEnabled: true,
+                      myLocationEnabled: true,
+                      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                        Factory<OneSequenceGestureRecognizer>(
+                              () => EagerGestureRecognizer(),
+                        ),
+                      },
+                      onMapCreated: _onMapCreated,
+                      initialCameraPosition: CameraPosition(
+                        target: currentLocation,
+                        zoom: 11.0,
                       ),
-                    },
-                    onMapCreated: _onMapCreated,
-                    initialCameraPosition: CameraPosition(
-                      target: _center,
-                      zoom: 11.0,
-                    ),
-                  )),
+                    );
+                  }, error: (error, _) {
+                    print("error");
+                    return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
+                  }, loading: () {
+                    print("loading");
+                    return const Center(child: CircularProgressIndicator());
+                  })
+              ),
             ],
           )),
     );
@@ -151,19 +151,18 @@ class HomeView extends ConsumerWidget {
       child: Container(
           padding: const EdgeInsets.all(12.0),
           decoration: const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
           child: Row(
             children: [
               Text(favoritePlaceEntity.placeName, style: const TextStyle(color: Colors.black, fontSize: 16.0)),
               IconButton(
                 icon: const Icon(Icons.language),
                 onPressed: () => {
-                  Navigator.push(
-                      context,
+                  Navigator.push(context,
                       MaterialPageRoute(
                           builder: (context) => SettingView()))
-                }),
+                }
+              ),
         ]
           )
       ),

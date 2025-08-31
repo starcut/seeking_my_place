@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:seeking_my_place/api/controller/location/location_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
@@ -10,6 +12,17 @@ final homeViewModelNotifierProvider = FutureProvider<List<FavoritePlaceEntity>>(
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   await viewModel.getFavoritePlace();
   return viewModel.favoritePlaces;
+});
+
+final homeViewModelCurrentLocationNotifierProvider = FutureProvider<LatLng>((ref) async {
+  print("start homeViewModelCurrentLocationNotifierProvider");
+  final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
+  return await viewModel.getCurrentPosition();
+});
+
+final homeViewModelProvider = FutureProvider<HomeViewModel>((ref) async {
+  final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
+  return viewModel;
 });
 
 final purposeListStateNotifierProvider =
@@ -27,6 +40,12 @@ class Purpose extends StateNotifier<int> {
     final repository = ref.read(homeRepositoryProvider);
     final purposeList = await repository.getPurposeListDataRepository();
     return purposeList;
+  }
+
+  Future<LatLng> getCurrentPosition() async {
+    await LocationManager.shared.request();
+    var position = await LocationManager.shared.determinePosition();
+    return LatLng(position.latitude, position.longitude);
   }
 }
 
@@ -62,6 +81,14 @@ class HomeViewModel {
       return [];
     }
   }
+
+  Future<LatLng> getCurrentPosition() async {
+    await LocationManager.shared.request();
+    var position = await LocationManager.shared.determinePosition();
+    return LatLng(position.latitude, position.longitude);
+  }
+
+
 
   Future getPurposeDataViewModel() async {
     try {
