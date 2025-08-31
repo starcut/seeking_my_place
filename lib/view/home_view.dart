@@ -46,6 +46,35 @@ class HomeView extends ConsumerWidget {
         ),
         child: Center(child: Text("お気に入り場所なし"))
     );
+    final favoriteListView = Consumer(builder: (context, ref, _) {
+      return ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
+        if (favoritePlaces.isEmpty) {
+          return noFavoritePlaceView;
+        }
+        return SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height * 0.5 - 120,
+            child: CustomScrollView(
+              // TODO: shrinkWrapはtrueだとメモリを食うため要修正
+                shrinkWrap: true,
+                slivers: [
+                  SliverList(delegate: SliverChildBuilderDelegate(
+                    childCount: favoritePlaces.length, (BuildContext context, int index) {
+                    final favoritePlace = favoritePlaces[index];
+                    return favoritePlaceList(context, favoritePlace);
+                  },
+                  )),
+                ]
+            )
+        );
+      }, error: (error, _) {
+        print("error");
+        return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
+      }, loading: () {
+        print("loading");
+        return const Center(child: CircularProgressIndicator());
+      });
+    });
 
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
@@ -60,41 +89,9 @@ class HomeView extends ConsumerWidget {
             ),
             body: Column(children: [
               googleMapView(context, ref),
-              Consumer(builder: (context, ref, _) {
-                return ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
-                  if (favoritePlaces.isEmpty) {
-                    return noFavoritePlaceView;
-                  }
-                  return SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height * 0.5 - 120,
-                      child: favoritePlaceView(context, favoritePlaces)
-                  );
-                }, error: (error, _) {
-                  print("error");
-                  return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
-                }, loading: () {
-                  print("loading");
-                  return const Center(child: CircularProgressIndicator());
-                });
-              })
+              favoriteListView
             ],)
         )
-    );
-  }
-
-  Widget favoritePlaceView(BuildContext context, List<FavoritePlaceEntity> favoritePlaces) {
-    return CustomScrollView(
-      // TODO: shrinkWrapはtrueだとメモリを食うため要修正
-        shrinkWrap: true,
-        slivers: [
-          SliverList(delegate: SliverChildBuilderDelegate(
-            childCount: favoritePlaces.length, (BuildContext context, int index) {
-            final favoritePlace = favoritePlaces[index];
-            return favoritePlaceList(context, favoritePlace);
-          },
-          )),
-        ]
     );
   }
 
