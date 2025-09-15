@@ -42,4 +42,12 @@ class FavoritePlaceService {
       throw Exception(exception);
     }
   }
+
+  Future<void> deleteFavoritePlaceData(int id) async {
+    try {
+      await DatabaseManager.shared.deleterFavoritePlace(id);
+    } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
 }

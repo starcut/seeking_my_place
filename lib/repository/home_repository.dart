@@ -21,6 +21,14 @@ class HomeRepository {
     }
   }
 
+  Future<void> deleteFavoritePlace(int id) async {
+    try {
+      await service.deleteFavoritePlaceData(id);
+    } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
+
   Future<List<PurposeEntity>> getPurposeListDataRepository() async {
     try {
       final data = await service.getPurposeListDataService();

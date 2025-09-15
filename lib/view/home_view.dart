@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
@@ -46,35 +47,69 @@ class HomeView extends ConsumerWidget {
         ),
         child: Center(child: Text("お気に入り場所なし"))
     );
-    final favoriteListView = Consumer(builder: (context, ref, _) {
-      return ref.watch(homeViewModelNotifierProvider).when(data: (favoritePlaces) {
-        if (favoritePlaces.isEmpty) {
-          return noFavoritePlaceView;
-        }
-        return SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height * 0.5 - 120,
-            child: CustomScrollView(
-              // TODO: shrinkWrapはtrueだとメモリを食うため要修正
-                shrinkWrap: true,
-                slivers: [
-                  SliverList(delegate: SliverChildBuilderDelegate(
-                    childCount: favoritePlaces.length, (BuildContext context, int index) {
-                    final favoritePlace = favoritePlaces[index];
-                    return favoritePlaceList(context, favoritePlace);
-                  },
-                  )),
-                ]
-            )
+
+    final favoriteListView = ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
+      if(favoriteList.length == 0) {
+        return Container(
+          padding: const EdgeInsets.all(0),
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+          ),
+          width: MediaQuery.of(context).size.width,
+          height: 50,
+          child: Text("登録なし"),
         );
-      }, error: (error, _) {
-        print("error");
-        return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
-      }, loading: () {
-        print("loading");
-        return const Center(child: CircularProgressIndicator());
-      });
-    });
+      }
+
+      // 取得したリストをListView.builderに渡す
+      return Expanded(
+          child: ListView.builder(
+          itemCount: favoriteList.length,
+          itemBuilder: (context, index) {
+            final favorite = favoriteList[index];
+            return Slidable(
+              key: UniqueKey(),
+              startActionPane: ActionPane(motion: const ScrollMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    SlidableAction(onPressed: (_) {
+                      print("お気に入りデータピン留めする");
+                    },
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        icon: Icons.push_pin)
+                  ]
+              ),
+              endActionPane: ActionPane(motion: const ScrollMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    SlidableAction(onPressed: (_) {
+                      int? deleteId = favorite.id;
+                      if (deleteId == null) {
+                        return;
+                      }
+                      ref.read(deleteFavoritePlaceFamily(deleteId));
+                    },
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete)
+                  ]
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(0),
+                decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                ),
+                width: MediaQuery.of(context).size.width,
+                height: 50,
+                child: Text(favorite.placeName),
+              )
+            );
+          }));
+      },
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const Center(child: CircularProgressIndicator())
+    );
 
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),

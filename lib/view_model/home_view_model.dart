@@ -25,6 +25,11 @@ final homeViewModelProvider = FutureProvider<HomeViewModel>((ref) async {
   return viewModel;
 });
 
+final deleteFavoritePlaceFamily = FutureProvider.family<void, int>((ref, id) async {
+  final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
+  viewModel.deleteFavoritePlace(id);
+});
+
 final purposeListStateNotifierProvider =
     StateNotifierProvider<Purpose, int>((ref) {
   return Purpose(ref);
@@ -71,6 +76,15 @@ class HomeViewModel {
     }
   }
 
+  Future deleteFavoritePlace(int id) async {
+    try {
+      print("start viewmodel deleteFavoritePlace");
+      await repository.deleteFavoritePlace(id);
+    } on Exception catch (exception) {
+      Exception(exception);
+    }
+  }
+
   Future getPurposeListData() async {
     try {
       _purposeList = await repository.getPurposeListDataRepository();
@@ -87,8 +101,6 @@ class HomeViewModel {
     var position = await LocationManager.shared.determinePosition();
     return LatLng(position.latitude, position.longitude);
   }
-
-
 
   Future getPurposeDataViewModel() async {
     try {
