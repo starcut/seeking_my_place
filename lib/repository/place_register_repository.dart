@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/api/controller/favorite_place_service.dart';
+import 'package:seeking_my_place/api/controller/database/favorite_place_service.dart';
 
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 

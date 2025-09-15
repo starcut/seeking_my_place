@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:seeking_my_place/api/controller/purpose_list_service.dart';
+import 'package:seeking_my_place/api/controller/database/purpose_list_service.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 final settingRepositoryProvider = Provider<SettingRepository>((ref) {

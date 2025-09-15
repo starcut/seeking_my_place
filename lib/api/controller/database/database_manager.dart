@@ -147,6 +147,22 @@ class DatabaseManager {
     }
   }
 
+  Future deleterFavoritePlace(int id) async {
+    try {
+      debugPrint("start: DatabaseManager deleterFavoritePlace");
+      await _database.transaction((txn) async {
+        final sql = 'DELETE FROM  $tableNamePlaceList '
+            'WHERE $columnPlaceListId = $id';
+        print(sql);
+        await txn.rawInsert(sql);
+      });
+      debugPrint("end: DatabaseManager deleterFavoritePlace");
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager deleterFavoritePlace");
+      debugPrint("$exception");
+      Exception(exception);
+    }
+  }
 
   Future<List<PurposeEntity>> selectAllPurposeMasterData() async {
     debugPrint("start: selectAllPurposeMasterData()");

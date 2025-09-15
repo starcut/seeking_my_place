@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:seeking_my_place/api/controller/favorite_place_service.dart';
+import 'package:seeking_my_place/api/controller/database/favorite_place_service.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
@@ -16,6 +16,14 @@ class HomeRepository {
     try {
       final data = await service.getFavoritePlaceData();
       return data;
+    } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
+
+  Future<void> deleteFavoritePlace(int id) async {
+    try {
+      await service.deleteFavoritePlaceData(id);
     } on Exception catch (exception) {
       throw Exception(exception);
     }
