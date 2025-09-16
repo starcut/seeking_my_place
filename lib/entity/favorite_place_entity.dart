@@ -2,8 +2,8 @@ class FavoritePlaceEntity {
   final int? id;
   final String placeName;
   final String address;
-  final double latitude;
-  final double longitude;
+  final double? latitude;
+  final double? longitude;
   final String url;
   final String category;
   final int purpose;
@@ -15,8 +15,8 @@ class FavoritePlaceEntity {
       {this.id,
       required this.placeName,
       required this.address,
-      required this.latitude,
-      required this.longitude,
+      this.latitude,
+      this.longitude,
       required this.url,
       required this.category,
       required this.purpose,

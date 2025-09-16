@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 
 import 'package:seeking_my_place/repository/place_register_repository.dart';
@@ -52,6 +54,19 @@ class PlaceRegisterViewModel {
       default:
         debugPrint("input error");
         throw UnimplementedError();
+    }
+  }
+
+  Future<LatLng?> getLatLngFromAddress(String address) async {
+    try {
+      List<Location> location = await locationFromAddress(address);
+      if (location.isEmpty) {
+        return null;
+      }
+      return LatLng(location.first.latitude, location.first.longitude);
+    } catch (e) {
+      print("error: $e");
+      return null;
     }
   }
 }
