@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/view_model/place_register_view_model.dart';
@@ -124,10 +128,13 @@ class PlaceRegisterView extends ConsumerWidget {
 
     var registerButton = OutlinedButton(
         onPressed: () async {
+          final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
+          LatLng? latLng = await viewModel.getLatLngFromAddress(viewModel.address);
+
           final favoritePlaceData = FavoritePlaceEntity(placeName: viewModel.placeName,
               address: viewModel.address,
-              latitude: 45.521563,
-              longitude: -122.677433,
+              latitude: latLng?.latitude,
+              longitude: latLng?.longitude,
               url: viewModel.url,
               category: viewModel.category,
               purpose: 0,

@@ -33,11 +33,12 @@ class HomeView extends ConsumerWidget {
       Navigator.push(context, MaterialPageRoute(
           builder: (context) => SettingView()))
     });
+
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async => {
-          Navigator.push(context, MaterialPageRoute(
-              builder: (context) => PlaceRegisterView()))
-        });
+      Navigator.push(context, MaterialPageRoute(
+          builder: (context) => PlaceRegisterView()))
+    });
 
     //
     final noFavoritePlaceView = Container(
@@ -102,7 +103,13 @@ class HomeView extends ConsumerWidget {
                 ),
                 width: MediaQuery.of(context).size.width,
                 height: 50,
-                child: Text(favorite.placeName),
+                child: 
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      Text(favorite.placeName, style: TextStyle(fontWeight: FontWeight.bold),),
+                      Text(favorite.address)
+                    ],)
               )
             );
           }));
@@ -136,7 +143,9 @@ class HomeView extends ConsumerWidget {
     void _onMapCreated(GoogleMapController controller) async {
       mapController = controller;
     }
-
+    Set<Marker> markers = ref.watch(homeViewModelMarkerNotifierProvider).when(data: (markers) {
+      return markers;
+    }, error: (Object error, StackTrace stackTrace) { return {}; }, loading: () { return {}; });
     final googleMapWidget = ref.watch(homeViewModelCurrentLocationNotifierProvider)
         .when(data: (currentLocation) {
       return GoogleMap(
@@ -145,6 +154,7 @@ class HomeView extends ConsumerWidget {
           target: currentLocation,
           zoom: 11.0,
         ),
+        markers: markers,
         myLocationButtonEnabled: true,
         myLocationEnabled: true,
         gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{

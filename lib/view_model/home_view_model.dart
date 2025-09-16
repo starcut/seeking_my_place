@@ -20,14 +20,16 @@ final homeViewModelCurrentLocationNotifierProvider = FutureProvider<LatLng>((ref
   return await viewModel.getCurrentPosition();
 });
 
-final homeViewModelProvider = FutureProvider<HomeViewModel>((ref) async {
-  final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
-  return viewModel;
-});
-
 final deleteFavoritePlaceFamily = FutureProvider.family<void, int>((ref, id) async {
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   viewModel.deleteFavoritePlace(id);
+});
+
+final homeViewModelMarkerNotifierProvider = FutureProvider<Set<Marker>>((ref) async {
+  print("start homeViewModelNotifierProvider");
+  final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
+  await viewModel.getFavoritePlace();
+  return await viewModel.getMarkerList();
 });
 
 final purposeListStateNotifierProvider =
@@ -110,5 +112,40 @@ class HomeViewModel {
       Exception(exception);
       return [];
     }
+  }
+
+  Future<Set<Marker>> getMarkerList() async {
+    Set<Marker> markers = {};
+    for (var favoritePlace in _favoritePlaces) {
+      double? latitude = favoritePlace.latitude;
+      double? longitude = favoritePlace.longitude;
+      if (latitude == null || longitude == null) {
+        continue;
+      }
+
+      var markerColor = BitmapDescriptor.hueRed;
+      switch (favoritePlace.purpose) {
+        case 0:
+          markerColor = BitmapDescriptor.hueRed;
+          break;
+        default:
+          markerColor = BitmapDescriptor.hueYellow;
+          break;
+      }
+
+      markers.add(
+          Marker(
+            markerId: MarkerId(favoritePlace.id.toString()),
+            position: LatLng(latitude, longitude),
+            infoWindow: InfoWindow(title: favoritePlace.placeName),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              markerColor,
+            ),
+          )
+      );
+    }
+    print("markers");
+    print(markers);
+    return markers;
   }
 }
