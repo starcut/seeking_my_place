@@ -66,6 +66,22 @@ class PlaceRegisterView extends ConsumerWidget {
   // 登録のセル
   Widget registerItemCellView(PlaceRegisterViewModel viewModel, InputItem inputItem, String hintText) {
     return Consumer(builder: (context, ref, _) {
+      var textInput = "";
+      switch (inputItem) {
+        case InputItem.placeName:
+          textInput = ref.watch(placeRegisterViewModelNotifierProvider).placeName;
+          break;
+        case InputItem.address:
+          textInput = ref.watch(placeRegisterViewModelNotifierProvider).address;
+          break;
+        case InputItem.category:
+          textInput = ref.watch(placeRegisterViewModelNotifierProvider).category;
+          break;
+        default:
+          break;
+      }
+      final controller = TextEditingController(text: textInput);
+
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -80,15 +96,30 @@ class PlaceRegisterView extends ConsumerWidget {
                       .primaryColor,
                 ),
               )),
-          TextField(
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              hintText: hintText,
-            ),
-            onChanged: (text) {
-              viewModel.setFavoritePlaceData(inputItem, text);
-            },
+      Consumer(builder: (context, ref, _) {
+        return TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            hintText: hintText,
           ),
+          onChanged: (text) async {
+            ref.read(placeRegisterViewModelNotifierProvider).setFavoritePlaceData(inputItem, text);
+            if (inputItem == InputItem.url) {
+              final placeName = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.placeName);
+              ref
+                  .read(placeRegisterViewModelNotifierProvider)
+                  .placeName = placeName;
+              final address = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.address);
+              ref
+                  .read(placeRegisterViewModelNotifierProvider)
+                  .address = address;
+              final category = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.category);
+              ref.read(placeRegisterViewModelNotifierProvider).category = category;
+            }
+          },
+        );
+      }),
           const SizedBox(height: 15)
         ],
       );
@@ -110,14 +141,14 @@ class PlaceRegisterView extends ConsumerWidget {
                     .of(context)
                     .primaryColor,
               )),
-          Checkbox(
-              value: viewModel.isVisited,
-              activeColor: Colors.green,
-              onChanged: (_) {
-                viewModel.isVisited = !viewModel.isVisited;
-                changeNotifier.notifiyListeners();
-              }
-          ),
+      Consumer(builder: (context, ref, _) {
+        return Checkbox(
+            value: ref.read(placeRegisterViewModelNotifierProvider).isVisited,
+            activeColor: Colors.green,
+            onChanged: (_) {
+              ref.read(placeRegisterViewModelNotifierProvider).isVisited = !ref.read(placeRegisterViewModelNotifierProvider).isVisited;
+            });
+      })
         ],
       );
     });
