@@ -43,7 +43,8 @@ class PlaceRegisterView extends ConsumerWidget {
               .inversePrimary,
           title: const Text("場所の登録"),
         ),
-        body: Container( //SizedBoxでも可
+        body: SingleChildScrollView(
+        child: Container( //SizedBoxでも可
             height: 639,
             padding: EdgeInsets.all(12),
             child: Column(
@@ -59,7 +60,7 @@ class PlaceRegisterView extends ConsumerWidget {
                 const SizedBox(height: 15),
                 buttonArea(viewModel, context, ref)
               ],
-            ))
+            )))
     );
   }
 
