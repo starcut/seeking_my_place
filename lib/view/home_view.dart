@@ -37,17 +37,8 @@ class HomeView extends ConsumerWidget {
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async => {
       Navigator.push(context, MaterialPageRoute(
-          builder: (context) => PlaceRegisterView()))
+          builder: (context) => PlaceRegisterView(purposeList: this.purposeList)))
     });
-
-    //
-    final noFavoritePlaceView = Container(
-        padding: const EdgeInsets.all(12.0),
-        decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-        ),
-        child: Center(child: Text("お気に入り場所なし"))
-    );
 
     final favoriteListView = ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
       if(favoriteList.length == 0) {
