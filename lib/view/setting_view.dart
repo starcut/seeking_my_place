@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/view_model/setting_view_model.dart';
 
@@ -17,15 +19,16 @@ class SettingView extends ConsumerWidget {
         return newPurposeRegisterCell(context, ref);
       }
 
-      // 取得したリストをListView.builderに渡す
-      return ListView.builder(
-          itemCount: purposeList.length,
+      final listView = ListView.builder(
+          itemCount: purposeList.length + 1,
           itemBuilder: (context, index) {
+            if (index == purposeList.length) {
+              return newPurposeRegisterCell(context, ref);
+            }
             final purpose = purposeList[index];
-            print("testeste: ${purpose.purposeName}");
             return Slidable(
                 key: UniqueKey(),
-                startActionPane: ActionPane(motion: const ScrollMotion(),
+                startActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
                     extentRatio: 0.2,
                     children: [
                       SlidableAction(onPressed: (_) {
@@ -36,12 +39,12 @@ class SettingView extends ConsumerWidget {
                           icon: Icons.push_pin)
                     ]
                 ),
-                endActionPane: ActionPane(motion: const ScrollMotion(),
+                endActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
                     extentRatio: 0.2,
                     children: [
                       SlidableAction(onPressed: (_) {
                         int deleteId = purpose.id;
-                        // ref.read(deleteFavoritePlaceFamily(deleteId));
+                        ref.read(settingViewModelDeleteDataProvider(deleteId));
                       },
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
@@ -49,25 +52,27 @@ class SettingView extends ConsumerWidget {
                     ]
                 ),
                 child: Container(
-                    padding: const EdgeInsets.all(0),
+                    padding: const EdgeInsets.all(10),
                     decoration: const BoxDecoration(
                         border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
                     ),
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                    width: MediaQuery.of(context).size.width,
                     height: 50,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(purpose.purposeName)
-                      ],
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Padding(
+                                  padding: EdgeInsets.only(bottom: 8.0),
+                                  child: Text(purpose.purposeName))
+                            ],
                     )
                 )
             );
           }
       );
+
+      // 取得したリストをListView.builderに渡す
+      return listView;
     },
         error: (err, stack) {
           return Center(child: Text('Error: $err'));
@@ -164,27 +169,23 @@ class SettingView extends ConsumerWidget {
               TextButton(
                   onPressed: () {
                     if (_inputPurposeName.isNotEmpty) {
-                      if (entity != null) {
-                        var purposeData = ref
-                            .read(settingViewModelSelectByIdNotifierProvider
-                                .notifier)
+                      if (entity == null) {
+                        ref.read(settingViewModelInsertDataProvider(_inputPurposeName));
+                      } else {
+                        print("entity: ${entity.purposeName}");
+                        var purposeData = ref.read(settingViewModelSelectByIdNotifierProvider.notifier)
                             .getPurposeList(entity.id);
                         purposeData.then((selectedPurposeData) {
-                          debugPrint(
-                              "entity1:::: ${selectedPurposeData}");
                           debugPrint("purposeData != null");
                           selectedPurposeData?.purposeName =
                               _inputPurposeName;
                           debugPrint(
                               "update to: ${selectedPurposeData?.purposeName}");
                           if (selectedPurposeData != null) {
-                            ref.read(settingViewModelUpdateDataProvider(
-                                selectedPurposeData));
+                            ref.read(settingViewModelUpdateDataProvider(selectedPurposeData));
                           }
                         });
                       }
-                    } else {
-                      ref.read(settingViewModelInsertDataProvider(_inputPurposeName));
                     }
                     // ref.invalidate(settingViewModelNotifierProvider);
                     Navigator.pop(context);

@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 
+import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';

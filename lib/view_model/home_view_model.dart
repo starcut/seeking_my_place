@@ -1,20 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'package:seeking_my_place/api/controller/location/location_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-
 import 'package:seeking_my_place/repository/home_repository.dart';
 
 final homeViewModelNotifierProvider = FutureProvider<List<FavoritePlaceEntity>>((ref) async {
-  print("start homeViewModelNotifierProvider");
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   await viewModel.getFavoritePlace();
   return viewModel.favoritePlaces;
 });
 
 final homeViewModelCurrentLocationNotifierProvider = FutureProvider<LatLng>((ref) async {
-  print("start homeViewModelCurrentLocationNotifierProvider");
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   return await viewModel.getCurrentPosition();
 });
@@ -25,7 +24,6 @@ final deleteFavoritePlaceFamily = FutureProvider.family<void, int>((ref, id) asy
 });
 
 final homeViewModelMarkerNotifierProvider = FutureProvider<Set<Marker>>((ref) async {
-  print("start homeViewModelNotifierProvider");
   final viewModel = HomeViewModel(repository: ref.read(homeRepositoryProvider));
   await viewModel.getFavoritePlace();
   return await viewModel.getMarkerList();
