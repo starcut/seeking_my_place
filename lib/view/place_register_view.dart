@@ -1,11 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:geocoding/geocoding.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/view_model/place_register_view_model.dart';
 
 enum InputItem {
@@ -31,9 +32,19 @@ enum InputItem {
 }
 
 class PlaceRegisterView extends ConsumerWidget {
+
+  PlaceRegisterView({super.key});
+
+  List<PurposeEntity> purposeList = [];
+  var selectedIndex = 0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
+    viewModel.selectAllPurposeList().then((purposeList) {
+      this.purposeList = purposeList;
+      print("this.purposeList: ${this.purposeList}");
+    });
 
     return Scaffold(
         appBar: AppBar(
@@ -43,7 +54,8 @@ class PlaceRegisterView extends ConsumerWidget {
               .inversePrimary,
           title: const Text("場所の登録"),
         ),
-        body: Container( //SizedBoxでも可
+        body: SingleChildScrollView(
+        child: Container( //SizedBoxでも可
             height: 639,
             padding: EdgeInsets.all(12),
             child: Column(
@@ -59,7 +71,7 @@ class PlaceRegisterView extends ConsumerWidget {
                 const SizedBox(height: 15),
                 buttonArea(viewModel, context, ref)
               ],
-            ))
+            )))
     );
   }
 
@@ -96,33 +108,84 @@ class PlaceRegisterView extends ConsumerWidget {
                       .primaryColor,
                 ),
               )),
-      Consumer(builder: (context, ref, _) {
-        return TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            hintText: hintText,
-          ),
-          onChanged: (text) async {
-            ref.read(placeRegisterViewModelNotifierProvider).setFavoritePlaceData(inputItem, text);
-            if (inputItem == InputItem.url) {
-              final placeName = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.placeName);
-              ref
-                  .read(placeRegisterViewModelNotifierProvider)
-                  .placeName = placeName;
-              final address = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.address);
-              ref
-                  .read(placeRegisterViewModelNotifierProvider)
-                  .address = address;
-              final category = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.category);
-              ref.read(placeRegisterViewModelNotifierProvider).category = category;
-            }
-          },
-        );
+          Consumer(builder: (context, ref, _) {
+            if(inputItem == InputItem.purpose) {
+              return TextFormField(
+                controller: controller,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  hintText: hintText,
+                ),
+                onTap: () {
+                  // キーボードが出ないようにする
+                  FocusScope.of(context).requestFocus(new FocusNode());
+                  ref.watch(placeRegisterViewModelNotifierProvider).purpose;
+                  showPicker(context, controller);
+                },
+                onChanged: (text) async {
+                  ref.read(placeRegisterViewModelNotifierProvider).purpose = text;
+                  print(text);
+                },
+              );
+        } else {
+          return TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              hintText: hintText,
+            ),
+            onChanged: (text) async {
+              ref.read(placeRegisterViewModelNotifierProvider).setFavoritePlaceData(inputItem, text);
+              if (inputItem == InputItem.url) {
+                final placeName = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.placeName);
+                ref
+                    .read(placeRegisterViewModelNotifierProvider)
+                    .placeName = placeName;
+                final address = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.address);
+                ref
+                    .read(placeRegisterViewModelNotifierProvider)
+                    .address = address;
+                final category = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.category);
+                ref
+                    .read(placeRegisterViewModelNotifierProvider)
+                    .category = category;
+              }
+            },
+          );
+        }
       }),
           const SizedBox(height: 15)
         ],
       );
+    });
+  }
+
+  void showPicker(BuildContext context, TextEditingController controller) {
+    final list = this.purposeList.map((item) {
+      return Text(item.purposeName);
+    }).toList();
+
+    showCupertinoModalPopup<void>(context: context,
+        builder: (BuildContext context) {
+      return Container(
+        height: 216,
+        child: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: CupertinoPicker(
+            backgroundColor: Colors.white,
+            itemExtent: 32,
+            children: list,
+            onSelectedItemChanged: (int index) {
+              selectedIndex = index;
+              print("selected: ${this.purposeList[index].purposeName}");
+            },
+          )
+        ),
+      );
+    }).then((_) {
+      controller.value = TextEditingValue(text: this.purposeList[selectedIndex].purposeName);
     });
   }
 

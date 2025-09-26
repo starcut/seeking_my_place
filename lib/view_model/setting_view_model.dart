@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/repository/setting_repository.dart';
 
-final settingViewModelNotifierProvider =
-    FutureProvider<List<PurposeEntity>>((ref) async {
-  final viewModel =
-      SettingViewModel(repository: ref.read(settingRepositoryProvider));
+final settingViewModelNotifierProvider = FutureProvider<List<PurposeEntity>>((ref) async {
+  final viewModel = SettingViewModel(repository: ref.read(settingRepositoryProvider));
   await viewModel.selectAll();
   return viewModel.purposeList;
 });
@@ -65,7 +63,6 @@ class SettingViewModel {
 
   Future selectAll() async {
     try {
-      await repository.initDatabase();
       _purposeList = await repository.selectAll();
     } on Exception catch (exception) {
       Exception(exception);
@@ -76,8 +73,7 @@ class SettingViewModel {
     try {
       debugPrint("selectById(id: $id) start");
       _purposeData = await repository.selectPurposeDataById(id);
-      debugPrint(
-          "_purposeData: ${_purposeData?.purposeText}");
+      debugPrint("_purposeData: ${_purposeData?.purposeName}");
     } on Exception catch (exception) {
       Exception(exception);
     }

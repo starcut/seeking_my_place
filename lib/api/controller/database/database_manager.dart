@@ -1,18 +1,22 @@
 import 'dart:io';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
 import 'package:flutter/cupertino.dart';
+
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 
 class DatabaseManager {
   static final DatabaseManager shared = DatabaseManager._init();
 
   late Database _database;
-  late String _databasePath;
+  Database get database => _database;
 
-  final dbName = "place_list.db";
+  late String _databasePath;
+  String get databasePath => _databasePath;
+
+  final _dbName = "place_list.db";
 
   final tableNamePlaceList = "place_list";
   final columnPlaceListId = "id";
@@ -29,7 +33,7 @@ class DatabaseManager {
 
   final masterTableNamePurpose = "master_table_purpose";
   final columnMasterPurposeId = "id";
-  final columnMasterPurposeText = "purpose_text";
+  final columnMasterPurposeName = "purpose_name";
 
   factory DatabaseManager() {
     return shared;
@@ -43,7 +47,7 @@ class DatabaseManager {
     debugPrint("initDatabaseExecute start");
     try {
       await Directory(await getDatabasesPath()).create(recursive: true);
-      _databasePath = join(await getDatabasesPath(), dbName);
+      _databasePath = join(await getDatabasesPath(), _dbName);
       debugPrint(_databasePath);
     } on Exception catch (exception) {
       debugPrint("database not exist");
@@ -75,7 +79,7 @@ class DatabaseManager {
           await db.execute(
               '''CREATE TABLE IF NOT EXISTS $masterTableNamePurpose (
                   $columnMasterPurposeId INTEGER PRIMARY KEY,
-                  $columnMasterPurposeText TEXT
+                  $columnMasterPurposeName TEXT
               )''');
         },
       );
@@ -95,17 +99,13 @@ class DatabaseManager {
     debugPrint("selectAllPlaces() start");
     try {
       var exist = await databaseExists(_databasePath);
-
       if (!exist) {
         debugPrint("データベースが存在しません");
         return <FavoritePlaceEntity>[];
       }
 
-      debugPrint("これから$tableNamePlaceListのselect文");
       List<Map<String, Object?>> records = await _database
           .rawQuery('SELECT * FROM $tableNamePlaceList;');
-      debugPrint("selectAllPlaces() start: $records"
-          "");
       List<FavoritePlaceEntity> placeList = <FavoritePlaceEntity>[];
       for (var record in records) {
         debugPrint("fromData: $record");
@@ -114,8 +114,7 @@ class DatabaseManager {
       }
       return placeList;
     } on Exception catch (exception) {
-      debugPrint("DatabaseManager selectAllPlaces error");
-      debugPrint("$exception");
+      debugPrint("DatabaseManager selectAllPlaces $exception");
       return <FavoritePlaceEntity>[];
     }
   }
@@ -139,10 +138,8 @@ class DatabaseManager {
         print(sql);
         await txn.rawInsert(sql);
       });
-      debugPrint("end: DatabaseManager insertRegisterPlaceData");
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager insertRegisterPlaceData");
-      debugPrint("$exception");
+      debugPrint("error: DatabaseManager insertRegisterPlaceData $exception");
       Exception(exception);
     }
   }
@@ -156,10 +153,8 @@ class DatabaseManager {
         print(sql);
         await txn.rawInsert(sql);
       });
-      debugPrint("end: DatabaseManager deleterFavoritePlace");
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager deleterFavoritePlace");
-      debugPrint("$exception");
+      debugPrint("DatabaseManager deleterFavoritePlace $exception");
       Exception(exception);
     }
   }
@@ -168,7 +163,6 @@ class DatabaseManager {
     debugPrint("start: selectAllPurposeMasterData()");
     try {
       var exist = await databaseExists(_databasePath);
-
       if (!exist) {
         debugPrint("Not Found Database");
         return <PurposeEntity>[];
@@ -176,17 +170,16 @@ class DatabaseManager {
 
       List<Map<String, Object?>> records = await _database
           .rawQuery('SELECT * FROM $masterTableNamePurpose;');
-      List<PurposeEntity> imageDataList = <PurposeEntity>[];
+      List<PurposeEntity> purposeList = <PurposeEntity>[];
       for (var record in records) {
         debugPrint("fromData: $record");
-        PurposeEntity imageDataEntity = PurposeEntity.fromData(record);
-        imageDataList.add(imageDataEntity);
+        PurposeEntity purposeEntity = PurposeEntity.fromData(record);
+        purposeList.add(purposeEntity);
       }
-      print(imageDataList);
-      return imageDataList;
+      print(purposeList);
+      return purposeList;
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager selectAllPurposeMasterData");
-      debugPrint("$exception");
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
       return <PurposeEntity>[];
     }
   }
@@ -201,13 +194,11 @@ class DatabaseManager {
         return 0;
       }
 
-      final countData = await _database
-          .rawQuery('SELECT COUNT(*) FROM $masterTableNamePurpose;');
+      final countData = await _database.rawQuery('SELECT COUNT(*) FROM $masterTableNamePurpose;');
       print(Sqflite.firstIntValue(countData) ?? 0);
       return Sqflite.firstIntValue(countData) ?? 0;
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager getCountPurposeMasterData");
-      debugPrint("$exception");
+      debugPrint("error: DatabaseManager getCountPurposeMasterData $exception");
       return 0;
     }
   }
@@ -217,14 +208,12 @@ class DatabaseManager {
       debugPrint("start: DatabaseManager insertImage");
       await _database.transaction((txn) async {
         await txn.rawInsert('INSERT INTO $masterTableNamePurpose '
-            '($columnMasterPurposeText) '
+            '($columnMasterPurposeName) '
             'VALUES '
             '("$purposeText")');
       });
-      debugPrint("register complete：${columnMasterPurposeText}");
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager insertPurpose");
-      debugPrint("$exception");
+      debugPrint("error: DatabaseManager insertPurpose $exception");
       Exception(exception);
     }
   }
