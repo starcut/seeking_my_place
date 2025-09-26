@@ -14,18 +14,8 @@ class SettingRepository {
   final PurposeListService service;
   SettingRepository({required this.service});
 
-  Future<void> initDatabase() async {
-    try {
-      final data = await service.initDatabaseExecute();
-      return data;
-    } on Exception catch (exception) {
-      throw Exception(exception);
-    }
-  }
-
   Future<List<PurposeEntity>> selectAll() async {
     try {
-      initDatabase();
       final data = await service.selectAllExecute();
       return data;
     } on Exception catch (exception) {
@@ -35,9 +25,8 @@ class SettingRepository {
 
   Future<PurposeEntity?> selectPurposeDataById(int id) async {
     try {
-      initDatabase();
       final data = await service.selectPurposeDataByIdExecute(id);
-      debugPrint("select by id: ${data?.purposeText}");
+      debugPrint("select by id: ${data?.purposeName}");
       return data;
     } on Exception catch (exception) {
       debugPrint("SettingRepository selectAll error");
@@ -57,7 +46,6 @@ class SettingRepository {
 
   Future<void> updatePurposeData(PurposeEntity entity) async {
     try {
-      initDatabase();
       await service.updatePurposeDataExecute(entity);
     } on Exception catch (exception) {
       debugPrint("SettingRepository updatePurposeData error");

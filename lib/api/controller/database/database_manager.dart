@@ -11,6 +11,7 @@ class DatabaseManager {
 
   late Database _database;
   late String _databasePath;
+  String get databasePath => _databasePath;
 
   final dbName = "place_list.db";
 
@@ -29,7 +30,7 @@ class DatabaseManager {
 
   final masterTableNamePurpose = "master_table_purpose";
   final columnMasterPurposeId = "id";
-  final columnMasterPurposeText = "purpose_text";
+  final columnMasterPurposeText = "purpose_name";
 
   factory DatabaseManager() {
     return shared;
@@ -153,13 +154,10 @@ class DatabaseManager {
       await _database.transaction((txn) async {
         final sql = 'DELETE FROM  $tableNamePlaceList '
             'WHERE $columnPlaceListId = $id';
-        print(sql);
         await txn.rawInsert(sql);
       });
-      debugPrint("end: DatabaseManager deleterFavoritePlace");
     } on Exception catch (exception) {
-      debugPrint("error: DatabaseManager deleterFavoritePlace");
-      debugPrint("$exception");
+      debugPrint("DatabaseManager deleterFavoritePlace $exception");
       Exception(exception);
     }
   }
@@ -176,14 +174,14 @@ class DatabaseManager {
 
       List<Map<String, Object?>> records = await _database
           .rawQuery('SELECT * FROM $masterTableNamePurpose;');
-      List<PurposeEntity> imageDataList = <PurposeEntity>[];
+      List<PurposeEntity> purposeList = <PurposeEntity>[];
       for (var record in records) {
         debugPrint("fromData: $record");
-        PurposeEntity imageDataEntity = PurposeEntity.fromData(record);
-        imageDataList.add(imageDataEntity);
+        PurposeEntity purposeEntity = PurposeEntity.fromData(record);
+        purposeList.add(purposeEntity);
       }
-      print(imageDataList);
-      return imageDataList;
+      print(purposeList);
+      return purposeList;
     } on Exception catch (exception) {
       debugPrint("error: DatabaseManager selectAllPurposeMasterData");
       debugPrint("$exception");

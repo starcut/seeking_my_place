@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
@@ -34,7 +33,7 @@ enum InputItem {
 
 class PlaceRegisterView extends ConsumerWidget {
 
-  PlaceRegisterView({super.key, required this.purposeList});
+  PlaceRegisterView({super.key});
 
   List<PurposeEntity> purposeList = [];
   var selectedIndex = 0;
@@ -42,6 +41,10 @@ class PlaceRegisterView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
+    viewModel.selectAllPurposeList().then((purposeList) {
+      this.purposeList = purposeList;
+      print("this.purposeList: ${this.purposeList}");
+    });
 
     return Scaffold(
         appBar: AppBar(
@@ -159,7 +162,7 @@ class PlaceRegisterView extends ConsumerWidget {
 
   void showPicker(BuildContext context, TextEditingController controller) {
     final list = this.purposeList.map((item) {
-      return Text(item.purposeText);
+      return Text(item.purposeName);
     }).toList();
 
     showCupertinoModalPopup<void>(context: context,
@@ -176,13 +179,13 @@ class PlaceRegisterView extends ConsumerWidget {
             children: list,
             onSelectedItemChanged: (int index) {
               selectedIndex = index;
-              print("selected: ${this.purposeList[index].purposeText}");
+              print("selected: ${this.purposeList[index].purposeName}");
             },
           )
         ),
       );
     }).then((_) {
-      controller.value = TextEditingValue(text: this.purposeList[selectedIndex].purposeText);
+      controller.value = TextEditingValue(text: this.purposeList[selectedIndex].purposeName);
     });
   }
 

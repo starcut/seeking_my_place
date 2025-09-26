@@ -28,14 +28,4 @@ class HomeRepository {
       throw Exception(exception);
     }
   }
-
-  Future<List<PurposeEntity>> getPurposeListDataRepository() async {
-    try {
-      final data = await service.getPurposeListDataService();
-      return data;
-    } on Exception catch (exception) {
-      debugPrint("HomeRepository getPurposeListData error");
-      throw Exception(exception);
-    }
-  }
 }

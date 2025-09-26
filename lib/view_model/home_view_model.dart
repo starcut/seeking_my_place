@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:seeking_my_place/api/controller/location/location_manager.dart';
@@ -42,13 +41,6 @@ class Purpose extends StateNotifier<int> {
 
   final Ref ref;
 
-  Future<List<PurposeEntity>> getPurposeList() async {
-    debugPrint("getPurposeList");
-    final repository = ref.read(homeRepositoryProvider);
-    final purposeList = await repository.getPurposeListDataRepository();
-    return purposeList;
-  }
-
   Future<LatLng> getCurrentPosition() async {
     await LocationManager.shared.request();
     var position = await LocationManager.shared.determinePosition();
@@ -71,7 +63,7 @@ class HomeViewModel {
 
   Future getFavoritePlace() async {
     try {
-      print("start viewmodel getFavoritePlace");
+      print("start HomeViewModel getFavoritePlace");
       _favoritePlaces = await repository.getFavoritePlaceData();
     } on Exception catch (exception) {
       Exception(exception);
@@ -80,21 +72,10 @@ class HomeViewModel {
 
   Future deleteFavoritePlace(int id) async {
     try {
-      print("start viewmodel deleteFavoritePlace");
+      print("start HomeViewModel deleteFavoritePlace");
       await repository.deleteFavoritePlace(id);
     } on Exception catch (exception) {
       Exception(exception);
-    }
-  }
-
-  Future getPurposeListData() async {
-    try {
-      _purposeList = await repository.getPurposeListDataRepository();
-      return _purposeList;
-    } on Exception catch (exception) {
-      debugPrint("HomeViewModel getPurposeList error");
-      Exception(exception);
-      return [];
     }
   }
 
@@ -102,16 +83,6 @@ class HomeViewModel {
     await LocationManager.shared.request();
     var position = await LocationManager.shared.determinePosition();
     return LatLng(position.latitude, position.longitude);
-  }
-
-  Future getPurposeDataViewModel() async {
-    try {
-      _purposeList = await repository.getPurposeListDataRepository();
-    } on Exception catch (exception) {
-      debugPrint("HomeViewModel getPurposeList error");
-      Exception(exception);
-      return [];
-    }
   }
 
   Future<Set<Marker>> getMarkerList() async {
@@ -144,8 +115,7 @@ class HomeViewModel {
           )
       );
     }
-    print("markers");
-    print(markers);
+    print("markers: ${markers}");
     return markers;
   }
 }

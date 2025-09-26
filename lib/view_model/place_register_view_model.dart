@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 import 'package:seeking_my_place/repository/place_register_repository.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
@@ -12,7 +13,7 @@ final placeRegisterViewModelInsertDataProvider =
 FutureProvider.family<void, FavoritePlaceEntity>((ref, favoritePlaceData) async {
   final viewModel =
   PlaceRegisterViewModel(repository: ref.read(placeRegisterRepositoryProvider));
-  await viewModel.insertPurposeData(favoritePlaceData);
+  await viewModel.insertFavoriteData(favoritePlaceData);
 });
 
 final placeRegisterViewModelNotifierProvider = AutoDisposeStateProvider<PlaceRegisterViewModel>((ref) {
@@ -32,11 +33,22 @@ class PlaceRegisterViewModel {
   bool isVisited = false;
   bool isLoading = false;
 
-  Future insertPurposeData(FavoritePlaceEntity favoritePlaceData) async {
+  Future insertFavoriteData(FavoritePlaceEntity favoritePlaceData) async {
     try {
       await repository.insertFavoritePlaceData(favoritePlaceData);
     } on Exception catch (exception) {
       Exception(exception);
+    }
+  }
+
+  Future<List<PurposeEntity>> selectAllPurposeList() async {
+    try {
+      final list = await repository.selectAllPurposeList();
+      print("selectAllPurposeList: ${list}");
+      return list;
+    } on Exception catch (exception) {
+      Exception(exception);
+      return [];
     }
   }
 

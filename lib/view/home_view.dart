@@ -22,26 +22,23 @@ class HomeView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final purposeList = ref.read(purposeListStateNotifierProvider.notifier).getPurposeList();
-    purposeList.then((purposeLists) {
-      this.purposeList = purposeLists;
-    });
-
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
         onPressed: () => {
       Navigator.push(context, MaterialPageRoute(
-          builder: (context) => SettingView()))
+          builder: (context) {
+            return SettingView();
+          }))
     });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async => {
       Navigator.push(context, MaterialPageRoute(
-          builder: (context) => PlaceRegisterView(purposeList: this.purposeList)))
+          builder: (context) => PlaceRegisterView()))
     });
 
     final favoriteListView = ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
-      if(favoriteList.length == 0) {
+      if(favoriteList.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(0),
           decoration: const BoxDecoration(
@@ -49,7 +46,7 @@ class HomeView extends ConsumerWidget {
           ),
           width: MediaQuery.of(context).size.width,
           height: 50,
-          child: Text("登録なし"),
+          child: const Text("登録なし"),
         );
       }
 
@@ -98,8 +95,8 @@ class HomeView extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      Text(favorite.placeName, style: TextStyle(fontWeight: FontWeight.bold),),
-                      Text(favorite.address)
+                        Text("${favorite.placeName} ${favorite.category} ${favorite.purpose}" , style: const TextStyle(fontWeight: FontWeight.bold),),
+                        Text(favorite.address)
                     ],)
               )
             );
@@ -131,7 +128,7 @@ class HomeView extends ConsumerWidget {
   Widget googleMapView(BuildContext context, WidgetRef ref) {
     late GoogleMapController mapController;
 
-    void _onMapCreated(GoogleMapController controller) async {
+    void onMapCreated(GoogleMapController controller) async {
       mapController = controller;
     }
     Set<Marker> markers = ref.watch(homeViewModelMarkerNotifierProvider).when(data: (markers) {
@@ -140,7 +137,7 @@ class HomeView extends ConsumerWidget {
     final googleMapWidget = ref.watch(homeViewModelCurrentLocationNotifierProvider)
         .when(data: (currentLocation) {
       return GoogleMap(
-        onMapCreated: _onMapCreated,
+        onMapCreated: onMapCreated,
         initialCameraPosition: CameraPosition(
           target: currentLocation,
           zoom: 11.0,
@@ -155,10 +152,8 @@ class HomeView extends ConsumerWidget {
         },
       );
     }, error: (error, _) {
-      print("error");
       return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
     }, loading: () {
-      print("loading");
       return const Center(child: CircularProgressIndicator());
     });
 
