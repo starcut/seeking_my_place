@@ -51,20 +51,28 @@ class SettingView extends ConsumerWidget {
                           icon: Icons.delete)
                     ]
                 ),
-                child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-                    ),
-                    width: MediaQuery.of(context).size.width,
-                    height: 50,
-                    child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Padding(
-                                  padding: EdgeInsets.only(bottom: 8.0),
-                                  child: Text(purpose.purposeName))
-                            ],
+                child: GestureDetector(
+                    onTap: () {
+                      if (index == 0) {
+                        return;
+                      }
+                      registerDialog(context, ref, purpose);
+                    },
+                    child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                        ),
+                        width: MediaQuery.of(context).size.width,
+                        height: 50,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Padding(
+                                padding: EdgeInsets.only(bottom: 8.0),
+                                child: Text(purpose.purposeName))
+                          ],
+                        )
                     )
                 )
             );

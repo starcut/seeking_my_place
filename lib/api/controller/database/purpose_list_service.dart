@@ -60,11 +60,11 @@ class PurposeListService {
     try {
       await DatabaseManager.shared.database.rawUpdate(
           'UPDATE ${DatabaseManager.shared.masterTableNamePurpose}'
-              ' SET ${DatabaseManager.shared.columnMasterPurposeName} = ?,'
+              ' SET ${DatabaseManager.shared.columnMasterPurposeName} = ?'
               ' WHERE ${DatabaseManager.shared.columnMasterPurposeId} = ?',
-          [entity.purposeName, DateTime.now().toString(), entity.id]);
+          [entity.purposeName, entity.id]);
     } on Exception catch (exception) {
-      debugPrint("PurposeListController updatePurposeDataExecute error");
+      debugPrint("PurposeListController updatePurposeDataExecute $exception");
       Exception(exception);
     }
   }
