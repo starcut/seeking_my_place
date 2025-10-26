@@ -38,74 +38,7 @@ class HomeView extends ConsumerWidget {
           builder: (context) => PlaceRegisterView()))
     });
 
-    final favoriteListView = ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
-      if(favoriteList.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(0),
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-          ),
-          width: MediaQuery.of(context).size.width,
-          height: 50,
-          child: const Text("登録なし"),
-        );
-      }
 
-      // 取得したリストをListView.builderに渡す
-      return Expanded(
-          child: ListView.builder(
-          itemCount: favoriteList.length,
-          itemBuilder: (context, index) {
-            final favorite = favoriteList[index];
-            return Slidable(
-              key: UniqueKey(),
-              startActionPane: ActionPane(motion: const ScrollMotion(),
-                  extentRatio: 0.2,
-                  children: [
-                    SlidableAction(onPressed: (_) {
-                      print("お気に入りデータピン留めする");
-                    },
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        icon: Icons.push_pin)
-                  ]
-              ),
-              endActionPane: ActionPane(motion: const ScrollMotion(),
-                  extentRatio: 0.2,
-                  children: [
-                    SlidableAction(onPressed: (_) {
-                      int? deleteId = favorite.id;
-                      if (deleteId == null) {
-                        return;
-                      }
-                      ref.read(deleteFavoritePlaceFamily(deleteId));
-                    },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        icon: Icons.delete)
-                  ]
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(0),
-                decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-                ),
-                width: MediaQuery.of(context).size.width,
-                height: 50,
-                child: 
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("${favorite.placeName} ${favorite.category} ${favorite.purpose}" , style: const TextStyle(fontWeight: FontWeight.bold),),
-                        Text(favorite.address)
-                    ],)
-              )
-            );
-          }));
-      },
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        loading: () => const Center(child: CircularProgressIndicator())
-    );
 
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
@@ -118,10 +51,14 @@ class HomeView extends ConsumerWidget {
                 registerButton,
               ],
             ),
-            body: Column(children: [
-              googleMapView(context, ref),
-              favoriteListView
-            ],)
+            body: Consumer(
+              builder: (context, ref, child) {
+                return Column(children: [
+                  googleMapView(context, ref),
+                  favoriteListView(context, ref)
+                ],);
+              }
+            )
         )
     );
   }
@@ -173,6 +110,83 @@ class HomeView extends ConsumerWidget {
             ),
           ],
         )),
+    );
+  }
+
+  Widget favoriteListView(BuildContext context, WidgetRef ref) {
+    return ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
+      if (favoriteList.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(0),
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+          ),
+          width: MediaQuery
+              .of(context)
+              .size
+              .width,
+          height: 50,
+          child: const Text("登録なし"),
+        );
+      }
+
+      // 取得したリストをListView.builderに渡す
+      return Expanded(
+          child: ListView.builder(
+              itemCount: favoriteList.length,
+              itemBuilder: (context, index) {
+                final favorite = favoriteList[index];
+                return Slidable(
+                    key: UniqueKey(),
+                    startActionPane: ActionPane(motion: const ScrollMotion(),
+                        extentRatio: 0.2,
+                        children: [
+                          SlidableAction(onPressed: (_) {
+                            print("お気に入りデータピン留めする");
+                          },
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              icon: Icons.push_pin)
+                        ]
+                    ),
+                    endActionPane: ActionPane(motion: const ScrollMotion(),
+                        extentRatio: 0.2,
+                        children: [
+                          SlidableAction(onPressed: (_) {
+                            int? deleteId = favorite.id;
+                            if (deleteId == null) {
+                              return;
+                            }
+                            ref.read(deleteFavoritePlaceFamily(deleteId));
+                          },
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete)
+                        ]
+                    ),
+                    child: Container(
+                        padding: const EdgeInsets.all(0),
+                        decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                        ),
+                        width: MediaQuery
+                            .of(context)
+                            .size
+                            .width,
+                        height: 50,
+                        child:
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("${favorite.placeName} ${favorite.category} ${favorite.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
+                            Text(favorite.address)
+                          ],)
+                    )
+                );
+              }));
+    },
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const Center(child: CircularProgressIndicator())
     );
   }
 

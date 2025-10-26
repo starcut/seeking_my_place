@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart';
+import 'package:seeking_my_place/Provider/place_register_provider.dart';
 
 import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
@@ -40,12 +42,6 @@ class PlaceRegisterView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
-    viewModel.selectAllPurposeList().then((purposeList) {
-      this.purposeList = purposeList;
-      print("this.purposeList: ${this.purposeList}");
-    });
-
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme
@@ -54,110 +50,128 @@ class PlaceRegisterView extends ConsumerWidget {
               .inversePrimary,
           title: const Text("場所の登録"),
         ),
-        body: SingleChildScrollView(
-        child: Container( //SizedBoxでも可
-            height: 639,
-            padding: EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                registerItemCellView(viewModel, InputItem.url, "https://"),
-                registerItemCellView(viewModel, InputItem.placeName, ""),
-                registerItemCellView(viewModel, InputItem.address, ""),
-                registerItemCellView(viewModel, InputItem.category, ""),
-                registerItemCellView(viewModel, InputItem.purpose, ""),
-                registerItemCheckBoxCellView(viewModel, InputItem.visited),
-                const SizedBox(height: 15),
-                buttonArea(viewModel, context, ref)
-              ],
-            )))
-    );
+        body: Consumer(builder: (context, ref, _) {
+          final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
+          viewModel.selectAllPurposeList().then((purposeList) {
+            this.purposeList = purposeList;
+            print("this.purposeList: ${this.purposeList}");
+          });
+
+          return SingleChildScrollView(
+              child: Container( //SizedBoxでも可
+              height: 639,
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  registerItemCellView(ref, context, InputItem.url, "https://"),
+                  registerItemCellView(ref, context, InputItem.placeName, ""),
+                  registerItemCellView(ref, context, InputItem.address, ""),
+                  registerItemCellView(ref, context, InputItem.category, ""),
+                  registerItemCellView(ref, context, InputItem.purpose, ""),
+                  registerItemCheckBoxCellView(viewModel, InputItem.visited),
+                  const SizedBox(height: 15),
+                  buttonArea(viewModel, context, ref)
+                ],
+              )
+              )
+      );
+    }));
   }
 
   // 登録のセル
-  Widget registerItemCellView(PlaceRegisterViewModel viewModel, InputItem inputItem, String hintText) {
-    return Consumer(builder: (context, ref, _) {
-      var textInput = "";
-      switch (inputItem) {
-        case InputItem.placeName:
-          textInput = ref.watch(placeRegisterViewModelNotifierProvider).placeName;
-          break;
-        case InputItem.address:
-          textInput = ref.watch(placeRegisterViewModelNotifierProvider).address;
-          break;
-        case InputItem.category:
-          textInput = ref.watch(placeRegisterViewModelNotifierProvider).category;
-          break;
-        default:
-          break;
-      }
-      final controller = TextEditingController(text: textInput);
+  Widget registerItemCellView(WidgetRef ref, BuildContext context, InputItem inputItem, String hintText) {
+    var text = "";
+    switch (inputItem) {
+      case InputItem.url:
+        text = ref.watch(urlTextFieldProvider);
+        break;
+      case InputItem.placeName:
+        text = ref.watch(placeNameTextFieldProvider);
+        break;
+      case InputItem.address:
+        text = ref.watch(addressTextFieldProvider);
+        break;
+      case InputItem.category:
+        text = ref.watch(categoryTextFieldProvider);
+        break;
+      case InputItem.purpose:
+        text = ref.watch(purposeTextFieldProvider);
+        break;
+      case InputItem.visited:
+        // text = ref.watch(urlTextFieldProvider);
+        break;
+      default:
+        break;
+    }
 
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Align(
-              alignment: Alignment.centerLeft,
-              child: Text(inputItem.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Theme
-                      .of(context)
-                      .primaryColor,
-                ),
-              )),
-          Consumer(builder: (context, ref, _) {
-            if(inputItem == InputItem.purpose) {
-              return TextFormField(
-                controller: controller,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  hintText: hintText,
-                ),
-                onTap: () {
-                  // キーボードが出ないようにする
-                  FocusScope.of(context).requestFocus(new FocusNode());
-                  ref.watch(placeRegisterViewModelNotifierProvider).purpose;
-                  showPicker(context, controller);
-                },
-                onChanged: (text) async {
-                  ref.read(placeRegisterViewModelNotifierProvider).purpose = text;
-                  print(text);
-                },
-              );
-        } else {
-          return TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              hintText: hintText,
-            ),
-            onChanged: (text) async {
-              ref.read(placeRegisterViewModelNotifierProvider).setFavoritePlaceData(inputItem, text);
-              if (inputItem == InputItem.url) {
-                final placeName = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.placeName);
-                ref
-                    .read(placeRegisterViewModelNotifierProvider)
-                    .placeName = placeName;
-                final address = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.address);
-                ref
-                    .read(placeRegisterViewModelNotifierProvider)
-                    .address = address;
-                final category = await ref.read(placeRegisterViewModelNotifierProvider).getPlaceDataFromHTML(viewModel.url, InputItem.category);
-                ref
-                    .read(placeRegisterViewModelNotifierProvider)
-                    .category = category;
-              }
-            },
-          );
-        }
-      }),
-          const SizedBox(height: 15)
-        ],
-      );
-    });
+    final controller = TextEditingController(text: text);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Align(
+            alignment: Alignment.centerLeft,
+            child: Text(inputItem.name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Theme.of(context).primaryColor,
+              ),
+            )),
+          (inputItem == InputItem.purpose) ?
+            TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: hintText,
+              ),
+              onTap: () {
+                // キーボードが出ないようにする
+                FocusScope.of(context).requestFocus(new FocusNode());
+                showPicker(context, controller);
+              },
+              onChanged: (text) async {
+                print(text);
+              },
+            ) : TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: hintText,
+              ),
+              onChanged: (text) async {
+                print("onChanged $text");
+                switch (inputItem) {
+                  case InputItem.url:
+                    ref.read(urlTextFieldProvider.notifier).updateText(text);
+                    final placeName = await ref.watch(placeNameTextFieldProvider.notifier).getPlaceDataFromHTML(text, InputItem.placeName);
+                    ref.read(placeNameTextFieldProvider.notifier).updateText(placeName);
+                    final address = await ref.watch(addressTextFieldProvider.notifier).getPlaceDataFromHTML(text, InputItem.address);
+                    ref.read(addressTextFieldProvider.notifier).updateText(address);
+                    final category = await ref.watch(categoryTextFieldProvider.notifier).getPlaceDataFromHTML(text, InputItem.category);
+                    ref.read(categoryTextFieldProvider.notifier).updateText(category);
+                    break;
+                  case InputItem.placeName:
+                    ref.read(placeNameTextFieldProvider.notifier).updateText(text);
+                    break;
+                  case InputItem.address:
+                    ref.read(addressTextFieldProvider.notifier).updateText(text);
+                    break;
+                  case InputItem.category:
+                    ref.read(categoryTextFieldProvider.notifier).updateText(text);
+                    break;
+                  case InputItem.purpose:
+                    ref.read(purposeTextFieldProvider.notifier).updateText(text);
+                    break;
+                  default:
+                    break;
+                }
+              },
+            )
+      ],
+    );
   }
 
   void showPicker(BuildContext context, TextEditingController controller) {
@@ -191,8 +205,6 @@ class PlaceRegisterView extends ConsumerWidget {
 
   Widget registerItemCheckBoxCellView(PlaceRegisterViewModel viewModel, InputItem inputItem) {
     return Consumer(builder: (context, ref, _) {
-      final changeNotifier = ref.watch(changeNotifierProvider);
-
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -205,11 +217,19 @@ class PlaceRegisterView extends ConsumerWidget {
                     .primaryColor,
               )),
       Consumer(builder: (context, ref, _) {
+        final result = ref.watch(isVisitedTextFieldProvider);
+        final notifier = ref.watch(isVisitedTextFieldProvider.notifier);
+
         return Checkbox(
-            value: ref.read(placeRegisterViewModelNotifierProvider).isVisited,
+            value: result,
             activeColor: Colors.green,
-            onChanged: (_) {
-              ref.read(placeRegisterViewModelNotifierProvider).isVisited = !ref.read(placeRegisterViewModelNotifierProvider).isVisited;
+            onChanged: (isChecked) {
+              print("isCheck: $isChecked");
+              if (isChecked == null) {
+                notifier.updateText(false);
+              } else {
+                notifier.updateText(isChecked);
+              }
             });
       })
         ],
