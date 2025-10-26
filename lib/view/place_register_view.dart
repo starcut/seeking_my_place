@@ -72,7 +72,7 @@ class PlaceRegisterView extends ConsumerWidget {
                   registerItemCellView(ref, context, InputItem.purpose, ""),
                   registerItemCheckBoxCellView(viewModel, InputItem.visited),
                   const SizedBox(height: 15),
-                  buttonArea(viewModel, context, ref)
+                  buttonArea(ref, context)
                 ],
               )
               )
@@ -237,22 +237,28 @@ class PlaceRegisterView extends ConsumerWidget {
     });
   }
 
-  Widget buttonArea(PlaceRegisterViewModel viewModel, BuildContext context, WidgetRef ref) {
+  Widget buttonArea(WidgetRef ref, BuildContext context) {
     const buttonSize = Size(150, 40);
 
     var registerButton = OutlinedButton(
         onPressed: () async {
-          final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
-          LatLng? latLng = await viewModel.getLatLngFromAddress(viewModel.address);
+          final url = ref.watch(urlTextFieldProvider);
+          final placeName = ref.watch(placeNameTextFieldProvider);
+          final address = ref.watch(addressTextFieldProvider);
+          final category = ref.watch(categoryTextFieldProvider);
+          // final purpose = ref.watch(purposeTextFieldProvider);
+          final isVisited = ref.watch(isVisitedTextFieldProvider);
 
-          final favoritePlaceData = FavoritePlaceEntity(placeName: viewModel.placeName,
-              address: viewModel.address,
+          LatLng? latLng = await ref.read(placeNameTextFieldProvider.notifier).getLatLngFromAddress(address);
+
+          final favoritePlaceData = FavoritePlaceEntity(placeName: placeName,
+              address: address,
               latitude: latLng?.latitude,
               longitude: latLng?.longitude,
-              url: viewModel.url,
-              category: viewModel.category,
+              url: url,
+              category: category,
               purpose: 0,
-              isVisited: viewModel.isVisited);
+              isVisited: isVisited);
 
           ref.read(placeRegisterViewModelInsertDataProvider(favoritePlaceData));
           Navigator.pop(context);
