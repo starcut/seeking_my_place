@@ -8,18 +8,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:seeking_my_place/Provider/home_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
-import 'package:seeking_my_place/view_model/home_view_model.dart';
 
 class HomeView extends ConsumerWidget {
   HomeView({super.key});
 
   late List<PurposeEntity> purposeList;
+  late List<FavoritePlaceEntity> favoriteList;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,10 +34,15 @@ class HomeView extends ConsumerWidget {
     });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
-        onPressed: () async => {
-      Navigator.push(context, MaterialPageRoute(
-          builder: (context) => PlaceRegisterView()))
-    });
+        onPressed: () async {
+          var result = await Navigator.push(context,
+              MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
+          );
+          if (result) {
+            await _updateFavoritePlaceData(ref);
+          }
+        }
+    );
 
 
 
@@ -69,31 +75,22 @@ class HomeView extends ConsumerWidget {
     void onMapCreated(GoogleMapController controller) async {
       mapController = controller;
     }
-    Set<Marker> markers = ref.watch(homeViewModelMarkerNotifierProvider).when(data: (markers) {
-      return markers;
-    }, error: (Object error, StackTrace stackTrace) { return {}; }, loading: () { return {}; });
-    final googleMapWidget = ref.watch(homeViewModelCurrentLocationNotifierProvider)
-        .when(data: (currentLocation) {
-      return GoogleMap(
-        onMapCreated: onMapCreated,
-        initialCameraPosition: CameraPosition(
-          target: currentLocation,
-          zoom: 11.0,
-        ),
-        markers: markers,
-        myLocationButtonEnabled: true,
-        myLocationEnabled: true,
-        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-          Factory<OneSequenceGestureRecognizer>(
-                () => EagerGestureRecognizer(),
-          ),
-        },
-      );
-    }, error: (error, _) {
-      return const Center(child: Text('お気に入りの場所のデータベース読み込みエラー'));
-    }, loading: () {
-      return const Center(child: CircularProgressIndicator());
-    });
+    Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
+    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
+
+    GoogleMap currentMarker = GoogleMap(
+      onMapCreated: onMapCreated,
+      initialCameraPosition: CameraPosition(
+        target: currentLocation,
+        zoom: 11.0,
+      ),
+      markers: markers,
+      myLocationButtonEnabled: true,
+      myLocationEnabled: true,
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer(),),
+      },
+    );
 
     return GestureDetector(child: Container(
         padding: const EdgeInsets.all(0),
@@ -106,7 +103,7 @@ class HomeView extends ConsumerWidget {
             SizedBox(
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: googleMapWidget
+                child: currentMarker
             ),
           ],
         )),
@@ -114,79 +111,83 @@ class HomeView extends ConsumerWidget {
   }
 
   Widget favoriteListView(BuildContext context, WidgetRef ref) {
-    return ref.watch(homeViewModelNotifierProvider).when(data: (favoriteList) {
-      if (favoriteList.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(0),
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-          ),
-          width: MediaQuery
-              .of(context)
-              .size
-              .width,
-          height: 50,
-          child: const Text("登録なし"),
-        );
-      }
+    var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
 
-      // 取得したリストをListView.builderに渡す
-      return Expanded(
-          child: ListView.builder(
-              itemCount: favoriteList.length,
-              itemBuilder: (context, index) {
-                final favorite = favoriteList[index];
-                return Slidable(
-                    key: UniqueKey(),
-                    startActionPane: ActionPane(motion: const ScrollMotion(),
-                        extentRatio: 0.2,
-                        children: [
-                          SlidableAction(onPressed: (_) {
-                            print("お気に入りデータピン留めする");
-                          },
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              icon: Icons.push_pin)
-                        ]
-                    ),
-                    endActionPane: ActionPane(motion: const ScrollMotion(),
-                        extentRatio: 0.2,
-                        children: [
-                          SlidableAction(onPressed: (_) {
-                            int? deleteId = favorite.id;
-                            if (deleteId == null) {
-                              return;
-                            }
-                            ref.read(deleteFavoritePlaceFamily(deleteId));
-                          },
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              icon: Icons.delete)
-                        ]
-                    ),
-                    child: Container(
-                        padding: const EdgeInsets.all(0),
-                        decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-                        ),
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
-                        height: 50,
-                        child:
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+    if (favorite.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(0),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+        ),
+        width: MediaQuery
+            .of(context)
+            .size
+            .width,
+        height: 50,
+        child: const Text("登録なし"),
+      );
+    }
+
+    // 取得したリストをListView.builderに渡す
+    return Expanded(
+        child: RefreshIndicator(
+            onRefresh: () async {
+              await _updateFavoritePlaceData(ref);
+            },
+            child: ListView.builder(
+                itemCount: favorite.length,
+                itemBuilder: (context, index) {
+                  final favoritePlace = favorite[index];
+                  return Slidable(
+                      key: UniqueKey(),
+                      startActionPane: ActionPane(motion: const ScrollMotion(),
+                          extentRatio: 0.2,
                           children: [
-                            Text("${favorite.placeName} ${favorite.category} ${favorite.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
-                            Text(favorite.address)
-                          ],)
-                    )
-                );
-              }));
-    },
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        loading: () => const Center(child: CircularProgressIndicator())
+                            SlidableAction(onPressed: (_) {
+                              print("お気に入りデータピン留めする");
+                            },
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                icon: Icons.push_pin)
+                          ]
+                      ),
+                      endActionPane: ActionPane(motion: const ScrollMotion(),
+                          extentRatio: 0.2,
+                          children: [
+                            SlidableAction(onPressed: (_) async {
+                              int? deleteId = favoritePlace.id;
+                              if (deleteId == null) {
+                                return;
+                              }
+                              _updateFavoritePlaceData(ref);
+                            },
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                icon: Icons.delete)
+                          ]
+                      ),
+                      child: Container(
+                          padding: const EdgeInsets.all(0),
+                          decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                          ),
+                          width: MediaQuery
+                              .of(context)
+                              .size
+                              .width,
+                          height: 50,
+                          child:
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
+                              Text(favoritePlace.address)
+                            ],)
+                      )
+                  );
+                }
+            )
+        )
     );
   }
 
@@ -211,12 +212,18 @@ class HomeView extends ConsumerWidget {
         ]
         )
     ), onTap: () {
-      openWebPage(favoritePlaceEntity.url);
+      _openWebPage(favoritePlaceEntity.url);
     },
     );
   }
 
-  Future openWebPage(String url) async {
+  Future _updateFavoritePlaceData(WidgetRef ref) async {
+    await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
+    await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
+    await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+  }
+
+  Future _openWebPage(String url) async {
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {

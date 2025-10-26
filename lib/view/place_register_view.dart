@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart';
 import 'package:seeking_my_place/Provider/place_register_provider.dart';
 
-import 'package:seeking_my_place/api/controller/provider/dio_provider.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/view_model/place_register_view_model.dart';
 
 enum InputItem {
   url("URL"),
@@ -50,34 +47,27 @@ class PlaceRegisterView extends ConsumerWidget {
               .inversePrimary,
           title: const Text("場所の登録"),
         ),
-        body: Consumer(builder: (context, ref, _) {
-          final viewModel = ref.watch(placeRegisterViewModelNotifierProvider);
-          viewModel.selectAllPurposeList().then((purposeList) {
-            this.purposeList = purposeList;
-            print("this.purposeList: ${this.purposeList}");
-          });
-
-          return SingleChildScrollView(
-              child: Container( //SizedBoxでも可
-              height: 639,
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  registerItemCellView(ref, context, InputItem.url, "https://"),
-                  registerItemCellView(ref, context, InputItem.placeName, ""),
-                  registerItemCellView(ref, context, InputItem.address, ""),
-                  registerItemCellView(ref, context, InputItem.category, ""),
-                  registerItemCellView(ref, context, InputItem.purpose, ""),
-                  registerItemCheckBoxCellView(viewModel, InputItem.visited),
-                  const SizedBox(height: 15),
-                  buttonArea(ref, context)
-                ],
-              )
-              )
-      );
-    }));
+        body: SingleChildScrollView(
+            child: Container( //SizedBoxでも可
+                height: 639,
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    registerItemCellView(ref, context, InputItem.url, "https://"),
+                    registerItemCellView(ref, context, InputItem.placeName, ""),
+                    registerItemCellView(ref, context, InputItem.address, ""),
+                    registerItemCellView(ref, context, InputItem.category, ""),
+                    registerItemCellView(ref, context, InputItem.purpose, ""),
+                    registerItemCheckBoxCellView(ref, InputItem.visited),
+                    const SizedBox(height: 15),
+                    buttonArea(ref, context)
+                  ],
+                )
+            )
+        )
+    );
   }
 
   // 登録のセル
@@ -203,7 +193,7 @@ class PlaceRegisterView extends ConsumerWidget {
     });
   }
 
-  Widget registerItemCheckBoxCellView(PlaceRegisterViewModel viewModel, InputItem inputItem) {
+  Widget registerItemCheckBoxCellView(WidgetRef ref, InputItem inputItem) {
     return Consumer(builder: (context, ref, _) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -260,8 +250,16 @@ class PlaceRegisterView extends ConsumerWidget {
               purpose: 0,
               isVisited: isVisited);
 
-          ref.read(placeRegisterViewModelInsertDataProvider(favoritePlaceData));
-          Navigator.pop(context);
+          ref.read(placeRegisterNotifier.notifier).insertFavoriteData(favoritePlaceData);
+
+          ref.read(urlTextFieldProvider.notifier).updateText("");
+          ref.read(placeNameTextFieldProvider.notifier).updateText("");
+          ref.read(addressTextFieldProvider.notifier).updateText("");
+          ref.read(categoryTextFieldProvider.notifier).updateText("");
+          // ref.read(purposeTextFieldProvider);
+          ref.read(isVisitedTextFieldProvider.notifier).updateText(false);
+          
+          Navigator.pop(context, true);
         },
         style: OutlinedButton.styleFrom(
             minimumSize: buttonSize,
