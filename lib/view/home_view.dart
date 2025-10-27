@@ -1,18 +1,23 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import 'package:csv/csv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:seeking_my_place/Provider/home_provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:seeking_my_place/Provider/home_provider.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 
@@ -44,7 +49,10 @@ class HomeView extends ConsumerWidget {
         }
     );
 
-
+    final exportButton = IconButton(icon: const Icon(Icons.upload),
+        onPressed: () async {
+      await shareFile();
+    });
 
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
@@ -55,6 +63,7 @@ class HomeView extends ConsumerWidget {
               actions: [
                 settingButton,
                 registerButton,
+                exportButton
               ],
             ),
             body: Consumer(
@@ -232,5 +241,55 @@ class HomeView extends ConsumerWidget {
     } else {
       debugPrint('Cloud not launch: $url');
     }
+  }
+
+  Future shareFile() async {
+    String filePath = await createFile();
+    SharePlus.instance.share(ShareParams(title: "ファイル共有", files: [XFile(filePath)]));
+  }
+
+  Future<String> createFile() async {
+    List<List<dynamic>> data = [
+      [
+        DatabaseManager.shared.columnPlaceListId,
+        DatabaseManager.shared.columnPlaceListPlaceName,
+        DatabaseManager.shared.columnPlaceListAddress,
+        DatabaseManager.shared.columnPlaceListLatitude,
+        DatabaseManager.shared.columnPlaceListLongitude,
+        DatabaseManager.shared.columnPlaceListUrl,
+        DatabaseManager.shared.columnPlaceListPurpose,
+        DatabaseManager.shared.columnPlaceListCategory,
+        DatabaseManager.shared.columnPlaceListIsVisited,
+        DatabaseManager.shared.columnPlaceListRegisterAt,
+        DatabaseManager.shared.columnPlaceListUpdateAt
+      ]
+    ];
+    var placeList = await DatabaseManager.shared.selectAllPlaces();
+
+    for (var place in placeList) {
+      var rowData = [
+        place.id,
+        place.placeName,
+        place.address,
+        place.latitude,
+        place.longitude,
+        place.url,
+        place.purpose,
+        place.category,
+        place.isVisited,
+        place.registerAt,
+        place.updateAt,
+      ];
+      data.add(rowData);
+    }
+
+    String csvData = const ListToCsvConverter().convert(data);
+    final directory = await getTemporaryDirectory();
+    final path = '${directory.path}/favorite_place_list.csv';
+
+    final file = File(path);
+    await file.writeAsString(csvData);
+
+    return path;
   }
 }
