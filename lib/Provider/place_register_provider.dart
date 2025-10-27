@@ -1,73 +1,37 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
-import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/repository/place_register_repository.dart';
+
 import 'package:seeking_my_place/view/place_register_view.dart';
 
-final placeRegisterViewModelInsertDataProvider =
-FutureProvider.family<void, FavoritePlaceEntity>((ref, favoritePlaceData) async {
-  final viewModel =
-  PlaceRegisterViewModel(repository: ref.read(placeRegisterRepositoryProvider));
-  await viewModel.insertFavoriteData(favoritePlaceData);
+// 1. TextFieldの値を管理するプロバイダーを作成
+final urlTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  return TextFieldNotifier();
+});
+final placeNameTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  return TextFieldNotifier();
+});
+final addressTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  return TextFieldNotifier();
+});
+final categoryTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  return TextFieldNotifier();
+});
+final purposeTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  return TextFieldNotifier();
+});
+final isVisitedTextFieldProvider = StateNotifierProvider<CheckBoxNotifier, bool>((ref) {
+  return CheckBoxNotifier();
 });
 
-final placeRegisterViewModelNotifierProvider = AutoDisposeStateProvider<PlaceRegisterViewModel>((ref) {
-  return PlaceRegisterViewModel(repository: ref.read(placeRegisterRepositoryProvider));
-});
+class TextFieldNotifier extends StateNotifier<String> {
+  TextFieldNotifier() : super('');
 
-class PlaceRegisterViewModel {
-  final PlaceRegisterRepository repository;
-
-  PlaceRegisterViewModel({required this.repository});
-
-  String url = "";
-  String placeName = "";
-  String address = "";
-  String category = "";
-  String purpose = "";
-  bool isVisited = false;
-  bool isLoading = false;
-
-  Future insertFavoriteData(FavoritePlaceEntity favoritePlaceData) async {
-    try {
-      await repository.insertFavoritePlaceData(favoritePlaceData);
-    } on Exception catch (exception) {
-      Exception(exception);
-    }
-  }
-
-  Future<List<PurposeEntity>> selectAllPurposeList() async {
-    try {
-      final list = await repository.selectAllPurposeList();
-      print("selectAllPurposeList: ${list}");
-      return list;
-    } on Exception catch (exception) {
-      Exception(exception);
-      return [];
-    }
-  }
-
-  void setFavoritePlaceData(InputItem inputItem, String text) {
-    switch (inputItem) {
-      case InputItem.url:
-        url = text;
-      case InputItem.placeName:
-        placeName = text;
-      case InputItem.address:
-        address = text;
-      case InputItem.category:
-        category = text;
-      case InputItem.purpose:
-        purpose = text;
-      default:
-        debugPrint("input error");
-        throw UnimplementedError();
-    }
+  void updateText(String text) {
+    state = text;
   }
 
   Future<LatLng?> getLatLngFromAddress(String address) async {
@@ -148,5 +112,39 @@ class PlaceRegisterViewModel {
       extractionString = str;
     }
     return extractionString;
+  }
+}
+
+class CheckBoxNotifier extends StateNotifier<bool> {
+  CheckBoxNotifier() : super(false);
+
+  void updateText(bool isChecked) {
+    state = isChecked;
+  }
+}
+
+class PurposeNotifier extends StateNotifier<int> {
+  PurposeNotifier() : super(0);
+
+  void updateText(int purposeId) {
+    state = purposeId;
+  }
+}
+
+
+final placeRegisterNotifier = StateNotifierProvider.autoDispose<PlaceRegisterNotifier, void>((ref) {
+  return PlaceRegisterNotifier();
+});
+
+/// StateNotifierProvider に渡すことになる StateNotifier クラスです。
+class PlaceRegisterNotifier extends StateNotifier<void> {
+  PlaceRegisterNotifier() : super(0);
+
+  Future insertFavoriteData(FavoritePlaceEntity favoritePlaceData) async {
+    try {
+      await DatabaseManager.shared.insertRegisterPlaceData(favoritePlaceData);
+    } on Exception catch (exception) {
+      throw Exception(exception);
+    }
   }
 }
