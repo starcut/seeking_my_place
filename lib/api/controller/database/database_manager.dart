@@ -217,4 +217,51 @@ class DatabaseManager {
       Exception(exception);
     }
   }
+
+  Future importDatabaseFromCsv(File file) async {
+    try {
+      final content = await file.readAsString();
+      var lines = content.split('\n');
+      lines.removeAt(0);
+      for (var line in lines) {
+        final data = line.split(',');
+        print("data: $data");
+        final id = int.parse(data[0]);
+        print("id: ${data[0]}");
+        final placeName = data[1].replaceAll('"', '');
+        print("placeName: ${data[1]}");
+        final address = data[2].replaceAll('"', '');
+        print("address: ${data[2]}");
+        final latitude = double.parse(data[3]);
+        print("latitude: ${data[3]}");
+        final longitude = double.parse(data[4]);
+        print("longitude: ${data[4]}");
+        final url = data[5].replaceAll('"', '');
+        print("url: ${data[5]}");
+        final category = data[6].replaceAll('"', '');
+        print("category: ${data[6]}");
+        // final purpose = int.parse(data[7]);
+        // print("purpose: ${data[7]}");
+        final isVisited = (data[8].replaceAll('"', '') == "true");
+        print("isVisited: ${data[8].replaceAll('"', '')}");
+
+        final favoritePlaceData = FavoritePlaceEntity(
+            placeName: placeName,
+            address: address,
+            latitude: latitude,
+            longitude: longitude,
+            url: url,
+            category: category,
+            purpose: 0,
+            isVisited: false,
+            registerAt: DateTime.now(),
+            updateAt: DateTime.now());
+
+        await DatabaseManager.shared.insertRegisterPlaceData(favoritePlaceData);
+      }
+    } catch (e) {
+      print("database import error: $e");
+      rethrow;
+    }
+  }
 }
