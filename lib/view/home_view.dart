@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +51,11 @@ class HomeView extends ConsumerWidget {
         }
     );
 
+    final importButton = IconButton(icon: const Icon(Icons.download),
+        onPressed: () async {
+          await _importDatabase(context, ref);
+        });
+
     final exportButton = IconButton(icon: const Icon(Icons.upload),
         onPressed: () async {
       await shareFile();
@@ -63,6 +70,7 @@ class HomeView extends ConsumerWidget {
               actions: [
                 settingButton,
                 registerButton,
+                importButton,
                 exportButton
               ],
             ),
@@ -119,6 +127,29 @@ class HomeView extends ConsumerWidget {
     );
   }
 
+  double? distanceFromCurrentLocation(LatLng currentLocation, double? longitude, double? latitude, String name) {
+    double? distance;
+    if (longitude == null || latitude == null) {
+      return distance;
+    }
+
+    final currentLatitudeRad = currentLocation.latitude * pi / 180.0;
+    final currentLongitudeRad = currentLocation.longitude * pi / 180.0;
+    final latitudeRad = latitude * pi / 180.0;
+    final longitudeRad = longitude * pi / 180.0;
+
+    final diffLatitude = latitudeRad - currentLatitudeRad;
+    final diffLongitude = longitudeRad - currentLongitudeRad;
+
+    distance = 2.0 * 6371
+        * asin(sqrt(
+            sin(diffLatitude / 2.0) * sin(diffLatitude / 2.0)
+                + cos(currentLatitudeRad) * cos(latitudeRad)
+                * sin(diffLongitude / 2.0) * sin(diffLongitude / 2.0)
+        ));
+    return distance;
+  }
+
   Widget favoriteListView(BuildContext context, WidgetRef ref) {
     var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
 
@@ -137,6 +168,7 @@ class HomeView extends ConsumerWidget {
       );
     }
 
+    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
     // 取得したリストをListView.builderに渡す
     return Expanded(
         child: RefreshIndicator(
@@ -147,6 +179,15 @@ class HomeView extends ConsumerWidget {
                 itemCount: favorite.length,
                 itemBuilder: (context, index) {
                   final favoritePlace = favorite[index];
+                  double? distance = distanceFromCurrentLocation(currentLocation, favoritePlace.longitude, favoritePlace.latitude, favoritePlace.placeName);
+                  String distanceString = "";
+                  if (distance != null) {
+                    if (distance < 1) {
+                      distance = distance * 1000;
+                      distanceString = "${distance.toStringAsFixed(0)}m";
+                    }
+                    distanceString = "${distance.toStringAsFixed(1)}km";
+                  }
                   return Slidable(
                       key: UniqueKey(),
                       startActionPane: ActionPane(motion: const ScrollMotion(),
@@ -184,13 +225,13 @@ class HomeView extends ConsumerWidget {
                               .of(context)
                               .size
                               .width,
-                          height: 50,
+                          height: 65,
                           child:
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
-                              Text(favoritePlace.address)
+                              Text("$distanceString ${favoritePlace.address}")
                             ],)
                       )
                   );
@@ -291,5 +332,45 @@ class HomeView extends ConsumerWidget {
     await file.writeAsString(csvData);
 
     return path;
+  }
+
+  final GlobalKey<ScaffoldMessengerState> _scaffoldKey =
+  GlobalKey<ScaffoldMessengerState>();
+  // データベースファイルをインポートする関数
+  Future<void> _importDatabase(BuildContext context, WidgetRef ref) async {
+    try {
+      // FilePickerを使用してファイル選択ダイアログを表示
+      // FileType.anyを指定することで、すべての種類のファイルを選択可能にします
+      final result = await FilePicker.platform.pickFiles(type: FileType.any);
+
+      // ファイルが選択された場合の処理
+      if (result != null && result.files.single.path != null) {
+        // 選択されたファイルのパスからFileオブジェクトを作成
+        final file = File(result.files.single.path!);
+
+        // データベースインポート処理を実行
+        await DatabaseManager.shared.importDatabaseFromCsv(file);
+
+        // Riverpodのプロバイダーを更新して、UIを最新の状態に反映
+        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
+        await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+        // 成功メッセージをスナックバーで表示
+        SnackBar snackBar = const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('データベースをインポートしました！'),
+        );
+        print("_scaffoldKey: ${_scaffoldKey.currentState}");
+        _scaffoldKey.currentState?.showSnackBar(snackBar);
+      }
+    } catch (e) {
+      // エラーが発生した場合はエラーメッセージを表示
+
+      SnackBar snackBar = const SnackBar(
+        backgroundColor: Colors.green,
+        content: Text('インポートに失敗しました！'),
+      );
+      print("_scaffoldKey: ${_scaffoldKey.currentState}");
+      _scaffoldKey.currentState?.showSnackBar(snackBar);
+    }
   }
 }
