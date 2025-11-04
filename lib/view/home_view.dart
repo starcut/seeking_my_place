@@ -231,7 +231,7 @@ class HomeView extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
-                              Text("${distanceString} ${favoritePlace.address}")
+                              Text("$distanceString ${favoritePlace.address}")
                             ],)
                       )
                   );
