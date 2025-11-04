@@ -19,7 +19,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/Provider/home_provider.dart';
+import 'package:seeking_my_place/provider/home_provider.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 
@@ -33,11 +33,12 @@ class HomeView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
-        onPressed: () => {
-      Navigator.push(context, MaterialPageRoute(
+        onPressed: () async {
+      var result = await Navigator.push(context, MaterialPageRoute(
           builder: (context) {
             return SettingView();
-          }))
+          }));
+      await _updateSettingData(ref);
     });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
@@ -46,7 +47,7 @@ class HomeView extends ConsumerWidget {
               MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
           );
           if (result) {
-            await _updateFavoritePlaceData(ref);
+            await _updateSettingData(ref);
           }
         }
     );
@@ -77,12 +78,42 @@ class HomeView extends ConsumerWidget {
             body: Consumer(
               builder: (context, ref, child) {
                 return Column(children: [
-                  googleMapView(context, ref),
+                  settingView(ref),
+                  if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
+                    googleMapView(context, ref),
+                  ],
                   favoriteListView(context, ref)
                 ],);
               }
             )
         )
+    );
+  }
+
+  Widget settingView(WidgetRef ref) {
+    final updateButton = IconButton(icon: const Icon(Icons.refresh),
+        onPressed: () async {
+          await _updateSettingData(ref);
+    });
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final settingData = ref.watch(settingStateNotifierProvider);
+        return Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("表示可能件数： ${settingData.listCount}件"),
+                Text("表示可能範囲： ${settingData.range}km")
+              ],
+            ),
+            Spacer(),
+            googleMapSwitch(ref),
+            updateButton
+          ],
+        );
+      },
     );
   }
 
@@ -150,6 +181,19 @@ class HomeView extends ConsumerWidget {
     return distance;
   }
 
+  Widget googleMapSwitch(WidgetRef ref) {
+    bool isDisplay = ref.watch(googleMapDisplayStateNotifierProvider);
+    return Row(
+      children: [
+        Text("GoogleMap\n表示切替", textAlign: TextAlign.center,),
+        Switch(value: isDisplay,
+            onChanged: (value){
+          ref.read(googleMapDisplayStateNotifierProvider.notifier).switchDisplayGoogleMap(value);
+        }),
+      ],
+    );
+  }
+
   Widget favoriteListView(BuildContext context, WidgetRef ref) {
     var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
 
@@ -173,7 +217,7 @@ class HomeView extends ConsumerWidget {
     return Expanded(
         child: RefreshIndicator(
             onRefresh: () async {
-              await _updateFavoritePlaceData(ref);
+              await _updateSettingData(ref);
             },
             child: ListView.builder(
                 itemCount: favorite.length,
@@ -209,7 +253,7 @@ class HomeView extends ConsumerWidget {
                               if (deleteId == null) {
                                 return;
                               }
-                              _updateFavoritePlaceData(ref);
+                              _updateSettingData(ref);
                             },
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
@@ -267,10 +311,13 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Future _updateFavoritePlaceData(WidgetRef ref) async {
+  Future _updateSettingData(WidgetRef ref) async {
+    await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
-    await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+    if (ref.watch(googleMapDisplayStateNotifierProvider)) {
+      await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+    }
   }
 
   Future _openWebPage(String url) async {

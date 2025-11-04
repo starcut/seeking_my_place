@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:seeking_my_place/Provider/place_register_provider.dart';
+import 'package:seeking_my_place/provider/place_register_provider.dart';
 
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
