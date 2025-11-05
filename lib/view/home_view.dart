@@ -312,12 +312,25 @@ class HomeView extends ConsumerWidget {
                               .width,
                           height: 65,
                           child:
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}", style: const TextStyle(fontWeight: FontWeight.bold),),
-                              Text("$distanceString ${favoritePlace.address}")
-                            ],)
+                              Flexible(
+                                  child:Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}",
+                                        style: const TextStyle(fontWeight: FontWeight.bold),),
+                                      Text("$distanceString ${favoritePlace.address}")
+                                    ],
+                                  )
+                              ),
+                              IconButton(icon: const Icon(Icons.language),
+                                onPressed: (){
+                                  _openWebPage(favoritePlace.url);
+                                })
+                            ],
+                          )
                       )
                   );
                 }
