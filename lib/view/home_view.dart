@@ -29,6 +29,12 @@ class HomeView extends ConsumerWidget {
   late List<PurposeEntity> purposeList;
   late List<FavoritePlaceEntity> favoriteList;
 
+  final mapControllerCompleter = Completer<GoogleMapController>();
+  Future<void> onMapCreated(GoogleMapController controller) async {
+    mapControllerCompleter.complete(controller);
+  }
+
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ナビゲーションバーのボタン
@@ -62,6 +68,11 @@ class HomeView extends ConsumerWidget {
       await shareFile();
     });
 
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await moveCamera(ref);
+      await _updateSettingData(ref);
+    });
+
     return MaterialApp(
         theme: ThemeData(primarySwatch: Colors.grey),
         home: Scaffold(
@@ -90,6 +101,25 @@ class HomeView extends ConsumerWidget {
     );
   }
 
+  Future<void> moveCamera(WidgetRef ref) async {
+    await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
+    var currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    final mapController = await mapControllerCompleter.future;
+    final latitude = currentLocation?.latitude;
+    final longitude = currentLocation?.longitude;
+    if (latitude == null || longitude == null) {
+      return;
+    }
+    await mapController.moveCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(latitude, longitude),
+          zoom: 11.0,
+        ),
+      ),
+    );
+  }
+
   Widget settingView(WidgetRef ref) {
     final updateButton = IconButton(icon: const Icon(Icons.refresh),
         onPressed: () async {
@@ -108,7 +138,7 @@ class HomeView extends ConsumerWidget {
                 Text("表示可能範囲： ${settingData.range}km")
               ],
             ),
-            Spacer(),
+            const Spacer(),
             googleMapSwitch(ref),
             updateButton
           ],
@@ -118,13 +148,13 @@ class HomeView extends ConsumerWidget {
   }
 
   Widget googleMapView(BuildContext context, WidgetRef ref) {
-    late GoogleMapController mapController;
-
-    void onMapCreated(GoogleMapController controller) async {
-      mapController = controller;
-    }
     Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
-    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    var currentLocation = ref.read(locationSearchStateNotifierProvider);
+    print("現在表示位置：${currentLocation?.longitude} ${currentLocation?.latitude}");
+
+    if (currentLocation == null) {
+      return const Spacer();
+    }
 
     GoogleMap currentMarker = GoogleMap(
       onMapCreated: onMapCreated,
@@ -158,9 +188,9 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  double? distanceFromCurrentLocation(LatLng currentLocation, double? longitude, double? latitude, String name) {
+  double? distanceFromCurrentLocation(LatLng? currentLocation, double? longitude, double? latitude, String name) {
     double? distance;
-    if (longitude == null || latitude == null) {
+    if (longitude == null || latitude == null || currentLocation == null) {
       return distance;
     }
 
@@ -185,7 +215,7 @@ class HomeView extends ConsumerWidget {
     bool isDisplay = ref.watch(googleMapDisplayStateNotifierProvider);
     return Row(
       children: [
-        Text("GoogleMap\n表示切替", textAlign: TextAlign.center,),
+        const Text("GoogleMap\n表示切替", textAlign: TextAlign.center,),
         Switch(value: isDisplay,
             onChanged: (value){
           ref.read(googleMapDisplayStateNotifierProvider.notifier).switchDisplayGoogleMap(value);
@@ -212,7 +242,7 @@ class HomeView extends ConsumerWidget {
       );
     }
 
-    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    LatLng? currentLocation = ref.watch(locationSearchStateNotifierProvider);
     // 取得したリストをListView.builderに渡す
     return Expanded(
         child: RefreshIndicator(
@@ -312,11 +342,13 @@ class HomeView extends ConsumerWidget {
   }
 
   Future _updateSettingData(WidgetRef ref) async {
+    print("更新");
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
     if (ref.watch(googleMapDisplayStateNotifierProvider)) {
       await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+      await moveCamera(ref);
     }
   }
 

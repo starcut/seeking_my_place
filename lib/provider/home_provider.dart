@@ -58,13 +58,19 @@ class GoogleMapDisplayStateNotifierProvider extends StateNotifier<bool> {
 }
 
 final locationSearchStateNotifierProvider =
-StateNotifierProvider<LocationProvider, LatLng>((ref) {
-  return LocationProvider(const LatLng(0,0));
+StateNotifierProvider<LocationProvider, LatLng?>((ref) {
+  return LocationProvider();
 });
 
-class LocationProvider extends StateNotifier<LatLng> {
-  LocationProvider(LatLng state) : super(state) {
-    getCurrentPosition();
+class LocationProvider extends StateNotifier<LatLng?> {
+  LocationProvider() : super(null) {
+    loadCurrentPosition();
+  }
+
+  Future<LatLng> loadCurrentPosition() async {
+    await LocationManager.shared.request();
+    var position = await LocationManager.shared.determinePosition();
+    return LatLng(position.latitude, position.longitude);
   }
 
   Future getCurrentPosition() async {
