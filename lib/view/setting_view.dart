@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import 'package:seeking_my_place/entity/purpose_entity.dart';
+import 'package:seeking_my_place/provider//setting_provider.dart';
 import 'package:seeking_my_place/view_model/setting_view_model.dart';
 
 class SettingView extends ConsumerWidget {
@@ -95,12 +97,116 @@ class SettingView extends ConsumerWidget {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text("設定"),
         ),
-        body: purposeListView);
+        body:  Column(
+          children: [
+            countSettingWidget(context, ref),
+            rangeSettingWidget(context, ref)
+          ],
+        ));
+  }
+
+  Widget countSettingWidget(BuildContext context, WidgetRef ref) {
+    var count = ref.watch(listCountSettingProvider);
+    var controller = TextEditingController(text: count.listCount.toString());
+
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const Text("表示件数"),
+          SizedBox(
+            width: 180,
+            child: TextFormField(
+            controller: controller,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+            ),
+            onTap: () {
+              // キーボードが出ないようにする
+              FocusScope.of(context).requestFocus(new FocusNode());
+              showPicker(context, ref, controller);
+            },
+          ),),
+          const Text("件")
+          ]
+    );
+  }
+
+  void showPicker(BuildContext context, WidgetRef ref, TextEditingController controller) {
+    final countList = [1, 10, 20, 30, 50, 75, 100, 200, 300, 500];
+    final list = countList.map((item) {
+      return Text(item.toString());
+    }).toList();
+
+    showCupertinoModalPopup<void>(context: context,
+        builder: (BuildContext context) {
+          return SizedBox(
+            height: 216,
+            child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: CupertinoPicker(
+                  backgroundColor: Colors.white,
+                  itemExtent: 32,
+                  children: list,
+                  onSelectedItemChanged: (int index) {
+                    ref.read(listCountSettingProvider.notifier).updateListCount(countList[index], index);
+                    print("更新後の表示件数${countList[index]}");
+                  },
+                )
+            ),
+          );
+        }).then((_) {
+          final countSetting = ref.read(listCountSettingProvider);
+          controller.value = TextEditingValue(text: countSetting.toString());
+    });
+  }
+
+  Widget rangeSettingWidget(BuildContext context, WidgetRef ref) {
+    var range = ref.watch(rangeSettingProvider);
+
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text("検索範囲[km]: "),
+              Text(range.toStringAsFixed(2))
+            ],
+          ),
+          SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: Colors.green,
+                inactiveTrackColor: Colors.grey,
+                trackHeight: 8.0,
+                thumbColor: Colors.white,
+                overlayColor: Colors.blue,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 15.0),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
+              ),
+              child: Slider(value: range,
+                  min: 1,
+                  max: 100,
+                  onChanged: (rangeValue) async {
+                double rangeValueAbout = double.parse(rangeValue.toStringAsFixed(2));
+                await ref.read(rangeSettingProvider.notifier).updateRange(rangeValueAbout);
+                print("更新後：${rangeValue}");
+              })
+          )
+        ],
+      );
   }
 
   Widget purposeListCell(BuildContext context, WidgetRef ref, PurposeEntity entity) =>
       GestureDetector(
         child: Container(
+          padding: const EdgeInsets.all(0),
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+          ),
+          width: MediaQuery.of(context).size.width,
+          height: 65,
+          child: Container(
             padding: const EdgeInsets.all(12.0),
             decoration: const BoxDecoration(
                 border:
@@ -126,7 +232,7 @@ class SettingView extends ConsumerWidget {
                 ),
               ],
             )),
-      );
+      ));
 
   Widget newPurposeRegisterCell(BuildContext context, WidgetRef ref) {
     return GestureDetector(

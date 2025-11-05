@@ -32,7 +32,6 @@ class LocationManager {
 
   Future<LocationPermissionStatus> request() async {
     final status = await Permission.location.request();
-    print("request: $status");
     switch (status) {
       case PermissionStatus.granted:
         return LocationPermissionStatus.granted;

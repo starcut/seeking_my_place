@@ -19,7 +19,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:seeking_my_place/Provider/home_provider.dart';
+import 'package:seeking_my_place/provider/home_provider.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 
@@ -29,15 +29,22 @@ class HomeView extends ConsumerWidget {
   late List<PurposeEntity> purposeList;
   late List<FavoritePlaceEntity> favoriteList;
 
+  final mapControllerCompleter = Completer<GoogleMapController>();
+  Future<void> onMapCreated(GoogleMapController controller) async {
+    mapControllerCompleter.complete(controller);
+  }
+
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
-        onPressed: () => {
-      Navigator.push(context, MaterialPageRoute(
+        onPressed: () async {
+      var result = await Navigator.push(context, MaterialPageRoute(
           builder: (context) {
             return SettingView();
-          }))
+          }));
+      await _updateSettingData(ref);
     });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
@@ -46,7 +53,7 @@ class HomeView extends ConsumerWidget {
               MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
           );
           if (result) {
-            await _updateFavoritePlaceData(ref);
+            await _updateSettingData(ref);
           }
         }
     );
@@ -59,6 +66,11 @@ class HomeView extends ConsumerWidget {
     final exportButton = IconButton(icon: const Icon(Icons.upload),
         onPressed: () async {
       await shareFile();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await moveCamera(ref);
+      await _updateSettingData(ref);
     });
 
     return MaterialApp(
@@ -77,7 +89,10 @@ class HomeView extends ConsumerWidget {
             body: Consumer(
               builder: (context, ref, child) {
                 return Column(children: [
-                  googleMapView(context, ref),
+                  settingView(ref),
+                  if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
+                    googleMapView(context, ref),
+                  ],
                   favoriteListView(context, ref)
                 ],);
               }
@@ -86,14 +101,61 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Widget googleMapView(BuildContext context, WidgetRef ref) {
-    late GoogleMapController mapController;
-
-    void onMapCreated(GoogleMapController controller) async {
-      mapController = controller;
+  Future<void> moveCamera(WidgetRef ref) async {
+    await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
+    var currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    final mapController = await mapControllerCompleter.future;
+    final latitude = currentLocation?.latitude;
+    final longitude = currentLocation?.longitude;
+    if (latitude == null || longitude == null) {
+      return;
     }
+    await mapController.moveCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(latitude, longitude),
+          zoom: 11.0,
+        ),
+      ),
+    );
+  }
+
+  Widget settingView(WidgetRef ref) {
+    final updateButton = IconButton(icon: const Icon(Icons.refresh),
+        onPressed: () async {
+          await _updateSettingData(ref);
+    });
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final settingData = ref.watch(settingStateNotifierProvider);
+        return Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("表示可能件数： ${settingData.listCount}件"),
+                Text("表示可能範囲： ${settingData.range}km")
+              ],
+            ),
+            const Spacer(),
+            googleMapSwitch(ref),
+            updateButton
+          ],
+        );
+      },
+    );
+  }
+
+  Widget googleMapView(BuildContext context, WidgetRef ref) {
     Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
-    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    var currentLocation = ref.read(locationSearchStateNotifierProvider);
+    var range = ref.read(settingStateNotifierProvider).range;
+    print("現在表示位置：${currentLocation?.longitude} ${currentLocation?.latitude}");
+
+    if (currentLocation == null) {
+      return const Spacer();
+    }
 
     GoogleMap currentMarker = GoogleMap(
       onMapCreated: onMapCreated,
@@ -102,6 +164,16 @@ class HomeView extends ConsumerWidget {
         zoom: 11.0,
       ),
       markers: markers,
+      circles: {
+        Circle(
+          circleId: const CircleId('circle_1'),
+          center: currentLocation,
+          radius: range * 1000,
+          fillColor: Colors.red.withAlpha(30),
+          strokeWidth: 2,
+          strokeColor: Colors.red
+        ),
+      },
       myLocationButtonEnabled: true,
       myLocationEnabled: true,
       gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
@@ -127,9 +199,9 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  double? distanceFromCurrentLocation(LatLng currentLocation, double? longitude, double? latitude, String name) {
+  double? distanceFromCurrentLocation(LatLng? currentLocation, double? longitude, double? latitude, String name) {
     double? distance;
-    if (longitude == null || latitude == null) {
+    if (longitude == null || latitude == null || currentLocation == null) {
       return distance;
     }
 
@@ -150,6 +222,19 @@ class HomeView extends ConsumerWidget {
     return distance;
   }
 
+  Widget googleMapSwitch(WidgetRef ref) {
+    bool isDisplay = ref.watch(googleMapDisplayStateNotifierProvider);
+    return Row(
+      children: [
+        const Text("GoogleMap\n表示切替", textAlign: TextAlign.center,),
+        Switch(value: isDisplay,
+            onChanged: (value){
+          ref.read(googleMapDisplayStateNotifierProvider.notifier).switchDisplayGoogleMap(value);
+        }),
+      ],
+    );
+  }
+
   Widget favoriteListView(BuildContext context, WidgetRef ref) {
     var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
 
@@ -168,12 +253,12 @@ class HomeView extends ConsumerWidget {
       );
     }
 
-    LatLng currentLocation = ref.watch(locationSearchStateNotifierProvider);
+    LatLng? currentLocation = ref.watch(locationSearchStateNotifierProvider);
     // 取得したリストをListView.builderに渡す
     return Expanded(
         child: RefreshIndicator(
             onRefresh: () async {
-              await _updateFavoritePlaceData(ref);
+              await _updateSettingData(ref);
             },
             child: ListView.builder(
                 itemCount: favorite.length,
@@ -209,7 +294,7 @@ class HomeView extends ConsumerWidget {
                               if (deleteId == null) {
                                 return;
                               }
-                              _updateFavoritePlaceData(ref);
+                              _updateSettingData(ref);
                             },
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
@@ -267,10 +352,15 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Future _updateFavoritePlaceData(WidgetRef ref) async {
+  Future _updateSettingData(WidgetRef ref) async {
+    print("更新");
+    await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
-    await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+    if (ref.watch(googleMapDisplayStateNotifierProvider)) {
+      await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+      await moveCamera(ref);
+    }
   }
 
   Future _openWebPage(String url) async {

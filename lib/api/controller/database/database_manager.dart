@@ -44,7 +44,6 @@ class DatabaseManager {
   }
 
   Future<void> initDatabase() async {
-    debugPrint("initDatabaseExecute start");
     try {
       await Directory(await getDatabasesPath()).create(recursive: true);
       _databasePath = join(await getDatabasesPath(), _dbName);
@@ -54,7 +53,6 @@ class DatabaseManager {
       Exception(exception);
       return;
     }
-    debugPrint("DBが作成されました。");
 
     try {
       _database = await openDatabase(
@@ -96,7 +94,6 @@ class DatabaseManager {
   }
 
   Future<List<FavoritePlaceEntity>> selectAllPlaces() async {
-    debugPrint("selectAllPlaces() start");
     try {
       var exist = await databaseExists(_databasePath);
       if (!exist) {
@@ -108,7 +105,6 @@ class DatabaseManager {
           .rawQuery('SELECT * FROM $tableNamePlaceList;');
       List<FavoritePlaceEntity> placeList = <FavoritePlaceEntity>[];
       for (var record in records) {
-        debugPrint("fromData: $record");
         FavoritePlaceEntity placeData = FavoritePlaceEntity.fromData(record);
         placeList.add(placeData);
       }
@@ -172,7 +168,6 @@ class DatabaseManager {
           .rawQuery('SELECT * FROM $masterTableNamePurpose;');
       List<PurposeEntity> purposeList = <PurposeEntity>[];
       for (var record in records) {
-        debugPrint("fromData: $record");
         PurposeEntity purposeEntity = PurposeEntity.fromData(record);
         purposeList.add(purposeEntity);
       }
@@ -185,7 +180,6 @@ class DatabaseManager {
   }
 
   Future<int> getCountPurposeMasterData() async {
-    debugPrint("start: getCountPurposeMasterData()");
     try {
       var exist = await databaseExists(_databasePath);
 
