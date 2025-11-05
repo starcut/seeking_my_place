@@ -339,32 +339,6 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Widget favoritePlaceList(BuildContext context, FavoritePlaceEntity favoritePlaceEntity) {
-    final openWebButton = IconButton(icon: const Icon(Icons.language),
-        onPressed: () =>
-        {
-          Navigator.push(context,
-              MaterialPageRoute(
-                  builder: (context) => SettingView()))
-        }
-    );
-
-    return GestureDetector(child: Container(
-        padding: const EdgeInsets.all(12.0),
-        decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-        ),
-        child: Row(children: [
-          Text(favoritePlaceEntity.placeName, style: const TextStyle(color: Colors.black, fontSize: 16.0)),
-          openWebButton,
-        ]
-        )
-    ), onTap: () {
-      _openWebPage(favoritePlaceEntity.url);
-    },
-    );
-  }
-
   Future _updateSettingData(WidgetRef ref) async {
     print("更新");
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
