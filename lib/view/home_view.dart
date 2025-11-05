@@ -150,6 +150,7 @@ class HomeView extends ConsumerWidget {
   Widget googleMapView(BuildContext context, WidgetRef ref) {
     Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
     var currentLocation = ref.read(locationSearchStateNotifierProvider);
+    var range = ref.read(settingStateNotifierProvider).range;
     print("現在表示位置：${currentLocation?.longitude} ${currentLocation?.latitude}");
 
     if (currentLocation == null) {
@@ -163,6 +164,16 @@ class HomeView extends ConsumerWidget {
         zoom: 11.0,
       ),
       markers: markers,
+      circles: {
+        Circle(
+          circleId: const CircleId('circle_1'),
+          center: currentLocation,
+          radius: range * 1000,
+          fillColor: Colors.red.withAlpha(30),
+          strokeWidth: 2,
+          strokeColor: Colors.red
+        ),
+      },
       myLocationButtonEnabled: true,
       myLocationEnabled: true,
       gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
