@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeking_my_place/api/controller/database/database_manager.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,31 +63,31 @@ final purposeListSettingProvider = StateNotifierProvider<PurposeListNotifier, Li
 });
 
 class PurposeListNotifier extends StateNotifier<List<PurposeEntity>> {
-  PurposeListNotifier(List<PurposeEntity> state) : super([]);
-
-  void updateRange(List<PurposeEntity> purposeList) {
-    state = purposeList;
+  PurposeListNotifier(List<PurposeEntity> state) : super([]) {
+    getPurposeListAll();
   }
 
-  void insertPurpose(PurposeEntity purpose) {
-    state.add(purpose);
+  Future getPurposeListAll() async {
+    state = await DatabaseManager.shared.selectAllPurposeMasterData();
   }
 
-  void updatePurpose(PurposeEntity purpose) {
-    for (var item in state) {
-      if (item.id == purpose.id) {
-
-        return;
-      }
-    }
+  Future<PurposeEntity?> getPurposeEntity(int purposeId) async {
+    var purpose = await DatabaseManager.shared.getPurposeMasterData(purposeId);
+    return purpose;
   }
 
-  void deletePurpose(int deleteId) {
-    for (var item in state) {
-      if (item.id == deleteId) {
-        state.remove(item);
-        return;
-      }
-    }
+  void insertPurpose(String purposeName) async {
+    await DatabaseManager.shared.insertPurpose(purposeName);
+    await getPurposeListAll();
+  }
+
+  Future<void> updatePurpose(PurposeEntity purpose) async {
+    await DatabaseManager.shared.updatePurposeMasterData(purpose);
+    await getPurposeListAll();
+  }
+
+  Future<void> deletePurpose(int deleteId) async {
+    await DatabaseManager.shared.deletePurposeMasterData(deleteId);
+    await getPurposeListAll();
   }
 }

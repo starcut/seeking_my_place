@@ -179,6 +179,26 @@ class DatabaseManager {
     }
   }
 
+  Future<PurposeEntity?> getPurposeMasterData(int purposeId) async {
+    debugPrint("start: selectAllPurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return null;
+      }
+
+      List<Map<String, Object?>> records = await _database
+          .rawQuery('SELECT * FROM $masterTableNamePurpose WHERE $columnMasterPurposeId = $purposeId;');
+      final record = records.first;
+      final purpose = PurposeEntity.fromData(record);
+      return purpose;
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return null;
+    }
+  }
+
   Future<int> getCountPurposeMasterData() async {
     try {
       var exist = await databaseExists(_databasePath);
@@ -209,6 +229,47 @@ class DatabaseManager {
     } on Exception catch (exception) {
       debugPrint("error: DatabaseManager insertPurpose $exception");
       Exception(exception);
+    }
+  }
+
+  Future<void> updatePurposeMasterData(PurposeEntity updatePurpose) async {
+    debugPrint("start: updatePurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return;
+      }
+
+      await _database.update(
+          masterTableNamePurpose,
+          {columnMasterPurposeName: updatePurpose.purposeName},
+          where: '$columnMasterPurposeId = ?',
+          whereArgs: ['${updatePurpose.id}']
+      );
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return;
+    }
+  }
+
+  Future<void> deletePurposeMasterData(int deletePurposeId) async {
+    debugPrint("start: deletePurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return;
+      }
+
+      await _database.delete(
+          masterTableNamePurpose,
+          where: '$columnMasterPurposeId = ?',
+          whereArgs: [deletePurposeId]
+      );
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return;
     }
   }
 

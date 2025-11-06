@@ -6,7 +6,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider//setting_provider.dart';
-import 'package:seeking_my_place/view_model/setting_view_model.dart';
 
 class SettingView extends ConsumerWidget {
   SettingView({super.key});
@@ -16,93 +15,21 @@ class SettingView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
 
-    final purposeListView = ref.watch(settingViewModelNotifierProvider).when(data: (purposeList) {
-      if (purposeList.isEmpty) {
-        return newPurposeRegisterCell(context, ref);
-      }
-
-      final listView = ListView.builder(
-          itemCount: purposeList.length + 1,
-          itemBuilder: (context, index) {
-            if (index == purposeList.length) {
-              return newPurposeRegisterCell(context, ref);
-            }
-            final purpose = purposeList[index];
-            return Slidable(
-                key: UniqueKey(),
-                startActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
-                    extentRatio: 0.2,
-                    children: [
-                      SlidableAction(onPressed: (_) {
-                        print("お気に入りデータピン留めする");
-                      },
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          icon: Icons.push_pin)
-                    ]
-                ),
-                endActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
-                    extentRatio: 0.2,
-                    children: [
-                      SlidableAction(onPressed: (_) {
-                        int deleteId = purpose.id;
-                        ref.read(settingViewModelDeleteDataProvider(deleteId));
-                      },
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          icon: Icons.delete)
-                    ]
-                ),
-                child: GestureDetector(
-                    onTap: () {
-                      if (index == 0) {
-                        return;
-                      }
-                      registerDialog(context, ref, purpose);
-                    },
-                    child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-                        ),
-                        width: MediaQuery.of(context).size.width,
-                        height: 50,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Padding(
-                                padding: EdgeInsets.only(bottom: 8.0),
-                                child: Text(purpose.purposeName))
-                          ],
-                        )
-                    )
-                )
-            );
-          }
-      );
-
-      // 取得したリストをListView.builderに渡す
-      return listView;
-    },
-        error: (err, stack) {
-          return Center(child: Text('Error: $err'));
-        },
-        loading: () {
-          return const Center(child: CircularProgressIndicator());
-        }
-    );
-
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text("設定"),
         ),
-        body:  Column(
-          children: [
-            countSettingWidget(context, ref),
-            rangeSettingWidget(context, ref)
-          ],
-        ));
+        body:  Expanded(
+            child:Column(
+              children: [
+                countSettingWidget(context, ref),
+                rangeSettingWidget(context, ref),
+                purposeListWidget(context, ref)
+              ],
+            )
+        )
+    );
   }
 
   Widget countSettingWidget(BuildContext context, WidgetRef ref) {
@@ -197,6 +124,79 @@ class SettingView extends ConsumerWidget {
       );
   }
 
+  Widget purposeListWidget(BuildContext context, WidgetRef ref) {
+    final purposeList = ref.watch(purposeListSettingProvider);
+
+    final listView = ListView.builder(
+        itemCount: purposeList.length + 1,
+        itemBuilder: (context, index) {
+          if (index == purposeList.length) {
+            return newPurposeRegisterCell(context, ref);
+          }
+          final purpose = purposeList[index];
+          return Slidable(
+              key: UniqueKey(),
+              startActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    SlidableAction(onPressed: (_) {
+                      print("お気に入りデータピン留めする");
+                    },
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        icon: Icons.push_pin)
+                  ]
+              ),
+              endActionPane: index == 0 ? null : ActionPane(motion: const ScrollMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    SlidableAction(onPressed: (_) {
+                      int deleteId = purpose.id;
+                      ref.read(purposeListSettingProvider.notifier).deletePurpose(deleteId);
+                    },
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete)
+                  ]
+              ),
+              child: GestureDetector(
+                  onTap: () {
+                    if (index == 0) {
+                      return;
+                    }
+                    registerDialog(context, ref, purpose);
+                  },
+                  child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                          border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                      ),
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      height: 50,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(purpose.purposeName))
+                        ],
+                      )
+                  )
+              )
+          );
+        }
+    );
+
+    return Expanded(
+        child: Column(
+          children: [listView],
+        )
+    );
+  }
+
   Widget purposeListCell(BuildContext context, WidgetRef ref, PurposeEntity entity) =>
       GestureDetector(
         child: Container(
@@ -281,27 +281,18 @@ class SettingView extends ConsumerWidget {
             ),
             actions: <Widget>[
               TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_inputPurposeName.isNotEmpty) {
                       if (entity == null) {
-                        ref.read(settingViewModelInsertDataProvider(_inputPurposeName));
+                        ref.read(purposeListSettingProvider.notifier).insertPurpose(_inputPurposeName);
                       } else {
-                        print("entity: ${entity.purposeName}");
-                        var purposeData = ref.read(settingViewModelSelectByIdNotifierProvider.notifier)
-                            .getPurposeList(entity.id);
-                        purposeData.then((selectedPurposeData) {
-                          debugPrint("purposeData != null");
-                          selectedPurposeData?.purposeName =
-                              _inputPurposeName;
-                          debugPrint(
-                              "update to: ${selectedPurposeData?.purposeName}");
-                          if (selectedPurposeData != null) {
-                            ref.read(settingViewModelUpdateDataProvider(selectedPurposeData));
-                          }
-                        });
+                        var purposeData = await ref.read(purposeListSettingProvider.notifier).getPurposeEntity(entity.id);
+                        purposeData?.purposeName = _inputPurposeName;
+                        if (purposeData != null) {
+                          ref.read(purposeListSettingProvider.notifier).updatePurpose(purposeData);
+                        }
                       }
                     }
-                    // ref.invalidate(settingViewModelNotifierProvider);
                     Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
