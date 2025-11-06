@@ -148,6 +148,11 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
         ));
     return distance;
   }
+
+  Future<void> deleteFavoritePlace(int deleteId) async {
+    await DatabaseManager.shared.deleterFavoritePlace(deleteId);
+    getFavoritePlace();
+  }
 }
 
 final markerListStateNotifierProvider =

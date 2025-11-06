@@ -292,6 +292,7 @@ class HomeView extends ConsumerWidget {
                               if (deleteId == null) {
                                 return;
                               }
+                              ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
                               _updateSettingData(ref);
                             },
                                 backgroundColor: Colors.red,
