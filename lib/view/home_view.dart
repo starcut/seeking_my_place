@@ -308,7 +308,7 @@ class HomeView extends ConsumerWidget {
                               .of(context)
                               .size
                               .width,
-                          height: 65,
+                          height: 86,
                           child:
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -317,8 +317,27 @@ class HomeView extends ConsumerWidget {
                                   child:Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose == '未設定' ? '' : favoritePlace.purpose}",
-                                        style: const TextStyle(fontWeight: FontWeight.bold),),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (favoritePlace.isVisited) ... [
+                                            Icon(Icons.check_circle, size: 18, color: Colors.green)
+                                          ],
+                                          Text("${favoritePlace.placeName} ",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text("${favoritePlace.category} ",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Text(
+                                              "${(favoritePlace.purpose == '未設定') ? '' : favoritePlace.purpose}",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)
+                                          )
+                                        ]
+                                      ),
                                       Text("$distanceString ${favoritePlace.address}")
                                     ],
                                   )
