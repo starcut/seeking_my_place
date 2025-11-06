@@ -67,7 +67,7 @@ class DatabaseManager {
                   $columnPlaceListLatitude NUMERIC,
                   $columnPlaceListLongitude NUMERIC,
                   $columnPlaceListUrl TEXT,
-                  $columnPlaceListPurpose INTEGER,
+                  $columnPlaceListPurpose TEXT,
                   $columnPlaceListCategory Text,
                   $columnPlaceListIsVisited INTEGER,
                   $columnPlaceListRegisterAt DATETIME,
@@ -128,7 +128,7 @@ class DatabaseManager {
             'VALUES '
             '("${favoritePlaceData.placeName}", "${favoritePlaceData.address}",'
             ' ${favoritePlaceData.latitude}, ${favoritePlaceData.longitude},'
-            ' "${favoritePlaceData.url}", ${favoritePlaceData.purpose},'
+            ' "${favoritePlaceData.url}", "${favoritePlaceData.purpose}",'
             ' "${favoritePlaceData.category}", ${favoritePlaceData.isVisited},'
             ' "${DateTime.now().toString()}", "${DateTime.now().toString()}")';
         print(sql);
@@ -179,6 +179,26 @@ class DatabaseManager {
     }
   }
 
+  Future<PurposeEntity?> getPurposeMasterData(int purposeId) async {
+    debugPrint("start: selectAllPurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return null;
+      }
+
+      List<Map<String, Object?>> records = await _database
+          .rawQuery('SELECT * FROM $masterTableNamePurpose WHERE $columnMasterPurposeId = $purposeId;');
+      final record = records.first;
+      final purpose = PurposeEntity.fromData(record);
+      return purpose;
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return null;
+    }
+  }
+
   Future<int> getCountPurposeMasterData() async {
     try {
       var exist = await databaseExists(_databasePath);
@@ -212,6 +232,47 @@ class DatabaseManager {
     }
   }
 
+  Future<void> updatePurposeMasterData(PurposeEntity updatePurpose) async {
+    debugPrint("start: updatePurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return;
+      }
+
+      await _database.update(
+          masterTableNamePurpose,
+          {columnMasterPurposeName: updatePurpose.purposeName},
+          where: '$columnMasterPurposeId = ?',
+          whereArgs: ['${updatePurpose.id}']
+      );
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return;
+    }
+  }
+
+  Future<void> deletePurposeMasterData(int deletePurposeId) async {
+    debugPrint("start: deletePurposeMasterData()");
+    try {
+      var exist = await databaseExists(_databasePath);
+      if (!exist) {
+        debugPrint("Not Found Database");
+        return;
+      }
+
+      await _database.delete(
+          masterTableNamePurpose,
+          where: '$columnMasterPurposeId = ?',
+          whereArgs: [deletePurposeId]
+      );
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager selectAllPurposeMasterData $exception");
+      return;
+    }
+  }
+
   Future importDatabaseFromCsv(File file) async {
     try {
       final content = await file.readAsString();
@@ -234,8 +295,8 @@ class DatabaseManager {
         print("url: ${data[5]}");
         final category = data[6].replaceAll('"', '');
         print("category: ${data[6]}");
-        // final purpose = int.parse(data[7]);
-        // print("purpose: ${data[7]}");
+        final purpose = data[7].replaceAll('"', '');
+        print("purpose: ${data[7]}");
         final isVisited = (data[8].replaceAll('"', '') == "true");
         print("isVisited: ${data[8].replaceAll('"', '')}");
 
@@ -246,8 +307,8 @@ class DatabaseManager {
             longitude: longitude,
             url: url,
             category: category,
-            purpose: 0,
-            isVisited: false,
+            purpose: purpose,
+            isVisited: isVisited,
             registerAt: DateTime.now(),
             updateAt: DateTime.now());
 

@@ -16,7 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:seeking_my_place/api/controller/database/database_manager.dart';
+import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider/home_provider.dart';
@@ -49,12 +49,10 @@ class HomeView extends ConsumerWidget {
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async {
-          var result = await Navigator.push(context,
+          await Navigator.push(context,
               MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
           );
-          if (result) {
-            await _updateSettingData(ref);
-          }
+          await _updateSettingData(ref);
         }
     );
 
@@ -310,7 +308,7 @@ class HomeView extends ConsumerWidget {
                               .of(context)
                               .size
                               .width,
-                          height: 65,
+                          height: 86,
                           child:
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -319,8 +317,27 @@ class HomeView extends ConsumerWidget {
                                   child:Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}",
-                                        style: const TextStyle(fontWeight: FontWeight.bold),),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (favoritePlace.isVisited) ... [
+                                            Icon(Icons.check_circle, size: 18, color: Colors.green)
+                                          ],
+                                          Text("${favoritePlace.placeName} ",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text("${favoritePlace.category} ",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Text(
+                                              "${(favoritePlace.purpose == '未設定') ? '' : favoritePlace.purpose}",
+                                              style: const TextStyle(fontWeight: FontWeight.bold)
+                                          )
+                                        ]
+                                      ),
                                       Text("$distanceString ${favoritePlace.address}")
                                     ],
                                   )
@@ -340,7 +357,6 @@ class HomeView extends ConsumerWidget {
   }
 
   Future _updateSettingData(WidgetRef ref) async {
-    print("更新");
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
@@ -354,7 +370,7 @@ class HomeView extends ConsumerWidget {
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {
-      var response = await http.get(uri);
+      await http.get(uri);
       await launchUrl(uri);
     } else {
       debugPrint('Cloud not launch: $url');
@@ -436,17 +452,14 @@ class HomeView extends ConsumerWidget {
           backgroundColor: Colors.green,
           content: Text('データベースをインポートしました！'),
         );
-        print("_scaffoldKey: ${_scaffoldKey.currentState}");
         _scaffoldKey.currentState?.showSnackBar(snackBar);
       }
     } catch (e) {
       // エラーが発生した場合はエラーメッセージを表示
-
       SnackBar snackBar = const SnackBar(
         backgroundColor: Colors.green,
         content: Text('インポートに失敗しました！'),
       );
-      print("_scaffoldKey: ${_scaffoldKey.currentState}");
       _scaffoldKey.currentState?.showSnackBar(snackBar);
     }
   }

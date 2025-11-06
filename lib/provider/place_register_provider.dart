@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:seeking_my_place/api/controller/database/database_manager.dart';
+import 'package:seeking_my_place/Common/Enum/InputItem.dart';
+import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
-
-import 'package:seeking_my_place/view/place_register_view.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 // 1. TextFieldの値を管理するプロバイダーを作成
 final urlTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
@@ -19,12 +19,6 @@ final addressTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String
 });
 final categoryTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
   return TextFieldNotifier();
-});
-final purposeTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier();
-});
-final isVisitedTextFieldProvider = StateNotifierProvider<CheckBoxNotifier, bool>((ref) {
-  return CheckBoxNotifier();
 });
 
 class TextFieldNotifier extends StateNotifier<String> {
@@ -53,7 +47,6 @@ class TextFieldNotifier extends StateNotifier<String> {
     try {
       var response = await http.get(uri);
       if (response.statusCode == 200) {
-        print("body:");
         print(response.body);
         bodyString = response.body;
       } else {
@@ -74,31 +67,23 @@ class TextFieldNotifier extends StateNotifier<String> {
     String endRemoveString = '';
     switch(inputItem) {
       case InputItem.url:
-        print("InputItem.url");
         break;
       case InputItem.placeName:
-        print("InputItem.placeName");
         startRemoveString = "<span class=\"rstdtl-crumb\">";
         endRemoveString = '</span>';
         regExpString = r'<span class="rstdtl-crumb">(.*?)</span>';
         break;
       case InputItem.address:
-        print("InputItem.address");
         startRemoveString = 'data-send-address="';
         endRemoveString = '"';
         regExpString = r'data-send-address="([\s\S]*?)"';
         break;
-      case InputItem.purpose:
-        print("InputItem.purpose");
-        break;
       case InputItem.category:
-        print("InputItem.category");
         startRemoveString = '<span class="linktree__parent-target-text">';
         endRemoveString = '</span>';
         regExpString = r'<span class="linktree__parent-target-text">(.*?)</span>';
         break;
       default:
-        print("default");
         return "Not Found";
     }
 
@@ -115,6 +100,10 @@ class TextFieldNotifier extends StateNotifier<String> {
   }
 }
 
+final isVisitedTextFieldProvider = StateNotifierProvider<CheckBoxNotifier, bool>((ref) {
+  return CheckBoxNotifier();
+});
+
 class CheckBoxNotifier extends StateNotifier<bool> {
   CheckBoxNotifier() : super(false);
 
@@ -123,11 +112,23 @@ class CheckBoxNotifier extends StateNotifier<bool> {
   }
 }
 
-class PurposeNotifier extends StateNotifier<int> {
-  PurposeNotifier() : super(0);
+final purposeTextFieldProvider = StateNotifierProvider<PurposeNotifier, PurposeEntity>((ref) {
+  return PurposeNotifier();
+});
 
-  void updateText(int purposeId) {
-    state = purposeId;
+class PurposeNotifier extends StateNotifier<PurposeEntity> {
+  PurposeNotifier() : super(PurposeEntity(id: 0, purposeName: "未設定")) {
+    getPurposeList();
+  }
+
+  Future<List<PurposeEntity>> getPurposeList() async {
+    return await DatabaseManager.shared.selectAllPurposeMasterData();
+  }
+
+  Future<void> updateText(int purposeId) async {
+    final selectedPurpose = await DatabaseManager.shared.getPurposeMasterData(purposeId)
+        ?? PurposeEntity(id: 0, purposeName: "未設定");
+    state = selectedPurpose;
   }
 }
 

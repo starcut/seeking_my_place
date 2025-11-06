@@ -2,10 +2,11 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:seeking_my_place/api/controller/database/database_manager.dart';
+import 'package:seeking_my_place/api/controller/database_manager.dart';
 
-import 'package:seeking_my_place/api/controller/location/location_manager.dart';
+import 'package:seeking_my_place/api/controller/location_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingData {
@@ -119,6 +120,12 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
     }
   }
 
+  Future<String> getPurposeName(int purposeId) async {
+    PurposeEntity purpose = await DatabaseManager.shared.getPurposeMasterData(purposeId)
+        ?? PurposeEntity(id: 0, purposeName: "未設定");
+    return purpose.purposeName;
+  }
+  
   double? distanceFromCurrentLocation(LatLng currentLocation, double? longitude, double? latitude, String name) {
     double? distance;
     if (longitude == null || latitude == null) {
@@ -140,23 +147,6 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
                 * sin(diffLongitude / 2.0) * sin(diffLongitude / 2.0)
         ));
     return distance;
-  }
-}
-
-final favoritePlaceListUpdateStateNotifierProvider =
-StateNotifierProvider<FavoritePlaceUpdateProvider, void>((ref) {
-  return FavoritePlaceUpdateProvider();
-});
-
-class FavoritePlaceUpdateProvider extends StateNotifier<void> {
-  FavoritePlaceUpdateProvider() : super(0);
-
-  Future deleteFavoritePlace(int id) async {
-    try {
-      await DatabaseManager.shared.deleterFavoritePlace(id);
-    } on Exception catch (exception) {
-      throw Exception(exception);
-    }
   }
 }
 
