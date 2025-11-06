@@ -191,9 +191,7 @@ class SettingView extends ConsumerWidget {
     );
 
     return Expanded(
-        child: Column(
-          children: [listView],
-        )
+        child: listView
     );
   }
 
