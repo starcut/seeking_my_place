@@ -67,7 +67,7 @@ class DatabaseManager {
                   $columnPlaceListLatitude NUMERIC,
                   $columnPlaceListLongitude NUMERIC,
                   $columnPlaceListUrl TEXT,
-                  $columnPlaceListPurpose INTEGER,
+                  $columnPlaceListPurpose TEXT,
                   $columnPlaceListCategory Text,
                   $columnPlaceListIsVisited INTEGER,
                   $columnPlaceListRegisterAt DATETIME,
@@ -128,7 +128,7 @@ class DatabaseManager {
             'VALUES '
             '("${favoritePlaceData.placeName}", "${favoritePlaceData.address}",'
             ' ${favoritePlaceData.latitude}, ${favoritePlaceData.longitude},'
-            ' "${favoritePlaceData.url}", ${favoritePlaceData.purpose},'
+            ' "${favoritePlaceData.url}", "${favoritePlaceData.purpose}",'
             ' "${favoritePlaceData.category}", ${favoritePlaceData.isVisited},'
             ' "${DateTime.now().toString()}", "${DateTime.now().toString()}")';
         print(sql);
@@ -295,8 +295,8 @@ class DatabaseManager {
         print("url: ${data[5]}");
         final category = data[6].replaceAll('"', '');
         print("category: ${data[6]}");
-        // final purpose = int.parse(data[7]);
-        // print("purpose: ${data[7]}");
+        final purpose = data[7].replaceAll('"', '');
+        print("purpose: ${data[7]}");
         final isVisited = (data[8].replaceAll('"', '') == "true");
         print("isVisited: ${data[8].replaceAll('"', '')}");
 
@@ -307,8 +307,8 @@ class DatabaseManager {
             longitude: longitude,
             url: url,
             category: category,
-            purpose: 0,
-            isVisited: false,
+            purpose: purpose,
+            isVisited: isVisited,
             registerAt: DateTime.now(),
             updateAt: DateTime.now());
 

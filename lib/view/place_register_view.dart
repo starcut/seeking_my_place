@@ -18,6 +18,10 @@ class PlaceRegisterView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(purposeListSettingProvider.notifier).getPurposeListAll();
+    });
+
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme
@@ -68,9 +72,6 @@ class PlaceRegisterView extends ConsumerWidget {
       case InputItem.purpose:
         text = ref.watch(purposeTextFieldProvider).purposeName;
         break;
-      case InputItem.visited:
-        // text = ref.watch(urlTextFieldProvider);
-        break;
       default:
         break;
     }
@@ -111,7 +112,6 @@ class PlaceRegisterView extends ConsumerWidget {
                 hintText: hintText,
               ),
               onChanged: (text) async {
-                print("onChanged $text");
                 switch (inputItem) {
                   case InputItem.url:
                     ref.read(urlTextFieldProvider.notifier).updateText(text);
@@ -144,7 +144,6 @@ class PlaceRegisterView extends ConsumerWidget {
     final purposeList = ref.read(purposeListSettingProvider);
     final purposeTextList = <Text>[];
     for (PurposeEntity purpose in purposeList) {
-      print("${purpose.id} ${purpose.purposeName}");
       purposeTextList.add(Text(purpose.purposeName));
     }
 
@@ -161,7 +160,6 @@ class PlaceRegisterView extends ConsumerWidget {
             itemExtent: 32,
             children: purposeTextList,
             onSelectedItemChanged: (int index) {
-              print("selected: ${purposeList[index].purposeName}");
               ref.read(purposeTextFieldProvider.notifier).updateText(purposeList[index].id);
             },
           )
@@ -193,7 +191,6 @@ class PlaceRegisterView extends ConsumerWidget {
             value: result,
             activeColor: Colors.green,
             onChanged: (isChecked) {
-              print("isCheck: $isChecked");
               if (isChecked == null) {
                 notifier.updateText(false);
               } else {
@@ -215,7 +212,7 @@ class PlaceRegisterView extends ConsumerWidget {
           final placeName = ref.watch(placeNameTextFieldProvider);
           final address = ref.watch(addressTextFieldProvider);
           final category = ref.watch(categoryTextFieldProvider);
-          // final purpose = ref.watch(purposeTextFieldProvider);
+          final purpose = ref.watch(purposeTextFieldProvider).purposeName;
           final isVisited = ref.watch(isVisitedTextFieldProvider);
 
           LatLng? latLng = await ref.read(placeNameTextFieldProvider.notifier).getLatLngFromAddress(address);
@@ -226,7 +223,7 @@ class PlaceRegisterView extends ConsumerWidget {
               longitude: latLng?.longitude,
               url: url,
               category: category,
-              purpose: 0,
+              purpose: purpose,
               isVisited: isVisited);
 
           ref.read(placeRegisterNotifier.notifier).insertFavoriteData(favoritePlaceData);
@@ -235,7 +232,7 @@ class PlaceRegisterView extends ConsumerWidget {
           ref.read(placeNameTextFieldProvider.notifier).updateText("");
           ref.read(addressTextFieldProvider.notifier).updateText("");
           ref.read(categoryTextFieldProvider.notifier).updateText("");
-          // ref.read(purposeTextFieldProvider);
+          ref.read(purposeTextFieldProvider.notifier).updateText(0);
           ref.read(isVisitedTextFieldProvider.notifier).updateText(false);
           
           Navigator.pop(context, true);

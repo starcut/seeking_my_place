@@ -317,7 +317,7 @@ class HomeView extends ConsumerWidget {
                                   child:Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose}",
+                                      Text("${favoritePlace.placeName} ${favoritePlace.category} ${favoritePlace.purpose == '未設定' ? '' : favoritePlace.purpose}",
                                         style: const TextStyle(fontWeight: FontWeight.bold),),
                                       Text("$distanceString ${favoritePlace.address}")
                                     ],
@@ -338,7 +338,6 @@ class HomeView extends ConsumerWidget {
   }
 
   Future _updateSettingData(WidgetRef ref) async {
-    print("更新");
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
@@ -352,7 +351,7 @@ class HomeView extends ConsumerWidget {
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {
-      var response = await http.get(uri);
+      await http.get(uri);
       await launchUrl(uri);
     } else {
       debugPrint('Cloud not launch: $url');
@@ -434,17 +433,14 @@ class HomeView extends ConsumerWidget {
           backgroundColor: Colors.green,
           content: Text('データベースをインポートしました！'),
         );
-        print("_scaffoldKey: ${_scaffoldKey.currentState}");
         _scaffoldKey.currentState?.showSnackBar(snackBar);
       }
     } catch (e) {
       // エラーが発生した場合はエラーメッセージを表示
-
       SnackBar snackBar = const SnackBar(
         backgroundColor: Colors.green,
         content: Text('インポートに失敗しました！'),
       );
-      print("_scaffoldKey: ${_scaffoldKey.currentState}");
       _scaffoldKey.currentState?.showSnackBar(snackBar);
     }
   }
