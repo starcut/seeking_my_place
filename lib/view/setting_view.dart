@@ -207,8 +207,8 @@ class SettingView extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(12.0),
             decoration: const BoxDecoration(
-                border:
-                    Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+                border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[

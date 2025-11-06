@@ -49,12 +49,10 @@ class HomeView extends ConsumerWidget {
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async {
-          var result = await Navigator.push(context,
+          await Navigator.push(context,
               MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
           );
-          if (result) {
-            await _updateSettingData(ref);
-          }
+          await _updateSettingData(ref);
         }
     );
 

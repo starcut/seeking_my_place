@@ -3,38 +3,17 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:seeking_my_place/Common/Enum/InputItem.dart';
 import 'package:seeking_my_place/provider/place_register_provider.dart';
 
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-
-enum InputItem {
-  url("URL"),
-  placeName("場所名"),
-  address("住所"),
-  category("カテゴリ"),
-  purpose("用途"),
-  visited("訪問済み"),
-  other("不明");
-
-  const InputItem(this.name);
-
-  final String name;
-
-  static final Map<String, InputItem> _map = {
-    for (final inputItem in InputItem.values) inputItem.name: inputItem
-  };
-
-  static InputItem getInputNameFromString(String value) {
-    return _map[value] ?? InputItem.other;
-  }
-}
+import 'package:seeking_my_place/provider/setting_provider.dart';
 
 class PlaceRegisterView extends ConsumerWidget {
 
   PlaceRegisterView({super.key});
 
-  List<PurposeEntity> purposeList = [];
   var selectedIndex = 0;
 
   @override
@@ -87,7 +66,7 @@ class PlaceRegisterView extends ConsumerWidget {
         text = ref.watch(categoryTextFieldProvider);
         break;
       case InputItem.purpose:
-        text = ref.watch(purposeTextFieldProvider);
+        text = ref.watch(purposeTextFieldProvider).purposeName;
         break;
       case InputItem.visited:
         // text = ref.watch(urlTextFieldProvider);
@@ -120,10 +99,10 @@ class PlaceRegisterView extends ConsumerWidget {
               onTap: () {
                 // キーボードが出ないようにする
                 FocusScope.of(context).requestFocus(new FocusNode());
-                showPicker(context, controller);
+                showPicker(context, ref, controller);
               },
               onChanged: (text) async {
-                print(text);
+                ref.read(purposeTextFieldProvider).purposeName = text;
               },
             ) : TextField(
               controller: controller,
@@ -152,9 +131,6 @@ class PlaceRegisterView extends ConsumerWidget {
                   case InputItem.category:
                     ref.read(categoryTextFieldProvider.notifier).updateText(text);
                     break;
-                  case InputItem.purpose:
-                    ref.read(purposeTextFieldProvider.notifier).updateText(text);
-                    break;
                   default:
                     break;
                 }
@@ -164,10 +140,13 @@ class PlaceRegisterView extends ConsumerWidget {
     );
   }
 
-  void showPicker(BuildContext context, TextEditingController controller) {
-    final list = this.purposeList.map((item) {
-      return Text(item.purposeName);
-    }).toList();
+  void showPicker(BuildContext context, WidgetRef ref, TextEditingController controller) {
+    final purposeList = ref.read(purposeListSettingProvider);
+    final purposeTextList = <Text>[];
+    for (PurposeEntity purpose in purposeList) {
+      print("${purpose.id} ${purpose.purposeName}");
+      purposeTextList.add(Text(purpose.purposeName));
+    }
 
     showCupertinoModalPopup<void>(context: context,
         builder: (BuildContext context) {
@@ -180,16 +159,16 @@ class PlaceRegisterView extends ConsumerWidget {
           child: CupertinoPicker(
             backgroundColor: Colors.white,
             itemExtent: 32,
-            children: list,
+            children: purposeTextList,
             onSelectedItemChanged: (int index) {
-              selectedIndex = index;
-              print("selected: ${this.purposeList[index].purposeName}");
+              print("selected: ${purposeList[index].purposeName}");
+              ref.read(purposeTextFieldProvider.notifier).updateText(purposeList[index].id);
             },
           )
         ),
       );
     }).then((_) {
-      controller.value = TextEditingValue(text: this.purposeList[selectedIndex].purposeName);
+      controller.value = TextEditingValue(text: purposeList[selectedIndex].purposeName);
     });
   }
 
