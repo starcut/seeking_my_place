@@ -16,7 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:seeking_my_place/api/controller/database/database_manager.dart';
+import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider/home_provider.dart';
