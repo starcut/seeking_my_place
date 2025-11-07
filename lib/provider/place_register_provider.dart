@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:seeking_my_place/Common/Enum/InputItem.dart';
+import 'package:seeking_my_place/Common/Enum/input_item.dart';
 import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';

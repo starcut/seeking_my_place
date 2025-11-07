@@ -8,11 +8,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:csv/csv.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_menu_item.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -343,10 +345,33 @@ class HomeView extends ConsumerWidget {
                                     ],
                                   )
                               ),
-                              IconButton(icon: const Icon(Icons.language),
-                                onPressed: (){
-                                  _openWebPage(favoritePlace.url);
-                                })
+                              PopupMenuButton<String>(
+                                onSelected: (String selected) {
+                                  switch (FavoriteMenuItem.getFavoriteMenuItemFromString(selected)) {
+                                    case FavoriteMenuItem.edit:
+                                      break;
+                                    case FavoriteMenuItem.copyUrl:
+                                      final copyUrl = ClipboardData(text: favoritePlace.url);
+                                      Clipboard.setData(copyUrl);
+                                      break;
+                                    case FavoriteMenuItem.openBrowser:
+                                      _openWebPage(favoritePlace.url);
+                                      break;
+                                    default:
+                                      print("不明なメニュー");
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  var menuItem = FavoriteMenuItem.getUseableString();
+                                  return menuItem.map((String s) {
+                                    return PopupMenuItem(
+                                      child: Text(s),
+                                      value: s,
+                                    );
+                                  }).toList();
+                                },
+                              )
                             ],
                           )
                       )
