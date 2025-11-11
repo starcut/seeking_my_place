@@ -280,25 +280,15 @@ class DatabaseManager {
       lines.removeAt(0);
       for (var line in lines) {
         final data = line.split(',');
-        print("data: $data");
         final id = int.parse(data[0]);
-        print("id: ${data[0]}");
         final placeName = data[1].replaceAll('"', '');
-        print("placeName: ${data[1]}");
         final address = data[2].replaceAll('"', '');
-        print("address: ${data[2]}");
         final latitude = double.parse(data[3]);
-        print("latitude: ${data[3]}");
         final longitude = double.parse(data[4]);
-        print("longitude: ${data[4]}");
         final url = data[5].replaceAll('"', '');
-        print("url: ${data[5]}");
         final category = data[6].replaceAll('"', '');
-        print("category: ${data[6]}");
         final purpose = data[7].replaceAll('"', '');
-        print("purpose: ${data[7]}");
         final isVisited = (data[8].replaceAll('"', '') == "true");
-        print("isVisited: ${data[8].replaceAll('"', '')}");
 
         final favoritePlaceData = FavoritePlaceEntity(
             placeName: placeName,

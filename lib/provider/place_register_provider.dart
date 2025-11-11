@@ -8,22 +8,18 @@ import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 // 1. TextFieldの値を管理するプロバイダーを作成
-final urlTextFieldProviderFamily =
-StateNotifierProvider.family<TextFieldNotifier, String, String>((ref, url) {
-  return TextFieldNotifier(url);
-});
 final urlTextFieldProvider =
 StateNotifierProvider<TextFieldNotifier, String>((ref) {
   throw UnimplementedError('urlTextFieldProvider not overridden');
 });
 final placeNameTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier("");
+  throw UnimplementedError('placeNameTextFieldProvider not overridden');
 });
 final addressTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier("");
+  throw UnimplementedError('addressTextFieldProvider not overridden');
 });
 final categoryTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier("");
+  throw UnimplementedError('categoryTextFieldProvider not overridden');
 });
 
 class TextFieldNotifier extends StateNotifier<String> {
@@ -50,7 +46,6 @@ class TextFieldNotifier extends StateNotifier<String> {
     try {
       var response = await http.get(uri);
       if (response.statusCode == 200) {
-        print(response.body);
         bodyString = response.body;
       } else {
         print('リクエストに失敗しました: ${response.statusCode}');
@@ -104,23 +99,21 @@ class TextFieldNotifier extends StateNotifier<String> {
 }
 
 final isVisitedTextFieldProvider = StateNotifierProvider<CheckBoxNotifier, bool>((ref) {
-  return CheckBoxNotifier();
+  throw UnimplementedError('isVisitedTextFieldProvider not overridden');
 });
 
 class CheckBoxNotifier extends StateNotifier<bool> {
-  CheckBoxNotifier() : super(false);
+  CheckBoxNotifier(isChecked) : super(isChecked);
 
-  void updateText(bool isChecked) {
-    state = isChecked;
-  }
+  void updateText(bool isChecked) => state = isChecked;
 }
 
 final purposeTextFieldProvider = StateNotifierProvider<PurposeNotifier, PurposeEntity>((ref) {
-  return PurposeNotifier();
+  throw UnimplementedError('purposeTextFieldProvider not overridden');
 });
 
 class PurposeNotifier extends StateNotifier<PurposeEntity> {
-  PurposeNotifier() : super(PurposeEntity(id: 0, purposeName: "未設定")) {
+  PurposeNotifier(entity) : super(PurposeEntity(id: 1, purposeName: "未設定")) {
     getPurposeList();
   }
 
@@ -130,7 +123,7 @@ class PurposeNotifier extends StateNotifier<PurposeEntity> {
 
   Future<void> updateText(int purposeId) async {
     final selectedPurpose = await DatabaseManager.shared.getPurposeMasterData(purposeId)
-        ?? PurposeEntity(id: 0, purposeName: "未設定");
+        ?? PurposeEntity(id: 1, purposeName: "未設定");
     state = selectedPurpose;
   }
 }

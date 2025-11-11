@@ -2,6 +2,7 @@ enum FavoriteMenuItem {
   edit("編集"),
   copyUrl("URLをコピー"),
   openBrowser("ブラウザで開く"),
+  delete("削除"),
   unknown("不明");
 
   const FavoriteMenuItem(this.name);

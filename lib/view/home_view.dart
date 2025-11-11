@@ -10,11 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:seeking_my_place/Common/Enum/favorite_menu_item.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -75,7 +75,22 @@ class HomeViewState extends ConsumerState<HomeView> {
                     parent: parentContainer, // ← 親スコープを明示的に継承！
                     overrides: [
                       urlTextFieldProvider.overrideWith(
-                            (ref) => TextFieldNotifier("https://example.com"),
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      placeNameTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      addressTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      categoryTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      purposeTextFieldProvider.overrideWith(
+                              (ref) => PurposeNotifier(PurposeEntity(id: 1, purposeName: "未設定"))
+                      ),
+                      isVisitedTextFieldProvider.overrideWith(
+                            (ref) => CheckBoxNotifier(false),
                       ),
                     ],
                   ),
@@ -300,36 +315,7 @@ class HomeViewState extends ConsumerState<HomeView> {
                     }
                     distanceString = "${distance.toStringAsFixed(1)}km";
                   }
-                  return /*Slidable(
-                      key: UniqueKey(),
-                      startActionPane: ActionPane(motion: const ScrollMotion(),
-                          extentRatio: 0.2,
-                          children: [
-                            SlidableAction(onPressed: (_) {
-                              print("お気に入りデータピン留めする");
-                            },
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                icon: Icons.push_pin)
-                          ]
-                      ),
-                      endActionPane: ActionPane(motion: const ScrollMotion(),
-                          extentRatio: 0.2,
-                          children: [
-                            SlidableAction(onPressed: (_) async {
-                              int? deleteId = favoritePlace.id;
-                              if (deleteId == null) {
-                                return;
-                              }
-                              ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
-                              _updateSettingData();
-                            },
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                icon: Icons.delete)
-                          ]
-                      ),
-                      child:*/ Container(
+                  return Container(
                           padding: const EdgeInsets.all(0),
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
@@ -380,7 +366,25 @@ class HomeViewState extends ConsumerState<HomeView> {
                                         MaterialPageRoute(
                                           builder: (_) => ProviderScope(
                                             overrides: [
-                                              urlTextFieldProvider.overrideWith((ref) => TextFieldNotifier(favoritePlace.url)),
+                                              urlTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.url)
+                                              ),
+                                              placeNameTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.placeName)
+                                              ),
+                                              addressTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.address)
+                                              ),
+                                              categoryTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.category)
+                                              ),
+                                              purposeTextFieldProvider.overrideWith((ref) {
+                                                final purposeEntity = (PurposeEntity(id: 0, purposeName: favoritePlace.purpose));
+                                                return PurposeNotifier(purposeEntity);
+                                              }),
+                                              isVisitedTextFieldProvider.overrideWith(
+                                                    (ref) => CheckBoxNotifier(favoritePlace.isVisited),
+                                              ),
                                             ],
                                             child: PlaceRegisterView(),
                                           ),
@@ -394,6 +398,14 @@ class HomeViewState extends ConsumerState<HomeView> {
                                     case FavoriteMenuItem.openBrowser:
                                       _openWebPage(favoritePlace.url);
                                       break;
+                                    case FavoriteMenuItem.delete:
+                                      int? deleteId = favoritePlace.id;
+                                      if (deleteId == null) {
+                                        return;
+                                      }
+                                      ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
+                                      _updateSettingData();
+                                      break;
                                     default:
                                       print("不明なメニュー");
                                       break;
@@ -402,9 +414,14 @@ class HomeViewState extends ConsumerState<HomeView> {
                                 itemBuilder: (BuildContext context) {
                                   var menuItem = FavoriteMenuItem.getUseableString();
                                   return menuItem.map((String menuString) {
+                                    var text = Text(menuString);
+                                    if (menuString == FavoriteMenuItem.delete.name) {
+                                      text = Text(menuString,
+                                      style: const TextStyle(color: Colors.red));
+                                    }
                                     return PopupMenuItem(
                                       value: menuString,
-                                      child: Text(menuString),
+                                      child: text,
                                     );
                                   }).toList();
                                 },
@@ -454,8 +471,8 @@ class HomeViewState extends ConsumerState<HomeView> {
         DatabaseManager.shared.columnPlaceListLatitude,
         DatabaseManager.shared.columnPlaceListLongitude,
         DatabaseManager.shared.columnPlaceListUrl,
-        DatabaseManager.shared.columnPlaceListPurpose,
         DatabaseManager.shared.columnPlaceListCategory,
+        DatabaseManager.shared.columnPlaceListPurpose,
         DatabaseManager.shared.columnPlaceListIsVisited,
         DatabaseManager.shared.columnPlaceListRegisterAt,
         DatabaseManager.shared.columnPlaceListUpdateAt
@@ -471,8 +488,8 @@ class HomeViewState extends ConsumerState<HomeView> {
         place.latitude,
         place.longitude,
         place.url,
-        place.purpose,
         place.category,
+        place.purpose,
         place.isVisited,
         place.registerAt,
         place.updateAt,

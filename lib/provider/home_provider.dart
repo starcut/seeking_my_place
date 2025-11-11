@@ -122,7 +122,7 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
 
   Future<String> getPurposeName(int purposeId) async {
     PurposeEntity purpose = await DatabaseManager.shared.getPurposeMasterData(purposeId)
-        ?? PurposeEntity(id: 0, purposeName: "未設定");
+        ?? PurposeEntity(id: 1, purposeName: "未設定");
     return purpose.purposeName;
   }
   
@@ -207,7 +207,7 @@ class MarkerListProvider extends StateNotifier<Set<Marker>> {
 
       var markerColor = BitmapDescriptor.hueRed;
       switch (favoritePlace.purpose) {
-        case 0:
+        case 1:
           markerColor = BitmapDescriptor.hueRed;
           break;
         default:

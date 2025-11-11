@@ -78,7 +78,6 @@ class SettingView extends ConsumerWidget {
                   children: list,
                   onSelectedItemChanged: (int index) {
                     ref.read(listCountSettingProvider.notifier).updateListCount(countList[index], index);
-                    print("更新後の表示件数${countList[index]}");
                   },
                 )
             ),
@@ -117,7 +116,6 @@ class SettingView extends ConsumerWidget {
                   onChanged: (rangeValue) async {
                 double rangeValueAbout = double.parse(rangeValue.toStringAsFixed(2));
                 await ref.read(rangeSettingProvider.notifier).updateRange(rangeValueAbout);
-                print("更新後：${rangeValue}");
               })
           )
         ],

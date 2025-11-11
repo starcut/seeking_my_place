@@ -19,22 +19,53 @@ class PlaceRegisterView extends ConsumerStatefulWidget {
 
 class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
   var selectedIndex = 0;
-  TextEditingController _controller = TextEditingController(text: "");
+  TextEditingController _urlController = TextEditingController(text: "");
+  TextEditingController _placeNameController = TextEditingController(text: "");
+  TextEditingController _addressController = TextEditingController(text: "");
+  TextEditingController _categoryController = TextEditingController(text: "");
+  TextEditingController _purposeController = TextEditingController(text: "");
 
   @override
   void initState() {
     super.initState();
-    // ref.read(purposeListSettingProvider.notifier).getPurposeListAll();
-    _controller = TextEditingController(text: "");
-    _controller.addListener(() {
-      ref.read(urlTextFieldProvider.notifier).updateText(_controller.text);
-      print(ref.watch(urlTextFieldProvider));
+    Future(() async {
+      ref.read(purposeListSettingProvider.notifier).getPurposeListAll();
+    });
+
+    _urlController = TextEditingController(text: "");
+    _urlController.addListener(() {
+      ref.read(urlTextFieldProvider.notifier).updateText(_urlController.text);
+    });
+
+    _placeNameController = TextEditingController(text: "");
+    _placeNameController.addListener(() {
+      ref.read(placeNameTextFieldProvider.notifier).updateText(_placeNameController.text);
+    });
+
+    _addressController = TextEditingController(text: "");
+    _addressController.addListener(() {
+      ref.read(addressTextFieldProvider.notifier).updateText(_addressController.text);
+    });
+
+    _categoryController = TextEditingController(text: "");
+    _categoryController.addListener(() {
+      ref.read(categoryTextFieldProvider.notifier).updateText(_categoryController.text);
+    });
+
+    _purposeController = TextEditingController(text: "");
+    _purposeController.addListener(() {
+      ref.read(purposeTextFieldProvider).purposeName = _purposeController.text;
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _urlController.dispose();
+    _placeNameController.dispose();
+    _addressController.dispose();
+    _categoryController.dispose();
+    _purposeController.dispose();
+
     super.dispose();
   }
 
@@ -76,19 +107,19 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
     var text = "";
     switch (inputItem) {
       case InputItem.url:
-        _controller = TextEditingController(text: ref.watch(urlTextFieldProvider));
+        _urlController = TextEditingController(text: ref.watch(urlTextFieldProvider));
         break;
       case InputItem.placeName:
-        text = ref.watch(placeNameTextFieldProvider);
+        _placeNameController = TextEditingController(text: ref.watch(placeNameTextFieldProvider));
         break;
       case InputItem.address:
-        // text = ref.watch(addressTextFieldProvider);
+        _addressController = TextEditingController(text: ref.watch(addressTextFieldProvider));
         break;
       case InputItem.category:
-        // text = ref.watch(categoryTextFieldProvider);
+        _categoryController = TextEditingController(text: ref.watch(categoryTextFieldProvider));
         break;
       case InputItem.purpose:
-        // text = ref.watch(purposeTextFieldProvider).purposeName;
+        _purposeController = TextEditingController(text: ref.watch(purposeTextFieldProvider).purposeName);
         break;
       default:
         break;
@@ -108,7 +139,7 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
             )),
           (inputItem == InputItem.purpose) ?
             TextFormField(
-              controller: _controller,
+              controller: getTextEditingController(inputItem),
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: hintText,
@@ -122,12 +153,12 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
                 ref.read(purposeTextFieldProvider).purposeName = text;
               },
             ) : TextField(
-              controller: _controller,
+              controller: getTextEditingController(inputItem),
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: hintText,
               ),
-              onChanged: (text) async {
+              onSubmitted: (text) async {
                 switch (inputItem) {
                   case InputItem.url:
                     ref.read(urlTextFieldProvider.notifier).updateText(text);
@@ -156,6 +187,23 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
     );
   }
 
+  TextEditingController getTextEditingController(InputItem inputItem) {
+    switch (inputItem) {
+      case InputItem.url:
+        return _urlController;
+      case InputItem.placeName:
+        return _placeNameController;
+      case InputItem.address:
+        return _addressController;
+      case InputItem.category:
+        return _categoryController;
+      case InputItem.purpose:
+        return _purposeController;
+      default:
+        return TextEditingController(text: "");
+    }
+  }
+
   void showPicker(BuildContext context) {
     final purposeList = ref.read(purposeListSettingProvider);
     final purposeTextList = <Text>[];
@@ -182,7 +230,7 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
         ),
       );
     }).then((_) {
-      _controller.value = TextEditingValue(text: purposeList[selectedIndex].purposeName);
+      _purposeController.value = TextEditingValue(text: purposeList[selectedIndex].purposeName);
     });
   }
 
@@ -248,7 +296,7 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
           ref.read(placeNameTextFieldProvider.notifier).updateText("");
           ref.read(addressTextFieldProvider.notifier).updateText("");
           ref.read(categoryTextFieldProvider.notifier).updateText("");
-          ref.read(purposeTextFieldProvider.notifier).updateText(0);
+          ref.read(purposeTextFieldProvider.notifier).updateText(1);
           ref.read(isVisitedTextFieldProvider.notifier).updateText(false);
           
           Navigator.pop(context, true);
