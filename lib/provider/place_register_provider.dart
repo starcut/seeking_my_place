@@ -8,25 +8,28 @@ import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
 // 1. TextFieldの値を管理するプロバイダーを作成
-final urlTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier();
+final urlTextFieldProviderFamily =
+StateNotifierProvider.family<TextFieldNotifier, String, String>((ref, url) {
+  return TextFieldNotifier(url);
+});
+final urlTextFieldProvider =
+StateNotifierProvider<TextFieldNotifier, String>((ref) {
+  throw UnimplementedError('urlTextFieldProvider not overridden');
 });
 final placeNameTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier();
+  return TextFieldNotifier("");
 });
 final addressTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier();
+  return TextFieldNotifier("");
 });
 final categoryTextFieldProvider = StateNotifierProvider<TextFieldNotifier, String>((ref) {
-  return TextFieldNotifier();
+  return TextFieldNotifier("");
 });
 
 class TextFieldNotifier extends StateNotifier<String> {
-  TextFieldNotifier() : super('');
+  TextFieldNotifier(String text) : super(text);
 
-  void updateText(String text) {
-    state = text;
-  }
+  void updateText(String text) => state = text;
 
   Future<LatLng?> getLatLngFromAddress(String address) async {
     try {

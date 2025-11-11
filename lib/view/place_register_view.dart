@@ -10,18 +10,36 @@ import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider/setting_provider.dart';
 
-class PlaceRegisterView extends ConsumerWidget {
-
+class PlaceRegisterView extends ConsumerStatefulWidget {
   PlaceRegisterView({super.key});
 
+  @override
+  PlaceRegisterViewState createState() => PlaceRegisterViewState();
+}
+
+class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
   var selectedIndex = 0;
+  TextEditingController _controller = TextEditingController(text: "");
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(purposeListSettingProvider.notifier).getPurposeListAll();
+  void initState() {
+    super.initState();
+    // ref.read(purposeListSettingProvider.notifier).getPurposeListAll();
+    _controller = TextEditingController(text: "");
+    _controller.addListener(() {
+      ref.read(urlTextFieldProvider.notifier).updateText(_controller.text);
+      print(ref.watch(urlTextFieldProvider));
     });
+  }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme
@@ -38,14 +56,14 @@ class PlaceRegisterView extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    registerItemCellView(ref, context, InputItem.url, "https://"),
-                    registerItemCellView(ref, context, InputItem.placeName, ""),
-                    registerItemCellView(ref, context, InputItem.address, ""),
-                    registerItemCellView(ref, context, InputItem.category, ""),
-                    registerItemCellView(ref, context, InputItem.purpose, ""),
-                    registerItemCheckBoxCellView(ref, InputItem.visited),
+                    registerItemCellView(context, InputItem.url, "https://"),
+                    registerItemCellView(context, InputItem.placeName, ""),
+                    registerItemCellView(context, InputItem.address, ""),
+                    registerItemCellView(context, InputItem.category, ""),
+                    registerItemCellView(context, InputItem.purpose, ""),
+                    registerItemCheckBoxCellView(InputItem.visited),
                     const SizedBox(height: 15),
-                    buttonArea(ref, context)
+                    buttonArea(context)
                   ],
                 )
             )
@@ -54,29 +72,27 @@ class PlaceRegisterView extends ConsumerWidget {
   }
 
   // 登録のセル
-  Widget registerItemCellView(WidgetRef ref, BuildContext context, InputItem inputItem, String hintText) {
+  Widget registerItemCellView(BuildContext context, InputItem inputItem, String hintText) {
     var text = "";
     switch (inputItem) {
       case InputItem.url:
-        text = ref.watch(urlTextFieldProvider);
+        _controller = TextEditingController(text: ref.watch(urlTextFieldProvider));
         break;
       case InputItem.placeName:
         text = ref.watch(placeNameTextFieldProvider);
         break;
       case InputItem.address:
-        text = ref.watch(addressTextFieldProvider);
+        // text = ref.watch(addressTextFieldProvider);
         break;
       case InputItem.category:
-        text = ref.watch(categoryTextFieldProvider);
+        // text = ref.watch(categoryTextFieldProvider);
         break;
       case InputItem.purpose:
-        text = ref.watch(purposeTextFieldProvider).purposeName;
+        // text = ref.watch(purposeTextFieldProvider).purposeName;
         break;
       default:
         break;
     }
-
-    final controller = TextEditingController(text: text);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -92,7 +108,7 @@ class PlaceRegisterView extends ConsumerWidget {
             )),
           (inputItem == InputItem.purpose) ?
             TextFormField(
-              controller: controller,
+              controller: _controller,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: hintText,
@@ -100,13 +116,13 @@ class PlaceRegisterView extends ConsumerWidget {
               onTap: () {
                 // キーボードが出ないようにする
                 FocusScope.of(context).requestFocus(new FocusNode());
-                showPicker(context, ref, controller);
+                showPicker(context);
               },
               onChanged: (text) async {
                 ref.read(purposeTextFieldProvider).purposeName = text;
               },
             ) : TextField(
-              controller: controller,
+              controller: _controller,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: hintText,
@@ -140,7 +156,7 @@ class PlaceRegisterView extends ConsumerWidget {
     );
   }
 
-  void showPicker(BuildContext context, WidgetRef ref, TextEditingController controller) {
+  void showPicker(BuildContext context) {
     final purposeList = ref.read(purposeListSettingProvider);
     final purposeTextList = <Text>[];
     for (PurposeEntity purpose in purposeList) {
@@ -166,11 +182,11 @@ class PlaceRegisterView extends ConsumerWidget {
         ),
       );
     }).then((_) {
-      controller.value = TextEditingValue(text: purposeList[selectedIndex].purposeName);
+      _controller.value = TextEditingValue(text: purposeList[selectedIndex].purposeName);
     });
   }
 
-  Widget registerItemCheckBoxCellView(WidgetRef ref, InputItem inputItem) {
+  Widget registerItemCheckBoxCellView(InputItem inputItem) {
     return Consumer(builder: (context, ref, _) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -203,7 +219,7 @@ class PlaceRegisterView extends ConsumerWidget {
     });
   }
 
-  Widget buttonArea(WidgetRef ref, BuildContext context) {
+  Widget buttonArea(BuildContext context) {
     const buttonSize = Size(150, 40);
 
     var registerButton = OutlinedButton(
