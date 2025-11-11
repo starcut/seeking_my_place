@@ -2,23 +2,23 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
-import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:seeking_my_place/Common/Enum/favorite_menu_item.dart';
-import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/api/controller/database_manager.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_menu_item.dart';
+import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider/home_provider.dart';
 import 'package:seeking_my_place/provider/place_register_provider.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
@@ -42,6 +42,10 @@ class HomeViewState extends ConsumerState<HomeView> {
     // TODO: implement initState
     super.initState();
 
+    Future(() async {
+      await moveCamera();
+      await _updateSettingData();
+    });
   }
 
   @override
@@ -55,12 +59,12 @@ class HomeViewState extends ConsumerState<HomeView> {
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
         onPressed: () async {
-      var result = await Navigator.push(context, MaterialPageRoute(
-          builder: (context) {
-            return SettingView();
-          }));
-      await _updateSettingData();
-    });
+          var result = await Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return SettingView();
+              }));
+          await _updateSettingData();
+        });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async {
@@ -110,37 +114,35 @@ class HomeViewState extends ConsumerState<HomeView> {
 
     final exportButton = IconButton(icon: const Icon(Icons.upload),
         onPressed: () async {
-      await shareFile();
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await moveCamera();
-      await _updateSettingData();
-    });
+          await shareFile();
+        });
 
     return Scaffold(
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-              title: const Text(''),
-              actions: [
-                settingButton,
-                registerButton,
-                importButton,
-                exportButton
-              ],
-            ),
-            body: Consumer(
-              builder: (context, ref, child) {
-                return Column(children: [
-                  settingView(ref),
-                  if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
-                    googleMapView(),
-                  ],
-                  favoriteListView()
-                ],);
-              }
-            )
-        );
+        appBar: AppBar(
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inversePrimary,
+          title: const Text(''),
+          actions: [
+            settingButton,
+            registerButton,
+            importButton,
+            exportButton
+          ],
+        ),
+        body: Consumer(
+            builder: (context, ref, child) {
+              return Column(children: [
+                settingView(ref),
+                if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
+                  googleMapView(),
+                ],
+                favoriteListView()
+              ],);
+            }
+        )
+    );
   }
 
   Future<void> moveCamera() async {
@@ -166,7 +168,7 @@ class HomeViewState extends ConsumerState<HomeView> {
     final updateButton = IconButton(icon: const Icon(Icons.refresh),
         onPressed: () async {
           await _updateSettingData();
-    });
+        });
 
     return Consumer(
       builder: (context, ref, _) {

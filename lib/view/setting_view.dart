@@ -14,14 +14,16 @@ class SettingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inversePrimary,
           title: const Text("設定"),
         ),
-        body:  Expanded(
-            child:Column(
+        body: Expanded(
+            child: Column(
               children: [
                 countSettingWidget(context, ref),
                 rangeSettingWidget(context, ref),
@@ -43,18 +45,18 @@ class SettingView extends ConsumerWidget {
           SizedBox(
             width: 180,
             child: TextFormField(
-            controller: controller,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-            onTap: () {
-              // キーボードが出ないようにする
-              FocusScope.of(context).requestFocus(new FocusNode());
-              showPicker(context, ref, controller);
-            },
-          ),),
+              controller: controller,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+              onTap: () {
+                // キーボードが出ないようにする
+                FocusScope.of(context).requestFocus(new FocusNode());
+                showPicker(context, ref, controller);
+              },
+            ),),
           const Text("件")
-          ]
+        ]
     );
   }
 
@@ -83,8 +85,8 @@ class SettingView extends ConsumerWidget {
             ),
           );
         }).then((_) {
-          final countSetting = ref.read(listCountSettingProvider);
-          controller.value = TextEditingValue(text: countSetting.toString());
+      final countSetting = ref.read(listCountSettingProvider);
+      controller.value = TextEditingValue(text: countSetting.toString());
     });
   }
 
@@ -92,34 +94,34 @@ class SettingView extends ConsumerWidget {
     var range = ref.watch(rangeSettingProvider);
 
     return Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text("検索範囲[km]: "),
-              Text(range.toStringAsFixed(2))
-            ],
-          ),
-          SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                activeTrackColor: Colors.green,
-                inactiveTrackColor: Colors.grey,
-                trackHeight: 8.0,
-                thumbColor: Colors.white,
-                overlayColor: Colors.blue,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 15.0),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
-              ),
-              child: Slider(value: range,
-                  min: 1,
-                  max: 100,
-                  onChanged: (rangeValue) async {
-                double rangeValueAbout = double.parse(rangeValue.toStringAsFixed(2));
-                await ref.read(rangeSettingProvider.notifier).updateRange(rangeValueAbout);
-              })
-          )
-        ],
-      );
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text("検索範囲[km]: "),
+            Text(range.toStringAsFixed(2))
+          ],
+        ),
+        SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Colors.green,
+              inactiveTrackColor: Colors.grey,
+              trackHeight: 8.0,
+              thumbColor: Colors.white,
+              overlayColor: Colors.blue,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 15.0),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
+            ),
+            child: Slider(value: range,
+                min: 1,
+                max: 100,
+                onChanged: (rangeValue) async {
+                  double rangeValueAbout = double.parse(rangeValue.toStringAsFixed(2));
+                  await ref.read(rangeSettingProvider.notifier).updateRange(rangeValueAbout);
+                })
+        )
+      ],
+    );
   }
 
   Widget purposeListWidget(BuildContext context, WidgetRef ref) {
@@ -195,40 +197,43 @@ class SettingView extends ConsumerWidget {
 
   Widget purposeListCell(BuildContext context, WidgetRef ref, PurposeEntity entity) =>
       GestureDetector(
-        child: Container(
-          padding: const EdgeInsets.all(0),
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-          ),
-          width: MediaQuery.of(context).size.width,
-          height: 65,
           child: Container(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(0),
             decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        entity.purposeName,
-                        style: const TextStyle(
-                            color: Colors.black, fontSize: 16.0),
-                      ),
-                      IconButton(
-                          icon: const Icon(Icons.settings),
-                          onPressed: () =>
-                              {registerDialog(context, ref, entity)}),
-                    ],
-                  ),
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
+            height: 65,
+            child: Container(
+                padding: const EdgeInsets.all(12.0),
+                decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
                 ),
-              ],
-            )),
-      ));
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            entity.purposeName,
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 16.0),
+                          ),
+                          IconButton(
+                              icon: const Icon(Icons.settings),
+                              onPressed: () =>
+                              {registerDialog(context, ref, entity)}),
+                        ],
+                      ),
+                    ),
+                  ],
+                )),
+          ));
 
   Widget newPurposeRegisterCell(BuildContext context, WidgetRef ref) {
     return GestureDetector(
@@ -236,7 +241,7 @@ class SettingView extends ConsumerWidget {
           padding: const EdgeInsets.all(12.0),
           decoration: const BoxDecoration(
               border:
-                  Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
+              Border(bottom: BorderSide(color: Colors.grey, width: 1.0))),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -255,8 +260,7 @@ class SettingView extends ConsumerWidget {
     );
   }
 
-  void registerDialog(
-      BuildContext context, WidgetRef ref, PurposeEntity? entity) {
+  void registerDialog(BuildContext context, WidgetRef ref, PurposeEntity? entity) {
     final TextEditingController controller = TextEditingController();
     controller.text = entity?.purposeName ?? "";
 
