@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final rangeSettingProvider = StateNotifierProvider<RangeNotifier, double>((ref) {
   return RangeNotifier();

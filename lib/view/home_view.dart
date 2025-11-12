@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:csv/csv.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -17,89 +17,135 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/api/controller/database_manager.dart';
-import 'package:seeking_my_place/entity/favorite_place_entity.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_menu_item.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 import 'package:seeking_my_place/provider/home_provider.dart';
+import 'package:seeking_my_place/provider/place_register_provider.dart';
 import 'package:seeking_my_place/view/place_register_view.dart';
 import 'package:seeking_my_place/view/setting_view.dart';
 
-class HomeView extends ConsumerWidget {
-  HomeView({super.key});
+class HomeView extends ConsumerStatefulWidget {
+  const HomeView({super.key});
 
-  late List<PurposeEntity> purposeList;
-  late List<FavoritePlaceEntity> favoriteList;
+  @override
+  HomeViewState createState() => HomeViewState();
+}
 
+class HomeViewState extends ConsumerState<HomeView> {
   final mapControllerCompleter = Completer<GoogleMapController>();
   Future<void> onMapCreated(GoogleMapController controller) async {
     mapControllerCompleter.complete(controller);
   }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    Future(() async {
+      await moveCamera();
+      await _updateSettingData();
+    });
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
         onPressed: () async {
-      var result = await Navigator.push(context, MaterialPageRoute(
-          builder: (context) {
-            return SettingView();
-          }));
-      await _updateSettingData(ref);
-    });
+          var result = await Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return SettingView();
+              }));
+          await _updateSettingData();
+        });
 
     final registerButton = IconButton(icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () async {
-          await Navigator.push(context,
-              MaterialPageRoute(builder: (context) => PlaceRegisterView(),)
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) {
+                // 親の container を明示的に取得する（←これが重要！）
+                final parentContainer = ProviderScope.containerOf(context, listen: false);
+
+                return UncontrolledProviderScope(
+                  container: ProviderContainer(
+                    parent: parentContainer, // ← 親スコープを明示的に継承！
+                    overrides: [
+                      urlTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      placeNameTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      addressTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      categoryTextFieldProvider.overrideWith(
+                              (ref) => TextFieldNotifier("")
+                      ),
+                      purposeTextFieldProvider.overrideWith(
+                              (ref) => PurposeNotifier(PurposeEntity(id: 1, purposeName: "未設定"))
+                      ),
+                      isVisitedTextFieldProvider.overrideWith(
+                            (ref) => CheckBoxNotifier(false),
+                      ),
+                    ],
+                  ),
+                  child: PlaceRegisterView(),
+                );
+              },
+            ),
           );
-          await _updateSettingData(ref);
+          await _updateSettingData();
         }
     );
 
     final importButton = IconButton(icon: const Icon(Icons.download),
         onPressed: () async {
-          await _importDatabase(context, ref);
+          await _importDatabase();
         });
 
     final exportButton = IconButton(icon: const Icon(Icons.upload),
         onPressed: () async {
-      await shareFile();
-    });
+          await shareFile();
+        });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await moveCamera(ref);
-      await _updateSettingData(ref);
-    });
-
-    return MaterialApp(
-        theme: ThemeData(primarySwatch: Colors.grey),
-        home: Scaffold(
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-              title: const Text(''),
-              actions: [
-                settingButton,
-                registerButton,
-                importButton,
-                exportButton
-              ],
-            ),
-            body: Consumer(
-              builder: (context, ref, child) {
-                return Column(children: [
-                  settingView(ref),
-                  if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
-                    googleMapView(context, ref),
-                  ],
-                  favoriteListView(context, ref)
-                ],);
-              }
-            )
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inversePrimary,
+          title: const Text(''),
+          actions: [
+            settingButton,
+            registerButton,
+            importButton,
+            exportButton
+          ],
+        ),
+        body: Consumer(
+            builder: (context, _, child) {
+              return Column(children: [
+                settingView(ref),
+                if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
+                  googleMapView(),
+                ],
+                favoriteListView()
+              ],);
+            }
         )
     );
   }
 
-  Future<void> moveCamera(WidgetRef ref) async {
+  Future<void> moveCamera() async {
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
     var currentLocation = ref.watch(locationSearchStateNotifierProvider);
     final mapController = await mapControllerCompleter.future;
@@ -121,8 +167,8 @@ class HomeView extends ConsumerWidget {
   Widget settingView(WidgetRef ref) {
     final updateButton = IconButton(icon: const Icon(Icons.refresh),
         onPressed: () async {
-          await _updateSettingData(ref);
-    });
+          await _updateSettingData();
+        });
 
     return Consumer(
       builder: (context, ref, _) {
@@ -137,7 +183,7 @@ class HomeView extends ConsumerWidget {
               ],
             ),
             const Spacer(),
-            googleMapSwitch(ref),
+            googleMapSwitch(),
             updateButton
           ],
         );
@@ -145,7 +191,7 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Widget googleMapView(BuildContext context, WidgetRef ref) {
+  Widget googleMapView() {
     Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
     var currentLocation = ref.read(locationSearchStateNotifierProvider);
     var range = ref.read(settingStateNotifierProvider).range;
@@ -220,7 +266,7 @@ class HomeView extends ConsumerWidget {
     return distance;
   }
 
-  Widget googleMapSwitch(WidgetRef ref) {
+  Widget googleMapSwitch() {
     bool isDisplay = ref.watch(googleMapDisplayStateNotifierProvider);
     return Row(
       children: [
@@ -233,7 +279,7 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Widget favoriteListView(BuildContext context, WidgetRef ref) {
+  Widget favoriteListView() {
     var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
 
     if (favorite.isEmpty) {
@@ -256,11 +302,11 @@ class HomeView extends ConsumerWidget {
     return Expanded(
         child: RefreshIndicator(
             onRefresh: () async {
-              await _updateSettingData(ref);
+              await _updateSettingData();
             },
             child: ListView.builder(
                 itemCount: favorite.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (_, index) {
                   final favoritePlace = favorite[index];
                   double? distance = distanceFromCurrentLocation(currentLocation, favoritePlace.longitude, favoritePlace.latitude, favoritePlace.placeName);
                   String distanceString = "";
@@ -271,36 +317,7 @@ class HomeView extends ConsumerWidget {
                     }
                     distanceString = "${distance.toStringAsFixed(1)}km";
                   }
-                  return Slidable(
-                      key: UniqueKey(),
-                      startActionPane: ActionPane(motion: const ScrollMotion(),
-                          extentRatio: 0.2,
-                          children: [
-                            SlidableAction(onPressed: (_) {
-                              print("お気に入りデータピン留めする");
-                            },
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                icon: Icons.push_pin)
-                          ]
-                      ),
-                      endActionPane: ActionPane(motion: const ScrollMotion(),
-                          extentRatio: 0.2,
-                          children: [
-                            SlidableAction(onPressed: (_) async {
-                              int? deleteId = favoritePlace.id;
-                              if (deleteId == null) {
-                                return;
-                              }
-                              ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
-                              _updateSettingData(ref);
-                            },
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                icon: Icons.delete)
-                          ]
-                      ),
-                      child: Container(
+                  return Container(
                           padding: const EdgeInsets.all(0),
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
@@ -343,13 +360,77 @@ class HomeView extends ConsumerWidget {
                                     ],
                                   )
                               ),
-                              IconButton(icon: const Icon(Icons.language),
-                                onPressed: (){
-                                  _openWebPage(favoritePlace.url);
-                                })
+                              PopupMenuButton<String>(
+                                onSelected: (String selected) {
+                                  switch (FavoriteMenuItem.getFavoriteMenuItemFromString(selected)) {
+                                    case FavoriteMenuItem.edit:
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ProviderScope(
+                                            overrides: [
+                                              urlTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.url)
+                                              ),
+                                              placeNameTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.placeName)
+                                              ),
+                                              addressTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.address)
+                                              ),
+                                              categoryTextFieldProvider.overrideWith(
+                                                      (ref) => TextFieldNotifier(favoritePlace.category)
+                                              ),
+                                              purposeTextFieldProvider.overrideWith((ref) {
+                                                final purposeEntity = (PurposeEntity(id: 0, purposeName: favoritePlace.purpose));
+                                                return PurposeNotifier(purposeEntity);
+                                              }),
+                                              isVisitedTextFieldProvider.overrideWith(
+                                                    (ref) => CheckBoxNotifier(favoritePlace.isVisited),
+                                              ),
+                                            ],
+                                            child: PlaceRegisterView(),
+                                          ),
+                                        ),
+                                      );
+                                      break;
+                                    case FavoriteMenuItem.copyUrl:
+                                      final copyUrl = ClipboardData(text: favoritePlace.url);
+                                      Clipboard.setData(copyUrl);
+                                      break;
+                                    case FavoriteMenuItem.openBrowser:
+                                      _openWebPage(favoritePlace.url);
+                                      break;
+                                    case FavoriteMenuItem.delete:
+                                      int? deleteId = favoritePlace.id;
+                                      if (deleteId == null) {
+                                        return;
+                                      }
+                                      ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
+                                      _updateSettingData();
+                                      break;
+                                    default:
+                                      print("不明なメニュー");
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  var menuItem = FavoriteMenuItem.getUseableString();
+                                  return menuItem.map((String menuString) {
+                                    var text = Text(menuString);
+                                    if (menuString == FavoriteMenuItem.delete.name) {
+                                      text = Text(menuString,
+                                      style: const TextStyle(color: Colors.red));
+                                    }
+                                    return PopupMenuItem(
+                                      value: menuString,
+                                      child: text,
+                                    );
+                                  }).toList();
+                                },
+                              )
                             ],
                           )
-                      )
+                      // )
                   );
                 }
             )
@@ -357,13 +438,13 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Future _updateSettingData(WidgetRef ref) async {
+  Future _updateSettingData() async {
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
     await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
     if (ref.watch(googleMapDisplayStateNotifierProvider)) {
       await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
-      await moveCamera(ref);
+      await moveCamera();
     }
   }
 
@@ -392,8 +473,8 @@ class HomeView extends ConsumerWidget {
         DatabaseManager.shared.columnPlaceListLatitude,
         DatabaseManager.shared.columnPlaceListLongitude,
         DatabaseManager.shared.columnPlaceListUrl,
-        DatabaseManager.shared.columnPlaceListPurpose,
         DatabaseManager.shared.columnPlaceListCategory,
+        DatabaseManager.shared.columnPlaceListPurpose,
         DatabaseManager.shared.columnPlaceListIsVisited,
         DatabaseManager.shared.columnPlaceListRegisterAt,
         DatabaseManager.shared.columnPlaceListUpdateAt
@@ -409,8 +490,8 @@ class HomeView extends ConsumerWidget {
         place.latitude,
         place.longitude,
         place.url,
-        place.purpose,
         place.category,
+        place.purpose,
         place.isVisited,
         place.registerAt,
         place.updateAt,
@@ -431,7 +512,7 @@ class HomeView extends ConsumerWidget {
   final GlobalKey<ScaffoldMessengerState> _scaffoldKey =
   GlobalKey<ScaffoldMessengerState>();
   // データベースファイルをインポートする関数
-  Future<void> _importDatabase(BuildContext context, WidgetRef ref) async {
+  Future<void> _importDatabase() async {
     try {
       // FilePickerを使用してファイル選択ダイアログを表示
       // FileType.anyを指定することで、すべての種類のファイルを選択可能にします

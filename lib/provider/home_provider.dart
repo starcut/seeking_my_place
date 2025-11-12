@@ -2,12 +2,12 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:seeking_my_place/api/controller/database_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/api/controller/location_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingData {
   final int listCount;
@@ -122,7 +122,7 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
 
   Future<String> getPurposeName(int purposeId) async {
     PurposeEntity purpose = await DatabaseManager.shared.getPurposeMasterData(purposeId)
-        ?? PurposeEntity(id: 0, purposeName: "未設定");
+        ?? PurposeEntity(id: 1, purposeName: "未設定");
     return purpose.purposeName;
   }
   
@@ -207,7 +207,7 @@ class MarkerListProvider extends StateNotifier<Set<Marker>> {
 
       var markerColor = BitmapDescriptor.hueRed;
       switch (favoritePlace.purpose) {
-        case 0:
+        case 1:
           markerColor = BitmapDescriptor.hueRed;
           break;
         default:
