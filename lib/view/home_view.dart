@@ -32,7 +32,7 @@ class HomeView extends ConsumerStatefulWidget {
 }
 
 class HomeViewState extends ConsumerState<HomeView> {
-  final mapControllerCompleter = Completer<GoogleMapController>();
+  Completer<GoogleMapController> mapControllerCompleter = Completer<GoogleMapController>();
   Future<void> onMapCreated(GoogleMapController controller) async {
     mapControllerCompleter.complete(controller);
   }
@@ -42,7 +42,10 @@ class HomeViewState extends ConsumerState<HomeView> {
     // TODO: implement initState
     super.initState();
 
+    mapControllerCompleter = Completer<GoogleMapController>();
+
     Future(() async {
+      await ref.watch(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
       await moveCamera();
       await _updateSettingData();
     });
@@ -51,6 +54,9 @@ class HomeViewState extends ConsumerState<HomeView> {
   @override
   void dispose() {
     // TODO: implement dispose
+    mapControllerCompleter.future.then((controller) {
+      controller.dispose();
+    });
     super.dispose();
   }
 
@@ -146,7 +152,6 @@ class HomeViewState extends ConsumerState<HomeView> {
   }
 
   Future<void> moveCamera() async {
-    await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
     var currentLocation = ref.watch(locationSearchStateNotifierProvider);
     final mapController = await mapControllerCompleter.future;
     final latitude = currentLocation?.latitude;
@@ -192,8 +197,8 @@ class HomeViewState extends ConsumerState<HomeView> {
   }
 
   Widget googleMapView() {
-    Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
     var currentLocation = ref.read(locationSearchStateNotifierProvider);
+    Set<Marker> markers = ref.watch(markerListStateNotifierProvider);
     var range = ref.read(settingStateNotifierProvider).range;
     print("現在表示位置：${currentLocation?.longitude} ${currentLocation?.latitude}");
 
@@ -274,6 +279,13 @@ class HomeViewState extends ConsumerState<HomeView> {
         Switch(value: isDisplay,
             onChanged: (value){
           ref.read(googleMapDisplayStateNotifierProvider.notifier).switchDisplayGoogleMap(value);
+          if (value) {
+            mapControllerCompleter = Completer<GoogleMapController>();
+          } else {
+            mapControllerCompleter.future.then((controller) {
+              controller.dispose();
+            });
+          }
         }),
       ],
     );
@@ -339,7 +351,7 @@ class HomeViewState extends ConsumerState<HomeView> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           if (favoritePlace.isVisited) ... [
-                                            Icon(Icons.check_circle, size: 18, color: Colors.green)
+                                            const Icon(Icons.check_circle, size: 18, color: Colors.green)
                                           ],
                                           Text("${favoritePlace.placeName} ",
                                               style: const TextStyle(fontWeight: FontWeight.bold)),

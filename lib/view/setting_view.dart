@@ -35,9 +35,6 @@ class SettingViewState extends ConsumerState<SettingView> {
 
   @override
   Widget build(BuildContext context) {
-    print("build: ${ref
-        .read(purposeListSettingProvider)
-        .length}");
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme
