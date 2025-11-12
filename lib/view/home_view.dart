@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -65,9 +66,9 @@ class HomeViewState extends ConsumerState<HomeView> {
     // ナビゲーションバーのボタン
     final settingButton = IconButton(icon: const Icon(Icons.settings),
         onPressed: () async {
-          var result = await Navigator.push(context, MaterialPageRoute(
+          await Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                return SettingView();
+                return const SettingView();
               }));
           await _updateSettingData();
         });
@@ -77,12 +78,8 @@ class HomeViewState extends ConsumerState<HomeView> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) {
-                // 親の container を明示的に取得する（←これが重要！）
-                final parentContainer = ProviderScope.containerOf(context, listen: false);
-
                 return UncontrolledProviderScope(
                   container: ProviderContainer(
-                    parent: parentContainer, // ← 親スコープを明示的に継承！
                     overrides: [
                       urlTextFieldProvider.overrideWith(
                               (ref) => TextFieldNotifier("")
@@ -129,12 +126,10 @@ class HomeViewState extends ConsumerState<HomeView> {
               .of(context)
               .colorScheme
               .inversePrimary,
-          title: const Text(''),
+          title: const Text('お気に入り'),
           actions: [
             settingButton,
-            registerButton,
-            importButton,
-            exportButton
+
           ],
         ),
         body: Consumer(
@@ -144,6 +139,20 @@ class HomeViewState extends ConsumerState<HomeView> {
                 if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
                   googleMapView(),
                 ],
+                Container(
+                  decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Spacer(),
+                      registerButton,
+                      importButton,
+                      exportButton
+                    ],
+                  ),
+                ),
                 favoriteListView()
               ],);
             }
@@ -240,7 +249,7 @@ class HomeViewState extends ConsumerState<HomeView> {
           children: <Widget>[
             SizedBox(
                 width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height * 0.5,
+                height: MediaQuery.of(context).size.height * 0.35,
                 child: currentMarker
             ),
           ],
@@ -316,138 +325,155 @@ class HomeViewState extends ConsumerState<HomeView> {
             onRefresh: () async {
               await _updateSettingData();
             },
-            child: ListView.builder(
-                itemCount: favorite.length,
-                itemBuilder: (_, index) {
-                  final favoritePlace = favorite[index];
-                  double? distance = distanceFromCurrentLocation(currentLocation, favoritePlace.longitude, favoritePlace.latitude, favoritePlace.placeName);
-                  String distanceString = "";
-                  if (distance != null) {
-                    if (distance < 1) {
-                      distance = distance * 1000;
-                      distanceString = "${distance.toStringAsFixed(0)}m";
-                    }
-                    distanceString = "${distance.toStringAsFixed(1)}km";
-                  }
-                  return Container(
-                          padding: const EdgeInsets.all(0),
-                          decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
-                          ),
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width,
-                          height: 86,
-                          child:
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                  child:Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          if (favoritePlace.isVisited) ... [
-                                            const Icon(Icons.check_circle, size: 18, color: Colors.green)
-                                          ],
-                                          Text("${favoritePlace.placeName} ",
-                                              style: const TextStyle(fontWeight: FontWeight.bold)),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text("${favoritePlace.category} ",
-                                              style: const TextStyle(fontWeight: FontWeight.bold)),
-                                          Text(
-                                              "${(favoritePlace.purpose == '未設定') ? '' : favoritePlace.purpose}",
-                                              style: const TextStyle(fontWeight: FontWeight.bold)
-                                          )
-                                        ]
-                                      ),
-                                      Text("$distanceString ${favoritePlace.address}")
-                                    ],
-                                  )
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (String selected) {
-                                  switch (FavoriteMenuItem.getFavoriteMenuItemFromString(selected)) {
-                                    case FavoriteMenuItem.edit:
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => ProviderScope(
-                                            overrides: [
-                                              urlTextFieldProvider.overrideWith(
-                                                      (ref) => TextFieldNotifier(favoritePlace.url)
-                                              ),
-                                              placeNameTextFieldProvider.overrideWith(
-                                                      (ref) => TextFieldNotifier(favoritePlace.placeName)
-                                              ),
-                                              addressTextFieldProvider.overrideWith(
-                                                      (ref) => TextFieldNotifier(favoritePlace.address)
-                                              ),
-                                              categoryTextFieldProvider.overrideWith(
-                                                      (ref) => TextFieldNotifier(favoritePlace.category)
-                                              ),
-                                              purposeTextFieldProvider.overrideWith((ref) {
-                                                final purposeEntity = (PurposeEntity(id: 0, purposeName: favoritePlace.purpose));
-                                                return PurposeNotifier(purposeEntity);
-                                              }),
-                                              isVisitedTextFieldProvider.overrideWith(
-                                                    (ref) => CheckBoxNotifier(favoritePlace.isVisited),
-                                              ),
-                                            ],
-                                            child: PlaceRegisterView(),
-                                          ),
-                                        ),
-                                      );
-                                      break;
-                                    case FavoriteMenuItem.copyUrl:
-                                      final copyUrl = ClipboardData(text: favoritePlace.url);
-                                      Clipboard.setData(copyUrl);
-                                      break;
-                                    case FavoriteMenuItem.openBrowser:
-                                      _openWebPage(favoritePlace.url);
-                                      break;
-                                    case FavoriteMenuItem.delete:
-                                      int? deleteId = favoritePlace.id;
-                                      if (deleteId == null) {
-                                        return;
-                                      }
-                                      ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
-                                      _updateSettingData();
-                                      break;
-                                    default:
-                                      print("不明なメニュー");
-                                      break;
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  var menuItem = FavoriteMenuItem.getUseableString();
-                                  return menuItem.map((String menuString) {
-                                    var text = Text(menuString);
-                                    if (menuString == FavoriteMenuItem.delete.name) {
-                                      text = Text(menuString,
-                                      style: const TextStyle(color: Colors.red));
-                                    }
-                                    return PopupMenuItem(
-                                      value: menuString,
-                                      child: text,
-                                    );
-                                  }).toList();
-                                },
-                              )
-                            ],
-                          )
-                      // )
-                  );
-                }
+            child: CustomScrollView(
+                slivers: [
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final favoritePlace = favorite[index];
+                      double? distance = distanceFromCurrentLocation(currentLocation, favoritePlace.longitude, favoritePlace.latitude, favoritePlace.placeName);
+                      String distanceString = "";
+                      if (distance != null) {
+                        if (distance < 1) {
+                          distance = distance * 1000;
+                          distanceString = "${distance.toStringAsFixed(0)}m";
+                        }
+                        distanceString = "${distance.toStringAsFixed(1)}km";
+                      }
+                      return cell(favoritePlace, distanceString);
+                    },
+                      childCount: favorite.length,
+                    ),
+                  )
+                ]
             )
         )
     );
+  }
+
+  Widget cell(FavoritePlaceEntity favoritePlace, String distanceString) {
+    return Container(
+        padding: const EdgeInsets.all(0),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey, width: 1.0))
+        ),
+        width: MediaQuery
+            .of(context)
+            .size
+            .width,
+        height: 86,
+        child:
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (favoritePlace.isVisited) ... [
+                          const Icon(Icons.check_circle, size: 18, color: Colors.green)
+                        ],
+                        Text("${favoritePlace.placeName} ",
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("${favoritePlace.category} ",
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                              "${(favoritePlace.purpose == '未設定') ? '' : favoritePlace.purpose}",
+                              style: const TextStyle(fontWeight: FontWeight.bold)
+                          )
+                        ]
+                    ),
+                    Text("$distanceString ${favoritePlace.address}")
+                  ],
+                )
+            ),
+            PopupMenuButton<String>(
+              onSelected: (String selected) {
+                selectedMenu(favoritePlace, selected);
+              },
+              itemBuilder: (BuildContext context) {
+                return popupMenu();
+              },
+            )
+          ],
+        )
+      // )
+    );
+  }
+
+  void selectedMenu(FavoritePlaceEntity favoritePlace, String selected) {
+    switch (FavoriteMenuItem.getFavoriteMenuItemFromString(selected)) {
+      case FavoriteMenuItem.edit:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ProviderScope(
+              overrides: [
+                urlTextFieldProvider.overrideWith(
+                        (ref) => TextFieldNotifier(favoritePlace.url)
+                ),
+                placeNameTextFieldProvider.overrideWith(
+                        (ref) => TextFieldNotifier(favoritePlace.placeName)
+                ),
+                addressTextFieldProvider.overrideWith(
+                        (ref) => TextFieldNotifier(favoritePlace.address)
+                ),
+                categoryTextFieldProvider.overrideWith(
+                        (ref) => TextFieldNotifier(favoritePlace.category)
+                ),
+                purposeTextFieldProvider.overrideWith((ref) {
+                  final purposeEntity = (PurposeEntity(id: 0, purposeName: favoritePlace.purpose));
+                  return PurposeNotifier(purposeEntity);
+                }),
+                isVisitedTextFieldProvider.overrideWith(
+                      (ref) => CheckBoxNotifier(favoritePlace.isVisited),
+                ),
+              ],
+              child: PlaceRegisterView(),
+            ),
+          ),
+        );
+        break;
+      case FavoriteMenuItem.copyUrl:
+        final copyUrl = ClipboardData(text: favoritePlace.url);
+        Clipboard.setData(copyUrl);
+        break;
+      case FavoriteMenuItem.openBrowser:
+        _openWebPage(favoritePlace.url);
+        break;
+      case FavoriteMenuItem.delete:
+        int? deleteId = favoritePlace.id;
+        if (deleteId == null) {
+          return;
+        }
+        ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
+        _updateSettingData();
+        break;
+      default:
+        print("不明なメニュー");
+        break;
+    }
+  }
+
+  List<PopupMenuItem<String>> popupMenu() {
+    var menuItem = FavoriteMenuItem.getUseableString();
+    return menuItem.map((String menuString) {
+      var text = Text(menuString);
+      if (menuString == FavoriteMenuItem.delete.name) {
+        text = Text(menuString,
+            style: const TextStyle(color: Colors.red));
+      }
+      return PopupMenuItem(
+        value: menuString,
+        child: text,
+      );
+    }).toList();
   }
 
   Future _updateSettingData() async {

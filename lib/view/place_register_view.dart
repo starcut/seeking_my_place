@@ -328,33 +328,10 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
             ))
     );
 
-    var continueToRegisterButton = OutlinedButton(
-        onPressed: () {
-          // データベース登録
-        },
-        style: OutlinedButton.styleFrom(
-            minimumSize: buttonSize,
-            backgroundColor: Colors.white10,
-            foregroundColor: Colors.black,
-            disabledBackgroundColor: Colors.black26,
-            disabledForegroundColor: Colors.black54
-        ),
-        child: Text("続けて登録",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Theme
-                  .of(context)
-                  .primaryColor,
-            ))
-    );
-
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           registerButton,
-          const SizedBox(width: 30),
-          continueToRegisterButton
         ]
     );
   }
