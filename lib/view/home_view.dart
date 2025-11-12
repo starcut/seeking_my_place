@@ -132,7 +132,7 @@ class HomeViewState extends ConsumerState<HomeView> {
           ],
         ),
         body: Consumer(
-            builder: (context, ref, child) {
+            builder: (context, _, child) {
               return Column(children: [
                 settingView(ref),
                 if (ref.watch(googleMapDisplayStateNotifierProvider)) ... [
@@ -306,7 +306,7 @@ class HomeViewState extends ConsumerState<HomeView> {
             },
             child: ListView.builder(
                 itemCount: favorite.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (_, index) {
                   final favoritePlace = favorite[index];
                   double? distance = distanceFromCurrentLocation(currentLocation, favoritePlace.longitude, favoritePlace.latitude, favoritePlace.placeName);
                   String distanceString = "";
