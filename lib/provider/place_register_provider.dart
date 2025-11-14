@@ -9,7 +9,14 @@ import 'package:seeking_my_place/api/controller/database_manager.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:seeking_my_place/entity/purpose_entity.dart';
 
-// 1. TextFieldの値を管理するプロバイダーを作成
+final favoriteIdFieldProvider =
+StateNotifierProvider<FavoriteIdNotifier, int?>((ref) {
+  throw UnimplementedError('favoriteIdFieldProvider not overridden');
+});
+class FavoriteIdNotifier extends StateNotifier<int?> {
+  FavoriteIdNotifier(id) : super(id);
+}
+
 final urlTextFieldProvider =
 StateNotifierProvider<TextFieldNotifier, String>((ref) {
   throw UnimplementedError('urlTextFieldProvider not overridden');
@@ -142,6 +149,14 @@ class PlaceRegisterNotifier extends StateNotifier<void> {
   Future insertFavoriteData(FavoritePlaceEntity favoritePlaceData) async {
     try {
       await DatabaseManager.shared.insertRegisterPlaceData(favoritePlaceData);
+    } on Exception catch (exception) {
+      throw Exception(exception);
+    }
+  }
+
+  Future updateFavoriteData(FavoritePlaceEntity favoritePlaceData) async {
+    try {
+      await DatabaseManager.shared.updatePlaceData(favoritePlaceData);
     } on Exception catch (exception) {
       throw Exception(exception);
     }

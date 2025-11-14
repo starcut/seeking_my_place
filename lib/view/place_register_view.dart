@@ -277,7 +277,6 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
 
   Widget buttonArea(BuildContext context) {
     const buttonSize = Size(150, 40);
-
     var registerButton = OutlinedButton(
         onPressed: () async {
           final url = ref.watch(urlTextFieldProvider);
@@ -291,7 +290,9 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
 
           LatLng? latLng = await ref.read(placeNameTextFieldProvider.notifier).getLatLngFromAddress(address);
 
-          final favoritePlaceData = FavoritePlaceEntity(placeName: placeName,
+          final favoritePlaceData = FavoritePlaceEntity(
+              id: ref.watch(favoriteIdFieldProvider),
+              placeName: placeName,
               address: address,
               latitude: latLng?.latitude,
               longitude: latLng?.longitude,
@@ -300,7 +301,11 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
               purpose: purpose,
               isVisited: isVisited);
 
-          ref.read(placeRegisterNotifier.notifier).insertFavoriteData(favoritePlaceData);
+          if(ref.read(favoriteIdFieldProvider) != null) {
+            ref.read(placeRegisterNotifier.notifier).updateFavoriteData(favoritePlaceData);
+          } else {
+            ref.read(placeRegisterNotifier.notifier).insertFavoriteData(favoritePlaceData);
+          }
 
           ref.read(urlTextFieldProvider.notifier).updateText("");
           ref.read(placeNameTextFieldProvider.notifier).updateText("");
@@ -318,7 +323,7 @@ class PlaceRegisterViewState extends ConsumerState<PlaceRegisterView> {
             disabledBackgroundColor: Colors.black26,
             disabledForegroundColor: Colors.black54
         ),
-        child: Text("登録",
+        child: Text(ref.read(favoriteIdFieldProvider) != null ? "更新" : "登録",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20,

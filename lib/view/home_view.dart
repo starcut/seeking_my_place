@@ -46,6 +46,7 @@ class HomeViewState extends ConsumerState<HomeView> {
     mapControllerCompleter = Completer<GoogleMapController>();
 
     Future(() async {
+      await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
       await ref.watch(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
       await moveCamera();
       await _updateSettingData();
@@ -81,6 +82,9 @@ class HomeViewState extends ConsumerState<HomeView> {
                 return UncontrolledProviderScope(
                   container: ProviderContainer(
                     overrides: [
+                      favoriteIdFieldProvider.overrideWith(
+                          (ref) => FavoriteIdNotifier(null)
+                      ),
                       urlTextFieldProvider.overrideWith(
                               (ref) => TextFieldNotifier("")
                       ),
@@ -302,7 +306,6 @@ class HomeViewState extends ConsumerState<HomeView> {
 
   Widget favoriteListView() {
     var favorite = ref.watch(favoritePlaceListStateNotifierProvider);
-
     if (favorite.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(0),
@@ -395,8 +398,8 @@ class HomeViewState extends ConsumerState<HomeView> {
                 )
             ),
             PopupMenuButton<String>(
-              onSelected: (String selected) {
-                selectedMenu(favoritePlace, selected);
+              onSelected: (String selected) async {
+                await selectedMenu(favoritePlace, selected);
               },
               itemBuilder: (BuildContext context) {
                 return popupMenu();
@@ -408,13 +411,16 @@ class HomeViewState extends ConsumerState<HomeView> {
     );
   }
 
-  void selectedMenu(FavoritePlaceEntity favoritePlace, String selected) {
+  Future selectedMenu(FavoritePlaceEntity favoritePlace, String selected) async {
     switch (FavoriteMenuItem.getFavoriteMenuItemFromString(selected)) {
       case FavoriteMenuItem.edit:
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ProviderScope(
               overrides: [
+                favoriteIdFieldProvider.overrideWith(
+                        (ref) => FavoriteIdNotifier(favoritePlace.id)
+                ),
                 urlTextFieldProvider.overrideWith(
                         (ref) => TextFieldNotifier(favoritePlace.url)
                 ),
@@ -439,6 +445,7 @@ class HomeViewState extends ConsumerState<HomeView> {
             ),
           ),
         );
+        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
         break;
       case FavoriteMenuItem.copyUrl:
         final copyUrl = ClipboardData(text: favoritePlace.url);

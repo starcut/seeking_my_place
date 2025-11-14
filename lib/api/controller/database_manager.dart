@@ -118,7 +118,6 @@ class DatabaseManager {
 
   Future insertRegisterPlaceData(FavoritePlaceEntity favoritePlaceData) async {
     try {
-      debugPrint("start: DatabaseManager insertRegisterPlaceData");
       await _database.transaction((txn) async {
         final sql = 'INSERT INTO $tableNamePlaceList '
             '($columnPlaceListPlaceName, $columnPlaceListAddress,'
@@ -135,6 +134,30 @@ class DatabaseManager {
         print(sql);
         await txn.rawInsert(sql);
       });
+    } on Exception catch (exception) {
+      debugPrint("error: DatabaseManager insertRegisterPlaceData $exception");
+      Exception(exception);
+    }
+  }
+
+  Future updatePlaceData(FavoritePlaceEntity favoritePlaceData) async {
+    try {
+      final updateData = <String, dynamic>{
+        columnPlaceListPlaceName: favoritePlaceData.placeName,
+        columnPlaceListAddress: favoritePlaceData.address,
+        columnPlaceListLatitude: favoritePlaceData.latitude,
+        columnPlaceListLongitude: favoritePlaceData.longitude,
+        columnPlaceListUrl: favoritePlaceData.url,
+        columnPlaceListPurpose: favoritePlaceData.purpose,
+        columnPlaceListCategory: favoritePlaceData.category,
+        columnPlaceListIsVisited: favoritePlaceData.isVisited ? 1 : 0,
+        columnPlaceListUpdateAt: DateTime.now().toString()
+      };
+
+      await database.update(tableNamePlaceList,
+          updateData,
+          where: 'id = ?',
+          whereArgs: [favoritePlaceData.id]);
     } on Exception catch (exception) {
       debugPrint("error: DatabaseManager insertRegisterPlaceData $exception");
       Exception(exception);
