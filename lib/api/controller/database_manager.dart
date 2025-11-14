@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 
 import 'package:path/path.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_list_sort_type.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
@@ -94,7 +95,7 @@ class DatabaseManager {
     }
   }
 
-  Future<List<FavoritePlaceEntity>> selectAllPlaces() async {
+  Future<List<FavoritePlaceEntity>> selectAllPlaces(FavoriteListSortType sortType) async {
     try {
       var exist = await databaseExists(_databasePath);
       if (!exist) {
@@ -102,8 +103,28 @@ class DatabaseManager {
         return <FavoritePlaceEntity>[];
       }
 
+      var sql = 'SELECT * FROM $tableNamePlaceList ';
+      switch (sortType) {
+        case FavoriteListSortType.placeName:
+          sql += "ORDER BY $columnPlaceListPlaceName";
+          break;
+        case FavoriteListSortType.address:
+          sql += "ORDER BY $columnPlaceListAddress";
+          break;
+        case FavoriteListSortType.category:
+          sql += "ORDER BY $columnPlaceListCategory";
+          break;
+        case FavoriteListSortType.purpose:
+          sql += "ORDER BY $columnPlaceListPurpose";
+          break;
+        case FavoriteListSortType.isVisited:
+          sql += "ORDER BY $columnPlaceListIsVisited";
+          break;
+      }
+      sql += ';';
+      print(sql);
       List<Map<String, Object?>> records = await _database
-          .rawQuery('SELECT * FROM $tableNamePlaceList;');
+          .rawQuery(sql);
       List<FavoritePlaceEntity> placeList = <FavoritePlaceEntity>[];
       for (var record in records) {
         FavoritePlaceEntity placeData = FavoritePlaceEntity.fromData(record);

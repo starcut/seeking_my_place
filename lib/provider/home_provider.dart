@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_list_sort_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:seeking_my_place/api/controller/database_manager.dart';
@@ -87,13 +88,11 @@ StateNotifierProvider<FavoritePlaceProvider, List<FavoritePlaceEntity>>((ref) {
 });
 
 class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
-  FavoritePlaceProvider(List<FavoritePlaceEntity> state) : super([]) {
-    getFavoritePlace();
-  }
+  FavoritePlaceProvider(state) : super([]);
 
-  Future getFavoritePlace() async {
+  Future getFavoritePlace(FavoriteListSortType sortType) async {
     try {
-      final favoriteList = await DatabaseManager.shared.selectAllPlaces();
+      final favoriteList = await DatabaseManager.shared.selectAllPlaces(sortType);
       final prefs = await SharedPreferences.getInstance();
       int countList = prefs.getInt('display_count') ?? 10;
       double range = prefs.getDouble('display_range') ?? 10.0;
@@ -151,7 +150,6 @@ class FavoritePlaceProvider extends StateNotifier<List<FavoritePlaceEntity>> {
 
   Future<void> deleteFavoritePlace(int deleteId) async {
     await DatabaseManager.shared.deleterFavoritePlace(deleteId);
-    getFavoritePlace();
   }
 }
 
@@ -161,15 +159,13 @@ StateNotifierProvider<MarkerListProvider, Set<Marker>>((ref) {
 });
 
 class MarkerListProvider extends StateNotifier<Set<Marker>> {
-  MarkerListProvider(Set<Marker> state) : super(Set()) {
-    getMarkerList();
-  }
+  MarkerListProvider(Set<Marker> state) : super(Set());
 
-  Future getMarkerList() async {
+  Future getMarkerList(FavoriteListSortType sortType) async {
     var favoritePlaces = <FavoritePlaceEntity>[];
     List<FavoritePlaceEntity> filteredFavoritePlaces = [];
     try {
-      favoritePlaces = await DatabaseManager.shared.selectAllPlaces();
+      favoritePlaces = await DatabaseManager.shared.selectAllPlaces(sortType);
 
       final prefs = await SharedPreferences.getInstance();
       int countList = prefs.getInt('display_count') ?? 10;
