@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:seeking_my_place/Common/Enum/favorite_list_sort_type.dart';
 import 'package:seeking_my_place/entity/favorite_place_entity.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,6 +34,7 @@ class HomeView extends ConsumerStatefulWidget {
 }
 
 class HomeViewState extends ConsumerState<HomeView> {
+  FavoriteListSortType sortType = FavoriteListSortType.address;
   Completer<GoogleMapController> mapControllerCompleter = Completer<GoogleMapController>();
   Future<void> onMapCreated(GoogleMapController controller) async {
     mapControllerCompleter.complete(controller);
@@ -46,7 +48,7 @@ class HomeViewState extends ConsumerState<HomeView> {
     mapControllerCompleter = Completer<GoogleMapController>();
 
     Future(() async {
-      await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
+      await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace(sortType);
       await ref.watch(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
       await moveCamera();
       await _updateSettingData();
@@ -83,7 +85,7 @@ class HomeViewState extends ConsumerState<HomeView> {
                   container: ProviderContainer(
                     overrides: [
                       favoriteIdFieldProvider.overrideWith(
-                          (ref) => FavoriteIdNotifier(null)
+                              (ref) => FavoriteIdNotifier(null)
                       ),
                       urlTextFieldProvider.overrideWith(
                               (ref) => TextFieldNotifier("")
@@ -114,6 +116,36 @@ class HomeViewState extends ConsumerState<HomeView> {
         }
     );
 
+    Future sortMenu(String selected) async {
+      final sortType = FavoriteListSortType.getFavoriteMenuItemFromString(selected);
+      this.sortType = sortType;
+      await DatabaseManager.shared.selectAllPlaces(sortType);
+    }
+    List<PopupMenuItem<String>> popupSortMenu() {
+      var menuItem = FavoriteListSortType.getUseableString();
+      return menuItem.map((String menuString) {
+        var text = Text(menuString);
+        return PopupMenuItem(
+          value: menuString,
+          child: text,
+        );
+      }).toList();
+    }
+    final sortButton = PopupMenuButton<String>(
+      onSelected: (String selected) async {
+        await sortMenu(selected);
+      },
+      itemBuilder: (BuildContext context) {
+        return popupSortMenu();
+      },
+      child: SizedBox(
+          height: 48,
+          width: 46,
+          child: (sortType == FavoriteListSortType.address) ?
+          const Icon(Icons.sort) :
+          const Icon(Icons.sort, color: Colors.blue, fontWeight: FontWeight.bold)),
+    );
+
     final importButton = IconButton(icon: const Icon(Icons.download),
         onPressed: () async {
           await _importDatabase();
@@ -133,7 +165,6 @@ class HomeViewState extends ConsumerState<HomeView> {
           title: const Text('お気に入り'),
           actions: [
             settingButton,
-
           ],
         ),
         body: Consumer(
@@ -151,6 +182,7 @@ class HomeViewState extends ConsumerState<HomeView> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const Spacer(),
+                      sortButton,
                       registerButton,
                       importButton,
                       exportButton
@@ -339,8 +371,9 @@ class HomeViewState extends ConsumerState<HomeView> {
                         if (distance < 1) {
                           distance = distance * 1000;
                           distanceString = "${distance.toStringAsFixed(0)}m";
+                        } else {
+                          distanceString = "${distance.toStringAsFixed(1)}km";
                         }
-                        distanceString = "${distance.toStringAsFixed(1)}km";
                       }
                       return cell(favoritePlace, distanceString);
                     },
@@ -445,7 +478,7 @@ class HomeViewState extends ConsumerState<HomeView> {
             ),
           ),
         );
-        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
+        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace(sortType);
         break;
       case FavoriteMenuItem.copyUrl:
         final copyUrl = ClipboardData(text: favoritePlace.url);
@@ -460,6 +493,7 @@ class HomeViewState extends ConsumerState<HomeView> {
           return;
         }
         ref.read(favoritePlaceListStateNotifierProvider.notifier).deleteFavoritePlace(deleteId);
+        ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace(sortType);
         _updateSettingData();
         break;
       default:
@@ -485,10 +519,10 @@ class HomeViewState extends ConsumerState<HomeView> {
 
   Future _updateSettingData() async {
     await ref.read(settingStateNotifierProvider.notifier).loadSettingData();
-    await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
+    await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace(sortType);
     await ref.read(locationSearchStateNotifierProvider.notifier).getCurrentPosition();
     if (ref.watch(googleMapDisplayStateNotifierProvider)) {
-      await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+      await ref.read(markerListStateNotifierProvider.notifier).getMarkerList(sortType);
       await moveCamera();
     }
   }
@@ -525,7 +559,7 @@ class HomeViewState extends ConsumerState<HomeView> {
         DatabaseManager.shared.columnPlaceListUpdateAt
       ]
     ];
-    var placeList = await DatabaseManager.shared.selectAllPlaces();
+    var placeList = await DatabaseManager.shared.selectAllPlaces(sortType);
 
     for (var place in placeList) {
       var rowData = [
@@ -572,8 +606,8 @@ class HomeViewState extends ConsumerState<HomeView> {
         await DatabaseManager.shared.importDatabaseFromCsv(file);
 
         // Riverpodのプロバイダーを更新して、UIを最新の状態に反映
-        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace();
-        await ref.read(markerListStateNotifierProvider.notifier).getMarkerList();
+        await ref.read(favoritePlaceListStateNotifierProvider.notifier).getFavoritePlace(sortType);
+        await ref.read(markerListStateNotifierProvider.notifier).getMarkerList(sortType);
         // 成功メッセージをスナックバーで表示
         SnackBar snackBar = const SnackBar(
           backgroundColor: Colors.green,
