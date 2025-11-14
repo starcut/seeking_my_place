@@ -64,8 +64,8 @@ StateNotifierProvider<LocationProvider, LatLng?>((ref) {
 });
 
 class LocationProvider extends StateNotifier<LatLng?> {
-  LocationProvider() : super(null) {
-    loadCurrentPosition();
+  LocationProvider() : super(const LatLng(0, 0)) {
+    getCurrentPosition();
   }
 
   Future<LatLng> loadCurrentPosition() async {
