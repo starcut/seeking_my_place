@@ -1,137 +1,87 @@
-# アーキテクチャ概要
+# Architecture
 
-本プロジェクトは Clean Architecture + Feature First 構成を採用する
-
----
-
-# 使用技術
-
+## 技術スタック
 - Flutter
-- Riverpod（状態管理）
-- go_router（ルーティング）
-- REST API（外部API）
-- ローカルDB（キャッシュ用）
-- Google API（位置情報など）
+- Riverpod
+- GoRouter
+- Freezed
 
----
+## アーキテクチャ
+Clean Architecture採用
 
-# レイヤー構成
+## レイヤ構成
+- presentation
+- application
+- domain
+- infrastructure
 
-## 1. presentation
-- UI（Widget）
-- 状態管理（Riverpod Provider）
+## ディレクトリ構成
 
-## 2. domain
-- Entity
-- UseCase（ビジネスロジック）
-- Repository（抽象）
-
-## 3. data
-- Repository実装
-- API通信
-- ローカルDB操作
-
----
-
-# ディレクトリ構成
+- Riverpodはapplication/stateに配置し、UIロジックと分離する
+- providersはUseCaseのみを呼び出し、ビジネスロジックを持たない
+- stateはUI専用のimmutable状態（loading / data / error）を定義する
+- datasourceは外部アクセスのみを担当し、ビジネスロジックを持たない
 
 lib/
- ├─ features/
- │   ├─ auth/
- │   │   ├─ presentation/
- │   │   │   ├─ screens/
- │   │   │   └─ providers/
- │   │   ├─ domain/
- │   │   │   ├─ entities/
- │   │   │   ├─ usecases/
- │   │   │   └─ repositories/
- │   │   └─ data/
- │   │       ├─ models/
- │   │       ├─ repositories/
- │   │       ├─ datasources/
- │   │
- │   ├─ profile/
- │   ├─ matching/
- │   └─ chat/
- │
- ├─ core/
- │   ├─ router/
- │   ├─ network/
- │   ├─ db/
- │   └─ utils/
+  features/
+    place/
+      presentation/
+        screens/
+        widgets/
 
----
+      application/
+        usecases/
+        providers/
+        state/
 
-# 状態管理ルール（Riverpod）
+      domain/
+        entities/
+        value_objects/
+        repositories/   // interface only
 
-- Providerはpresentation層に配置
-- ビジネスロジックはUseCaseに書く
-- ProviderからUseCaseを呼び出す
+      infrastructure/
+        datasources/
+          local/
+          remote/
+        dto/
+        mappers/
+        repositories/   // implementation
 
----
+    map/
+      presentation/
+      application/
+      domain/
+      infrastructure/
 
-# ルーティング（go_router）
+    auth/
+      presentation/
+      application/
+      domain/
+      infrastructure/
 
-- すべてのルートは core/router に集約
-- 画面遷移は go_router 経由のみ
+  core/
+    error/
+    utils/
+    constants/
+    di/
+    config/
 
-例：
-- /login
-- /home
-- /profile
+  shared/
+    widgets/
+    extensions/
+    themes/
 
----
+  routes/
+    app_router.dart
 
-# データ取得ルール
+## 状態管理
+Riverpod
 
-- UI → Provider → UseCase → Repository → DataSource
+## ルーティング
+GoRouter
 
----
+## API通信
+現時点ではAPIは使用しない
 
-# Repositoryルール
-
-- domain：抽象定義
-- data：実装
-
----
-
-# API / DB
-
-## API
-- REST形式
-- Dioを使用
-
-## ローカルDB
-- キャッシュ用途
-- API優先、DBは補助
-
----
-
-# Google API
-
-- 位置情報取得に使用
-- core配下にラップして配置
-
----
-
-# 命名規則
-
-- screen：xxx_screen.dart
-- provider：xxx_provider.dart
-- usecase：xxx_usecase.dart
-- repository：xxx_repository.dart
-
----
-
-# 禁止事項
-
-- UIにビジネスロジックを書く
-- Repositoryを直接UIから呼ぶ
-- Providerにロジックを書きすぎる
-
----
-
-# 依存関係ルール
-
-presentation → domain → data の一方向のみ
-逆依存は禁止
+## モデル生成
+Freezed + json_serializable
