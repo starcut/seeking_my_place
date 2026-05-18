@@ -1,125 +1,538 @@
-# UI Design
 
-# 1. Screens
 
-- HomeScreen
-- PlaceDetailScreen
-- AddPlaceScreen
-- SettingScreen
+### Layout
 
-# 2. Components
+Container
+ └── Text(label)
 
-## HomeScreen Layout
-
-Stack
- ├── GoogleMap (full screen)
- ├── DraggableScrollableSheet
- │    └── ListView(PlaceCard)
-
-## PrimaryButton
+### Style
 
 - width: full
 - height: 48
-- radius: 12
-- action: onTap()
+- borderRadius: 12
 
-## PlaceCard
+### Actions
 
-- title: place_name
-- subtitle: category
-- right: is_visited icon
-- onTap: navigate(PlaceDetailScreen)
+- onTap()
+
+---
 
 ## AppBarDefault
 
+### Props
+
 - title: String
-- back button: optional
+- backButton: optional
 
-# 3. PlaceListScreen
+---
 
-## Layout
+## PlaceCard
 
-Column
- ├── AppBarDefault(title="Places")
- ├── SearchBar
- ├── FilterRow
- ├── Expanded(ListView)
- ├── FloatingActionButton(AddPlaceScreen)
+### Layout
 
-## List Item
+Row
+ ├── Expanded
+ │    └── Column
+ │         ├── Row
+ │         │    ├── Text(category)
+ │         │    ├── Icon(purpose)
+ │         │    ├── Spacer
+ │         │    └── Icon(is_visited)
+ │         ├── Text(place_name)
+ │         └── Text(address)
+ ├── IconButton(global)
+ └── IconButton(menu)
 
-- widget: PlaceCard
-- data source: place_list
+### Data Binding
 
-## State
+- category ← place_list.category
+- place_name ← place_list.place_name
+- address ← place_list.address
+- is_visited ← place_list.is_visited
 
-- loading → CircularProgressIndicator
-- empty → Text("No places")
-- error → Text("Error occurred")
-- loaded → ListView
+### Actions
 
-## Actions
+- onTap → navigate(PlaceDetailScreen)
+- leftSwipe
+  - show delete action
+- onTap DeleteAction
+  - show confirmation dialog
+- pin
+  - prioritize display order
 
-- onTap PlaceCard → navigate(PlaceDetailScreen)
-- FAB → AddPlaceScreen
+---
 
-# 4. AddPlaceScreen
+## PlaceForm
 
-## Layout
+### Props
+
+- initialValue: PlaceFormUiModel?
+- onChanged(value)
+- readOnly: bool
+
+### Layout
 
 Form
  ├── TextField(place_name)
+ ├── Dropdown(category)
+ ├── Dropdown(purpose)
+ ├── TextField(url)
  ├── TextField(address)
  ├── MapPicker(latitude, longitude)
- ├── Dropdown(purpose)
- ├── Switch(is_visited)
- ├── PrimaryButton("Save")
+ └── Checkbox(is_visited)
+
+---
 
 ## Validation
 
-- place_name: required
-- latitude: -90 ~ 90
-- longitude: -180 ~ 180
+- place_name required
 
-# 5. MapScreen
+- latitude
+  - min: -90
+  - max: 90
+
+- longitude
+  - min: -180
+  - max: 180
+
+- url
+  - optional
+  - valid URL format
+
+---
+
+## Actions
+
+- onAddressInputCompleted
+  - geocode address
+  - update latitude
+  - update longitude
+
+# 3. HomeScreen
+
+## Layout
+
+Scaffold
+ ├── appBar: AppBarDefault
+ │    └── SettingButton
+ ├── body:
+ │    └── Stack
+ │         ├── GoogleMap
+ │         └── DraggableScrollableSheet
+ │              └── Column
+ │                   ├── SearchBar
+ │                   ├── RadiusFilter
+ │                   └── Expanded
+ │                        └── ListView(PlaceCard)
+ └── floatingActionButton
+      └── AddPlaceButton
+
+---
+
+## Components
+
+- AppBarDefault
+- SettingButton
+- GoogleMap
+- SearchBar
+- RadiusFilter
+- PlaceCard
+- AddPlaceButton
+
+---
+
+## State
+
+### UI State
+
+- selectedPlaceId
+  - selected marker id
+  - selected list item id
+- searchKeyword
+- radiusEnabled
+
+### Data State
+
+- loading
+  - CircularProgressIndicator
+- loaded
+  - show place list
+- empty
+  - Text("登録なし")
+- error
+  - Dialog("データ取得エラー")
+
+
+---
+
+## Actions
+
+- onTap SettingButton
+  - navigate(SettingScreen)
+
+- onTap PlaceCard
+  - navigate(PlaceDetailScreen)
+
+- onTap AddPlaceButton
+  - navigate(AddPlaceScreen)
+
+- onTap MapMarker
+  - select place
+  - show MarkerInfoBubble
+  - use ScrollController
+  - highlight selected PlaceCard
+
+- tap empty map area
+  - clear selectedPlaceId
+
+---
+
+## Behavior
+
+- map marker tap
+  - show place_name bubble
+  - synchronize map and list selection
+
+- selected PlaceCard
+  - backgroundColor: #fff2b8
+
+- sheet drag
+  - resize list area
+
+- search input
+  - filter places
+
+- radius change
+  - update visible places
+  - update circle size
+
+
+---
+
+## Navigation
+
+- HomeScreen → SettingScreen
+- HomeScreen → PlaceDetailScreen
+- HomeScreen → AddPlaceScreen
+
+---
+
+# 4. SearchBar
+
+## Layout
+
+Row
+ ├── SearchIcon
+ ├── TextField(keyword)
+ └── ClearButton
+
+---
+
+## Behavior
+
+- input updates search keyword
+- clear button resets keyword
+- partial match
+- case insensitive
+- target fields:
+  - place_name
+  - address
+
+---
+
+# 5. RadiusFilter
+
+## Layout
+
+Row
+ ├── Slider(100 ~ 50000)
+ ├── Text(distance)
+ └── Switch(enabled)
+
+---
+
+## Behavior
+
+- switch ON
+  - enable radius filter
+  - slider active
+  - search by radius
+
+- switch OFF
+  - disable radius filter
+  - slider disabled
+  - search without radius limit
+
+- slider updates search radius
+
+---
+
+## State
+
+- enabled: bool
+- radiusMeter: double
+
+---
+
+# 6. GoogleMap Area
+
+## Components
+
+- GoogleMap
+- MapMarker
+  - placeId
+  - latitude
+  - longitude
+  - selected
+- RadiusCircleOverlay
+- MarkerInfoBubble
+
+---
 
 ## Layout
 
 Stack
- ├── GoogleMap
- ├── FloatingSearchBar
- ├── BottomSheet(place preview)
+ └── GoogleMap
+
+---
 
 ## Behavior
 
-- marker tap → show BottomSheet
-- long press → AddPlaceScreen (lat/lng prefilled)
+- marker tap
+  - show place preview
+  - update selectedPlaceId
 
-# 6. Navigation Flow
+- debounce map move event
 
-HomeScreen → PlaceListScreen  
-PlaceListScreen → PlaceDetailScreen  
-PlaceListScreen → AddPlaceScreen  
-MapScreen → PlaceDetailScreen  
+- radius filter enabled
+  - draw RadiusCircleOverlay
 
-# 7. Data Binding
+- radius change
+  - update RadiusCircleOverlay size
 
-## PlaceCard
+- radius filter disabled
+  - hide RadiusCircleOverlay
 
-- place_name ← place_list.place_name  
-- category ← place_list.category  
-- is_visited ← place_list.is_visited  
+---
 
-# 8. State Model
+# 7. AddPlaceScreen
+
+## Layout
+
+Scaffold
+ ├── appBar: AppBarDefault
+ └── body:
+      └── SingleChildScrollView
+           └── Column
+                ├── PlaceForm
+                └── PrimaryButton("Save")
+
+---
+
+## Validation
+
+- place_name required
+
+- latitude
+  - min: -90
+  - max: 90
+
+- longitude
+  - min: -180
+  - max: 180
+
+- url
+  - optional
+  - valid URL format
+
+---
+
+## Actions
+
+- onAddressInputCompleted
+  - geocode address
+  - update latitude
+  - update longitude
+
+- onTap Save
+  - validate form
+  - save place
+  - navigate back
+
+---
+
+## State
+
+- editing
+- loading
+- saving
+- success
+- error(message)
+
+---
+
+## Error Handling
+
+- show dialog on save failure
+- show snackbar on validation failure
+
+---
+
+# 8. PlaceDetailScreen
+
+## Route Params
+
+- placeId: String
+
+---
+
+## State
 
 - loading
-- loaded(List<Place>)
+- loaded
+- editing
+- saving
+- success
+- error(message)
+
+---
+
+## Layout
+
+Scaffold
+ ├── appBar: AppBarDefault
+ └── body:
+      └── SingleChildScrollView
+           └── if(viewMode)
+                └── ViewLayout
+           └── if(editMode)
+                └── EditLayout
+
+---
+
+# ViewLayout
+
+Column
+ ├── Text(place_name)
+ ├── Text(category)
+ ├── Text(purpose)
+ ├── Text(url)
+ ├── AddressRow
+ ├── GoogleMapPreview
+ ├── VisitedBadge
+ ├── PrimaryButton("Edit")
+ └── DangerButton("Delete")
+
+---
+
+# EditLayout
+
+Column
+ ├── PlaceForm
+ ├── PrimaryButton("Save")
+ └── SecondaryButton("Cancel")
+
+---
+
+## Actions
+
+- onTap Edit
+  - switch mode → edit
+
+- onTap Cancel
+  - discard changes
+  - switch mode → view
+
+- onTap Save
+  - validate form
+  - update place
+  - switch mode → view
+
+- onTap Delete
+  - show confirmation dialog
+  - delete place
+  - navigate back
+
+---
+
+## Error Handling
+
+- show dialog on save failure
+- show snackbar on validation failure
+
+# 9. SettingScreen
+
+## Layout
+
+Scaffold
+ ├── appBar: AppBarDefault
+ └── body:
+      └── ListView
+           ├── DataSection
+           └── AppInfoSection
+
+---
+
+## DataSection
+
+Column
+ ├── ExportButton
+ └── ImportButton
+
+---
+
+## AppInfoSection
+
+Column
+ └── AppVersion
+
+---
+
+## Actions
+
+- export database
+- import database
+
+---
+
+## State
+
+- idle
+- exporting
+- importing
+- success
+- error(message)
+
+---
+
+## Error Handling
+
+- show dialog on export failure
+- show dialog on import failure
+- show snackbar on success
+
+---
+
+# 10. Global State Pattern
+
+## Standard State
+
+- loading
+  - initial load
+  - refresh
+- loaded(List<PlaceUiModel>)
 - empty
-- error(String)
+  - when places.isEmpty- empty
+- error(message)
 
-# 9. Notes
+---
 
-- UI構造と状態を分離する
-- Layoutはツリー形式で記述する
-- 画面単位で独立させる
-- Flutterコード生成を前提とした設計
+# 11. Navigation Flow
+
+HomeScreen
+ ├── AddPlaceScreen
+ ├── PlaceDetailScreen
+ └── EditPlaceScreen
+
+EditPlaceScreen
+ └── PlaceForm
