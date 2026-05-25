@@ -9,7 +9,7 @@
 | 住所 | address | String | text | NO | NO |  |  |
 | 緯度 | latitude | double | double precision | NO | NO |  | -90〜90 |
 | 経度 | longitude | double | double precision | NO | NO |  | -180~180 |
-| URL | url | String | varchar(2048) | YES | NO |  |  |
+| URL | url | String | varchar(2048) | NO | NO |  |  |
 | カテゴリ | category | String | varchar(255) | NO | NO |  | 将来的にmaster_table_categoryを追加 |
 | 訪問済みか | is_visited | bool | boolean | NO | NO | false | true=訪問済み |
 | 登録日 | created_at | DateTime | timestamp with time zone | NO | NO | CURRENT_TIMESTAMP |  |

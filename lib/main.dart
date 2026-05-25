@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeking_my_place/api/controller/database_manager.dart';
 
-import 'package:seeking_my_place/view/home_view.dart';
+import 'routes/router_service.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseManager.shared.initDatabase();
-  runApp(const ProviderScope(child: MyApp()));
+void main() {
+  runApp(const ProviderScope(child: App()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class App extends ConsumerWidget {
+  const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: HomeView(),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
+      routerConfig: router,
     );
   }
 }

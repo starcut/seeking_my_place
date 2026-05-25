@@ -1,0 +1,17 @@
+# ビルド生成物・キャッシュ
+.dart_tool/
+build/
+.pub-cache/
+ios/
+android/
+web/
+macos/
+linux/
+windows/
+
+# ドキュメント・アセット
+assets/
+images/
+*.md       # 仕様書以外の不要なドキュメントがあれば
+.git/
+

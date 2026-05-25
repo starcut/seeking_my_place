@@ -81,11 +81,6 @@ UI → Application → Domain → Infrastructure
 ## Repositoryメソッド制限
 
 - findById
-- findByPlacename
-- findByAddress
-- findByDistance
-- findByCategory
-- findByPurposeId
 - findAll
 - insert
 - update
