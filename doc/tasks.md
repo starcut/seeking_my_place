@@ -136,7 +136,7 @@ Place Entity作成
 
 ---
 
-### Task 2-2
+### Task 2-2 [x]
 Repository Interface作成
 
 #### 内容
@@ -151,11 +151,24 @@ Repository Interface作成
 ## Phase 3. Infrastructure Layer
 
 ### Task 3-1
-Local DB datasource作成
+Local DB 基盤 ＆ Settingsデータ層作成
 
 #### 内容
-- place CRUD
-- settings CRUD
+- ローカルDBの初期化処理（テーブル作成含む）
+- SettingsLocalDataSource の作成（Read/Write）
+- SettingsRepositoryImpl の作成
+
+#### 完了条件
+- 設定の読み書きがデータ層として独立して動作すること
+
+---
+
+### Task 3-2
+Place Local DB datasource作成
+
+#### 内容
+- PlaceLocalDataSource の作成（CRUD）
+- PlaceRepositoryImpl の作成（CRUD）
 
 #### 完了条件
 - datasource分離済み
