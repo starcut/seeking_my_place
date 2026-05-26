@@ -4,7 +4,7 @@ part 'purpose.freezed.dart';
 part 'purpose.g.dart';
 
 @freezed
-class Purpose with _$Purpose {
+abstract class Purpose with _$Purpose {
   const factory Purpose({
     required String purposeId,
     required String purposeName,

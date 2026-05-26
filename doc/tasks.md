@@ -195,6 +195,9 @@ SelectedPlaceState作成
 
 #### 完了条件
 - selected_place_id を単一管理
+- `@riverpod` アノテーションを使用したモダンな Notifier 形式で実装
+- `selected_place_id`（String?）を単一管理
+- `build_runner` により `selected_place_state.g.dart` が正常に自動生成されること
 
 ---
 
