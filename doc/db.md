@@ -56,3 +56,17 @@
 
 place_list 1:N relation_place_purpose N:1 master_table_purpose
 
+## 接続管理 (Connection Management)
+
+SQLiteの複数コネクションによるロック (`database is locked`) およびアプリ起動時の二重初期化（レースコンディション）を防ぐため、データベースの接続管理は以下のルールを厳守する。
+
+### 1. シングルトンパターンの適用
+- `DatabaseHelper` は外部から直接インスタンス化できないよう、コンストラクタをプライベート化（`DatabaseHelper._()`）する。
+- アプリ全体で唯一のインスタンス（`_instance`）を使い回す。
+
+### 2. 初期化時のレースコンディション対策
+- アプリ起動直後に複数のデータソースから同時に `initialize()` が呼び出された場合、二重に接続が開かれるのを防ぐため、初期化中の `Future` を `_initFuture` に保持する。
+- 先行して走っている初期化処理がある場合は、後続の呼び出しはその `Future` の完了を待つ設計とする。
+
+### 3. 外部キー制約の強制有効化
+- SQLiteのデフォルト仕様では外部キー制約がオフになっているため、`openDatabase` の `onConfigure` コールバックにて、必ず `PRAGMA foreign_keys = ON;` を実行する。

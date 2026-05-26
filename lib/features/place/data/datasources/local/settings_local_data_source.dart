@@ -1,0 +1,66 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
+abstract class SettingsLocalDataSource {
+  Future<Map<String, dynamic>> read();
+  Future<void> write(Map<String, dynamic> data);
+}
+
+class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
+  static const keySearchRange = 'search_range';
+  static const keyIsSearchEnabled = 'is_search_enabled';
+  static const keyItemsPerPage = 'items_per_page';
+
+  static const _defaultSearchRange = 1000.0;
+  static const _defaultIsSearchEnabled = true;
+  static const _defaultItemsPerPage = 50;
+
+  final SharedPreferences _prefs;
+
+  SettingsLocalDataSourceImpl(this._prefs);
+
+  @override
+  Future<Map<String, dynamic>> read() async {
+    return {
+      keySearchRange:
+          _prefs.getDouble(keySearchRange) ?? _defaultSearchRange,
+      keyIsSearchEnabled:
+          _prefs.getBool(keyIsSearchEnabled) ?? _defaultIsSearchEnabled,
+      keyItemsPerPage:
+          _prefs.getInt(keyItemsPerPage) ?? _defaultItemsPerPage,
+    };
+  }
+
+  @override
+  Future<void> write(Map<String, dynamic> data) async {
+    final searchRange = data[keySearchRange];
+    final isSearchEnabled = data[keyIsSearchEnabled];
+    final itemsPerPage = data[keyItemsPerPage];
+
+    if (searchRange == null) {
+      throw ArgumentError.notNull(keySearchRange);
+    }
+    if (searchRange is! double) {
+      throw ArgumentError.value(searchRange, keySearchRange, 'double required');
+    }
+
+    if (isSearchEnabled == null) {
+      throw ArgumentError.notNull(keyIsSearchEnabled);
+    }
+    if (isSearchEnabled is! bool) {
+      throw ArgumentError.value(
+          isSearchEnabled, keyIsSearchEnabled, 'bool required');
+    }
+
+    if (itemsPerPage == null) {
+      throw ArgumentError.notNull(keyItemsPerPage);
+    }
+    if (itemsPerPage is! int) {
+      throw ArgumentError.value(
+          itemsPerPage, keyItemsPerPage, 'int required');
+    }
+
+    await _prefs.setDouble(keySearchRange, searchRange);
+    await _prefs.setBool(keyIsSearchEnabled, isSearchEnabled);
+    await _prefs.setInt(keyItemsPerPage, itemsPerPage);
+  }
+}
