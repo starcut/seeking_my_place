@@ -13,7 +13,7 @@ Clean Architecture採用
 - presentation
 - application
 - domain
-- infrastructure
+- data
 
 ## ディレクトリ構成
 
@@ -39,7 +39,7 @@ lib/
         value_objects/
         repositories/   // interface only
 
-      infrastructure/
+      data/
         datasources/
           local/
           remote/
@@ -51,13 +51,13 @@ lib/
       presentation/
       application/
       domain/
-      infrastructure/
+      data/
 
     auth/
       presentation/
       application/
       domain/
-      infrastructure/
+      data/
 
   core/
     error/
