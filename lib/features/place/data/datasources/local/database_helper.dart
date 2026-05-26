@@ -8,6 +8,27 @@ class DatabaseHelper {
   static const _databaseName = 'seeking_my_place.db';
   static const _databaseVersion = 1;
 
+  // place_list
+  static const tablePlace = 'place_list';
+  static const colPlaceId = 'place_id';
+  static const colPlaceName = 'place_name';
+  static const colAddress = 'address';
+  static const colLatitude = 'latitude';
+  static const colLongitude = 'longitude';
+  static const colUrl = 'url';
+  static const colCategory = 'category';
+  static const colIsVisited = 'is_visited';
+  static const colCreatedAt = 'created_at';
+  static const colUpdatedAt = 'updated_at';
+
+  // master_table_purpose
+  static const tablePurpose = 'master_table_purpose';
+  static const colPurposeId = 'purpose_id';
+  static const colPurposeName = 'purpose_name';
+
+  // relation_place_purpose
+  static const tableRelationPlacePurpose = 'relation_place_purpose';
+
   final Database _db;
 
   DatabaseHelper._(this._db);
@@ -48,37 +69,37 @@ class DatabaseHelper {
 
   static Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE place_list (
-        place_id    TEXT    NOT NULL PRIMARY KEY,
-        place_name  TEXT    NOT NULL,
-        address     TEXT    NOT NULL,
-        latitude    REAL    NOT NULL CHECK (latitude BETWEEN -90 AND 90),
-        longitude   REAL    NOT NULL CHECK (longitude BETWEEN -180 AND 180),
-        url         TEXT    NOT NULL,
-        category    TEXT    NOT NULL,
-        is_visited  INTEGER NOT NULL DEFAULT 0,
-        created_at  TEXT    NOT NULL,
-        updated_at  TEXT    NOT NULL
+      CREATE TABLE $tablePlace (
+        $colPlaceId    TEXT    NOT NULL PRIMARY KEY,
+        $colPlaceName  TEXT    NOT NULL,
+        $colAddress    TEXT    NOT NULL,
+        $colLatitude   REAL    NOT NULL CHECK ($colLatitude BETWEEN -90 AND 90),
+        $colLongitude  REAL    NOT NULL CHECK ($colLongitude BETWEEN -180 AND 180),
+        $colUrl        TEXT    NOT NULL,
+        $colCategory   TEXT    NOT NULL,
+        $colIsVisited  INTEGER NOT NULL DEFAULT 0,
+        $colCreatedAt  TEXT    NOT NULL,
+        $colUpdatedAt  TEXT    NOT NULL
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE master_table_purpose (
-        purpose_id   TEXT NOT NULL PRIMARY KEY,
-        purpose_name TEXT NOT NULL UNIQUE
+      CREATE TABLE $tablePurpose (
+        $colPurposeId   TEXT NOT NULL PRIMARY KEY,
+        $colPurposeName TEXT NOT NULL UNIQUE
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE relation_place_purpose (
-        place_id   TEXT NOT NULL,
-        purpose_id TEXT NOT NULL,
-        PRIMARY KEY (place_id, purpose_id),
-        FOREIGN KEY (place_id)
-          REFERENCES place_list (place_id)
+      CREATE TABLE $tableRelationPlacePurpose (
+        $colPlaceId   TEXT NOT NULL,
+        $colPurposeId TEXT NOT NULL,
+        PRIMARY KEY ($colPlaceId, $colPurposeId),
+        FOREIGN KEY ($colPlaceId)
+          REFERENCES $tablePlace ($colPlaceId)
           ON DELETE CASCADE,
-        FOREIGN KEY (purpose_id)
-          REFERENCES master_table_purpose (purpose_id)
+        FOREIGN KEY ($colPurposeId)
+          REFERENCES $tablePurpose ($colPurposeId)
           ON DELETE CASCADE
       )
     ''');
