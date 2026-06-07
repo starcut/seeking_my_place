@@ -26,7 +26,7 @@ final class SettingsRepositoryProvider
         argument: null,
         retry: null,
         name: r'settingsRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -55,4 +55,4 @@ final class SettingsRepositoryProvider
 }
 
 String _$settingsRepositoryHash() =>
-    r'13d0b4d5609e1dcf98a8377f89256e2456e08fe6';
+    r'77fc8c93c48253fb9672b0357d0d9704c0e995d0';

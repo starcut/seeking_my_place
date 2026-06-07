@@ -46,3 +46,7 @@ app.*.map.json
 
 # Local backup
 oldlib/
+
+# Firebase config
+*/google-services.json
+*/GoogleService-Info.plist
