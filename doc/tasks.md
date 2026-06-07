@@ -178,26 +178,30 @@ Place Local DB datasource作成
 
 ## Phase 4. Application Layer
 
-### Task 4-1
-GetPlaceListUseCase作成
+### Task 4-1: Place系 UseCase 作成
+- GetPlaceListUseCase
+- GetPlaceMapUseCase
+- GetPlaceDetailUseCase
 
-### Task 4-2
-CreatePlaceUseCase作成
+### Task 4-2: Place操作 UseCase 作成
+- CreatePlaceUseCase
+- UpdatePlaceUseCase
+- DeletePlaceUseCase
 
-### Task 4-3
-UpdatePlaceUseCase作成
+### Task 4-3: AppSettings系 UseCase 作成
+- GetAppSettingsUseCase
+- UpdateAppSettingsUseCase
+- ObserveAppSettingsUseCase
 
-### Task 4-4
-DeletePlaceUseCase作成
-
-### Task 4-5
-SelectedPlaceState作成
+### Task 4-4: SelectedPlaceState 作成
+- 内容: 選択された場所のID（`selected_place_id`）を管理する状態管理クラスの作成
+- 責務: 選択状態の保持、更新（`select(String? id)`）、クリア
 
 #### 完了条件
-- selected_place_id を単一管理
 - `@riverpod` アノテーションを使用したモダンな Notifier 形式で実装
-- `selected_place_id`（String?）を単一管理
-- `build_runner` により `selected_place_state.g.dart` が正常に自動生成されること
+- `part 'selected_place_state.g.dart';` を含めること
+- `build_runner` により正常にコード生成が行われること
+- UIが直接Repositoryを触らず、状態管理クラスを介して参照すること
 
 ---
 
@@ -207,18 +211,37 @@ SelectedPlaceState作成
 HomeScreen作成
 
 #### 内容
-- GoogleMap
-- PlaceList
-- SearchBar
-- RadiusFilter
+- `lib/features/place/presentation/screens/home_screen.dart` の作成
+- 以下のコンポーネントの配置と統合：
+  - GoogleMap（地図表示、マーカー制御）
+  - PlaceList（場所の一覧表示、スクロール・ハイライト、スワイプ削除）
+  - SearchBar（キーワード検索）
+  - RadiusFilter（範囲フィルター：100m〜50km、On/Off切り替え）
 
 #### 参照
 - spec.md
 - ui.md
 
 #### 完了条件
-- Map/List同期
-- selectedPlaceId同期
+- **1. 双方向同期 (Map ⇔ List)**:
+  - `ref.watch(selectedPlaceStateProvider)` を監視し、状態変更時にマップとリストを同期させること。
+  - マーカーまたはリスト項目タップ時に `ref.read(selectedPlaceStateProvider.notifier).select(id)` を実行。
+  - マーカー選択時：該当座標へカメラアニメーション移動、マーカー強調。
+  - リスト選択時：該当項目を強調表示、必要に応じて自動スクロール。
+
+- **2. 状態のクリア (Selection Clearing)**:
+  - 地図上の空きスペースタップ時、または選択解除操作時に `select(null)` を実行し、選択状態を完全にクリアすること。
+  - PlaceDetailScreen等で削除操作が行われた場合も `select(null)` が適切に発火すること。
+
+- **3. フィルター連動 (Filter Synchronization)**:
+  - RadiusFilter や SearchBar の操作により、現在選択中の `selected_place_id` が検索結果リストから除外される場合、不整合を防ぐために自動的に `select(null)` を実行すること。
+
+- **4. ユーザー操作の実装**:
+  - リスト項目ボタン：URLコピー機能の実装。
+  - リスト項目ボタン：PlaceDetailScreen への遷移。
+  - マップ長押し：新規作成モードで AddPlaceScreen への遷移（座標初期値保持）。
+  - FAB：新規作成モードで AddPlaceScreen への遷移。
+
 
 ---
 
