@@ -1,11 +1,17 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:seeking_my_place/features/place/domain/repositories/place_repository.dart';
 
-class DeletePlaceUseCase {
-  final PlaceRepository _repository;
+part 'delete_place_use_case.g.dart';
 
-  DeletePlaceUseCase(this._repository);
+@riverpod
+class DeletePlaceUseCase extends _$DeletePlaceUseCase {
+  @override
+  FutureOr<void> build() {}
 
-  Future<void> execute(String placeId) {
-    return _repository.delete(placeId);
+  Future<void> execute(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(placeRepositoryProvider).delete(id),
+    );
   }
 }
