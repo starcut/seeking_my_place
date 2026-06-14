@@ -23,7 +23,7 @@ class SharedPreferencesSingleton {
 }
 
 abstract class SettingsLocalDataSource {
-  Future<Map<String, dynamic>> read();
+  Map<String, dynamic> read();
   Future<void> write(Map<String, dynamic> data);
 }
 
@@ -41,7 +41,7 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
   SettingsLocalDataSourceImpl(this._prefs);
 
   @override
-  Future<Map<String, dynamic>> read() async {
+  Map<String, dynamic> read() {
     return {
       keySearchRange: _prefs.getDouble(keySearchRange) ?? _defaultSearchRange,
       keyIsSearchEnabled:
