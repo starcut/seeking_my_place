@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:seeking_my_place/features/place/data/datasources/local/settings_local_data_source.dart';
+import 'package:seeking_my_place/features/place/data/repositories/settings_repository_impl.dart';
 import 'package:seeking_my_place/features/place/domain/entities/app_settings.dart';
 
-// 1. partを追加
 part 'settings_repository.g.dart';
 
 abstract class SettingsRepository {
@@ -9,10 +10,10 @@ abstract class SettingsRepository {
   Future<void> save(AppSettings settings);
 }
 
-// 2. プロバイダーを定義
-@riverpod
+@Riverpod(keepAlive: true)
 SettingsRepository settingsRepository(Ref ref) {
-  // ここで実際の実装クラス（SettingsRepositoryImplなど）を返す必要があります。
-  // まだ実装がない場合は throw UnimplementedError() でOKです。
-  throw UnimplementedError('SettingsRepositoryの実装クラスが登録されていません');
+  final dataSource = SettingsLocalDataSourceImpl(
+    SharedPreferencesSingleton.instance,
+  );
+  return SettingsRepositoryImpl(dataSource);
 }

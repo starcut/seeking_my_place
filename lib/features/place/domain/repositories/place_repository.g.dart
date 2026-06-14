@@ -22,7 +22,7 @@ final class PlaceRepositoryProvider
         argument: null,
         retry: null,
         name: r'placeRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -49,4 +49,4 @@ final class PlaceRepositoryProvider
   }
 }
 
-String _$placeRepositoryHash() => r'69a805bef28138f692e4de01a182f96237c4f4b6';
+String _$placeRepositoryHash() => r'107445f0809c6cbe3733d8858a011a35ef698a08';

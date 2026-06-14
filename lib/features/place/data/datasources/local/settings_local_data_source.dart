@@ -1,5 +1,27 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// runApp 前に [initialize] を await することで、以降は同期的に取得できる。
+class SharedPreferencesSingleton {
+  SharedPreferencesSingleton._();
+
+  static SharedPreferences? _instance;
+
+  static Future<void> initialize() async {
+    _instance ??= await SharedPreferences.getInstance();
+  }
+
+  static SharedPreferences get instance {
+    final i = _instance;
+    if (i == null) {
+      throw StateError(
+        'SharedPreferencesSingleton は未初期化です。'
+        'runApp() の前に SharedPreferencesSingleton.initialize() を await してください。',
+      );
+    }
+    return i;
+  }
+}
+
 abstract class SettingsLocalDataSource {
   Future<Map<String, dynamic>> read();
   Future<void> write(Map<String, dynamic> data);
@@ -21,12 +43,10 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
   @override
   Future<Map<String, dynamic>> read() async {
     return {
-      keySearchRange:
-          _prefs.getDouble(keySearchRange) ?? _defaultSearchRange,
+      keySearchRange: _prefs.getDouble(keySearchRange) ?? _defaultSearchRange,
       keyIsSearchEnabled:
           _prefs.getBool(keyIsSearchEnabled) ?? _defaultIsSearchEnabled,
-      keyItemsPerPage:
-          _prefs.getInt(keyItemsPerPage) ?? _defaultItemsPerPage,
+      keyItemsPerPage: _prefs.getInt(keyItemsPerPage) ?? _defaultItemsPerPage,
     };
   }
 
@@ -48,15 +68,17 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
     }
     if (isSearchEnabled is! bool) {
       throw ArgumentError.value(
-          isSearchEnabled, keyIsSearchEnabled, 'bool required');
+        isSearchEnabled,
+        keyIsSearchEnabled,
+        'bool required',
+      );
     }
 
     if (itemsPerPage == null) {
       throw ArgumentError.notNull(keyItemsPerPage);
     }
     if (itemsPerPage is! int) {
-      throw ArgumentError.value(
-          itemsPerPage, keyItemsPerPage, 'int required');
+      throw ArgumentError.value(itemsPerPage, keyItemsPerPage, 'int required');
     }
 
     await _prefs.setDouble(keySearchRange, searchRange);

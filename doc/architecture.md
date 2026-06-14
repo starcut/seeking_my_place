@@ -85,3 +85,29 @@ GoRouter
 
 ## モデル生成
 Freezed + json_serializable
+
+## 起動時初期化と同期的DI（Dependency Injection）
+
+### 方針
+`runApp()` 実行前に、外部リソース（SQLite / SharedPreferences）の非同期初期化を完了させる。  
+これにより、Riverpod プロバイダーは初期化済みのシングルトンインスタンスを **同期的に** 返すことができる。
+
+### 初期化シーケンス（main.dart）
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseHelper.initialize();
+  await SharedPreferencesSingleton.initialize();
+  runApp(const ProviderScope(child: App()));
+}
+```
+
+### Repositoryプロバイダーの定義規則
+- プロバイダーの戻り値は `Future<T>` ではなく `T`（インターフェース型）とする。
+- `DatabaseHelper.instance` / `SharedPreferencesSingleton.instance` は同期ゲッターであり、初期化未完了の場合は `StateError` を throw する。
+- UseCase側は `ref.read(placeRepositoryProvider)` で即座にインスタンスを取得でき、`.future` 等の非同期待ちは不要。
+
+### 禁止事項
+- プロバイダー内で `await` / `FutureProvider` を使った遅延初期化
+- `ref.watch(xxxRepositoryProvider.future)` による非同期解決
+- Repositoryの二重初期化

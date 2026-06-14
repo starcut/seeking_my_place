@@ -33,6 +33,18 @@ class DatabaseHelper {
 
   DatabaseHelper._(this._db);
 
+  /// runApp 前に [initialize] が完了している前提で同期的にインスタンスを返す。
+  static DatabaseHelper get instance {
+    final i = _instance;
+    if (i == null) {
+      throw StateError(
+        'DatabaseHelper は未初期化です。'
+        'runApp() の前に DatabaseHelper.initialize() を await してください。',
+      );
+    }
+    return i;
+  }
+
   static Future<DatabaseHelper> initialize() async {
     final existing = _instance;
     if (existing != null) return existing;
