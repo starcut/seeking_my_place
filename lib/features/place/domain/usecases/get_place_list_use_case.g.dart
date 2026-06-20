@@ -47,4 +47,4 @@ final class GetPlaceListUseCaseProvider
 }
 
 String _$getPlaceListUseCaseHash() =>
-    r'2aea9884d79948e34bf1a1d40a4f0cefb6c09643';
+    r'7397cb46aead074dd262f734e79afbbcc235ca6a';

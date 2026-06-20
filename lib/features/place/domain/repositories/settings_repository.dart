@@ -6,7 +6,7 @@ import 'package:seeking_my_place/features/place/domain/entities/app_settings.dar
 part 'settings_repository.g.dart';
 
 abstract class SettingsRepository {
-  Future<AppSettings> get();
+  AppSettings get();
   Future<void> save(AppSettings settings);
 }
 

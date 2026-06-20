@@ -8,16 +8,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
   SettingsRepositoryImpl(this._dataSource);
 
   @override
-  Future<AppSettings> get() async {
-    final data = await _dataSource.read();
+  AppSettings get() {
+    final data = _dataSource.read();
 
     return AppSettings(
-      searchRange:
-          data[SettingsLocalDataSourceImpl.keySearchRange] as double,
+      searchRange: data[SettingsLocalDataSourceImpl.keySearchRange] as double,
       isSearchEnabled:
           data[SettingsLocalDataSourceImpl.keyIsSearchEnabled] as bool,
-      itemsPerPage:
-          data[SettingsLocalDataSourceImpl.keyItemsPerPage] as int,
+      itemsPerPage: data[SettingsLocalDataSourceImpl.keyItemsPerPage] as int,
     );
   }
 
