@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeking_my_place/features/place/data/datasources/local/database_helper.dart';
 import 'package:seeking_my_place/features/place/data/datasources/local/settings_local_data_source.dart';
@@ -22,6 +23,10 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    return MaterialApp.router(routerConfig: router);
+    return MaterialApp.router(
+      routerConfig: router,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+    );
   }
 }
