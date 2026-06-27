@@ -1,0 +1,45 @@
+{
+  "@@locale": "ja",
+
+  "appTitle": "Stellar Archive",
+  "@appTitle": {},
+
+  "searchHint": "キーワード検索...",
+  "@searchHint": {},
+
+  "emptyPlaces": "登録なし",
+  "@emptyPlaces": {},
+
+  "urlNotRegistered": "URLが登録されていません",
+  "@urlNotRegistered": {},
+
+  "urlCopied": "URLをコピーしました",
+  "@urlCopied": {},
+
+  "deleteConfirmTitle": "削除確認",
+  "@deleteConfirmTitle": {},
+
+  "deleteConfirmMessage": "この場所を削除しますか？",
+  "@deleteConfirmMessage": {},
+
+  "cancel": "キャンセル",
+  "@cancel": {},
+
+  "delete": "削除",
+  "@delete": {},
+
+  "fetchError": "データ取得エラー: {error}",
+  "@fetchError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+
+  "copyUrlTooltip": "URLをコピー",
+  "@copyUrlTooltip": {},
+
+  "detailTooltip": "詳細",
+  "@detailTooltip": {}
+}
