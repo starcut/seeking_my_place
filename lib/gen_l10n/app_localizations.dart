@@ -165,6 +165,54 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'詳細'**
   String get detailTooltip;
+
+  /// No description provided for @placeDetailTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所の詳細'**
+  String get placeDetailTitle;
+
+  /// No description provided for @edit.
+  ///
+  /// In ja, this message translates to:
+  /// **'編集'**
+  String get edit;
+
+  /// No description provided for @registeredAt.
+  ///
+  /// In ja, this message translates to:
+  /// **'登録日時'**
+  String get registeredAt;
+
+  /// No description provided for @memoPlaceholder.
+  ///
+  /// In ja, this message translates to:
+  /// **'メモなし'**
+  String get memoPlaceholder;
+
+  /// No description provided for @openUrl.
+  ///
+  /// In ja, this message translates to:
+  /// **'URLを開く'**
+  String get openUrl;
+
+  /// No description provided for @deleteSuccess.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所を削除しました'**
+  String get deleteSuccess;
+
+  /// No description provided for @deleteError.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除に失敗しました: {error}'**
+  String deleteError(Object error);
+
+  /// No description provided for @retry.
+  ///
+  /// In ja, this message translates to:
+  /// **'再試行'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate

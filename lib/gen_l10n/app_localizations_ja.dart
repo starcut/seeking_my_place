@@ -45,4 +45,30 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get detailTooltip => '詳細';
+
+  @override
+  String get placeDetailTitle => '場所の詳細';
+
+  @override
+  String get edit => '編集';
+
+  @override
+  String get registeredAt => '登録日時';
+
+  @override
+  String get memoPlaceholder => 'メモなし';
+
+  @override
+  String get openUrl => 'URLを開く';
+
+  @override
+  String get deleteSuccess => '場所を削除しました';
+
+  @override
+  String deleteError(Object error) {
+    return '削除に失敗しました: $error';
+  }
+
+  @override
+  String get retry => '再試行';
 }

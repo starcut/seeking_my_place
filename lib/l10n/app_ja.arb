@@ -41,5 +41,35 @@
   "@copyUrlTooltip": {},
 
   "detailTooltip": "詳細",
-  "@detailTooltip": {}
+  "@detailTooltip": {},
+
+  "placeDetailTitle": "場所の詳細",
+  "@placeDetailTitle": {},
+
+  "edit": "編集",
+  "@edit": {},
+
+  "registeredAt": "登録日時",
+  "@registeredAt": {},
+
+  "memoPlaceholder": "メモなし",
+  "@memoPlaceholder": {},
+
+  "openUrl": "URLを開く",
+  "@openUrl": {},
+
+  "deleteSuccess": "場所を削除しました",
+  "@deleteSuccess": {},
+
+  "deleteError": "削除に失敗しました: {error}",
+  "@deleteError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+
+  "retry": "再試行",
+  "@retry": {}
 }
