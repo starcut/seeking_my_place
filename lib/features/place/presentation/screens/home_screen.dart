@@ -370,7 +370,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (places.isEmpty) {
-      return Center(child: Text(l10n.emptyPlaces));
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Text(l10n.emptyPlaces),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -509,30 +515,35 @@ class _HomeSearchBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: l10n.searchHint,
-                border: InputBorder.none,
-                isDense: true,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey, width: 1)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: Colors.grey),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: l10n.searchHint,
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onChanged: onChanged,
               ),
-              onChanged: onChanged,
             ),
-          ),
-          if (keyword.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                controller.clear();
-                onChanged('');
-              },
-              child: const Icon(Icons.clear, color: Colors.grey, size: 18),
-            ),
-        ],
+            if (keyword.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  controller.clear();
+                  onChanged('');
+                },
+                child: const Icon(Icons.clear, color: Colors.grey, size: 18),
+              ),
+          ],
+        ),
       ),
     );
   }
