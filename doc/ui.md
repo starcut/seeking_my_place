@@ -356,15 +356,16 @@ Scaffold
 
 - onTap Save
   - validate form
-  - save place
-  - navigate back
+  - save place (CreatePlaceUseCase or UpdatePlaceUseCase)
+  - success: navigate back, set selected_place_id to saved id
+  - failure: show error dialog with close button
 
 ---
 
 ## State
 
 - editing
-- loading
+- loading (edit時の初期データ取得中)
 - saving
 - success
 - error(message)

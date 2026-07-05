@@ -41,7 +41,7 @@ UI Stateとは分離される。
 
 ### AppSettings
 
-- search_range: SearchRange
+- search_range: double
 - is_search_enabled: bool
 - items_per_page: int
 
@@ -135,6 +135,9 @@ UI Stateとは分離される。
 - Switchで検索範囲のOn/Offを切り替える
   - Offの場合は検索範囲は無制限
 
+#### フィルター適用時の挙動
+- 検索範囲フィルター(Radius)またはキーワード検索(SearchBar)によって、現在選択中の `selected_place_id` が表示対象外（検索結果リスト外）となった場合、即座に `select(null)` を実行し、選択状態を解除すること。
+
 ---
 
 #### 選択同期ルール
@@ -192,27 +195,62 @@ selected_place_idが変更された場合：
 
 ### 5.2.1 Purpose
 
-Placeの詳細情報を表示する
+Placeの詳細情報を表示し、編集・削除・URLへのアクセスなどのアクションを提供する。
 
 ---
 
 ### 5.2.2 Data Source
 
 - GetPlaceDetailUseCase(place_id)
+- DeletePlaceUseCase
 
 ---
 
-### 5.2.3 操作
-
-- 編集 → AddPlaceScreen（edit mode）
-- 削除 → DeletePlaceUseCase
+### 5.2.3 State
+- AsyncValue<Place> (Riverpodで管理し、Loading/ErrorをUI層でハンドリングする)
 
 ---
 
-### 5.2.4 削除時の副作用
+### 5.2.4 画面振る舞い・表示仕様
 
-- 削除対象がselected_place_idと一致する場合：
-  - selected_place_id = null に更新
+#### 表示項目
+- 以下の項目を適切なコンポーネントで表示する：
+  - 場所の名前 (`placeName`)
+  - 住所 (`address`)
+  - 登録日時（フォーマットして表示）
+  - メモ/詳細テキスト（未入力の場合はプレースホルダーを表示）
+
+#### URLアクション
+- 登録されたURLがある場合：
+  - タップで外部ブラウザ（`url_launcher`等）を起動する。
+  - または、クリップボードにコピーできるボタンを配置する（コピー成功時はスナックバーを表示）。
+
+#### エッジケース対応
+- **Loading状態**: データの取得中は、Shimmer等のローディングインジケーターを表示すること。
+- **Error状態**: データの取得失敗時、または削除失敗時は、ユーザーフレンドリーなエラーメッセージと再試行ボタンを表示すること。
+
+---
+
+### 5.2.5 操作
+
+- **編集ボタンタップ**: AddPlaceScreen（edit mode）へ遷移。
+- **削除ボタンタップ**: 
+  - 誤操作防止のため、削除確認ダイアログを表示する。
+  - ダイアログ内の「削除」確定時、`DeletePlaceUseCase` を実行。
+  - 削除成功時は、画面をポップして前の画面（HomeScreen）に戻る。
+
+---
+
+### 5.2.6 削除時の副作用
+
+- 削除対象が `selected_place_id` と一致する場合：
+  - `selected_place_id = null` に更新する（Application LayerのUseCaseまたはNotifier側で制御）。
+
+---
+
+### 5.2.7 コーディング規約 (本画面における絶対ルール)
+- **L10nの徹底**: ダイアログ、スナックバー、プレースホルダーを含むすべての日本語文字列は `lib/l10n/app_ja.arb` に切り出すこと。コード内への直接のハードコードは一切禁止。
+- **クリーンネーミング**: 単一文字（`p`, `ctx`, `e` など）や極端な略称の変数名・引数名は使用せず、一目で役割が理解できる明確な名称（`place`, `dialogContext`, `error` など）を使用すること。
 
 ---
 
@@ -222,7 +260,7 @@ Placeの詳細情報を表示する
 
 ### 5.3.1 Purpose
 
-Placeの新規作成および編集
+Placeの新規作成および編集。
 
 ---
 
@@ -235,7 +273,7 @@ Placeの新規作成および編集
 
 ### 5.3.3 Data Source
 
-- edit時のみ GetPlaceDetailUseCase
+- edit時のみ GetPlaceDetailUseCase を使用。
 
 ---
 
@@ -244,23 +282,24 @@ Placeの新規作成および編集
 - place_name: 必須
 - latitude: -90〜90
 - longitude: -180〜180
-- latitude, longitudeはaddressから取得する
+- url: 任意（入力時は正しいURLフォーマットであること）
+- latitude, longitudeはaddress入力完了時（onAddressInputCompleted）にジオコーディングUseCase経由で取得する。
 
 ---
 
 ### 5.3.5 操作
 
-#### 保存
+#### 保存（onTap Save）
 
-- CreatePlaceUseCase または UpdatePlaceUseCaseを実行
+- バリデーションを実行。
+- CreatePlaceUseCase または UpdatePlaceUseCase を実行。
 - 成功時：
-  - 画面を閉じる
-  - selected_place_idを新規/更新IDに設定
-  - placesを更新する
+  - 画面を閉じる。
+  - selected_place_idを新規/更新IDに設定する。
+  - placesを更新する。
 - 失敗時：
-  - エラーダイアログを表示する
-  - 文言はエラーの原因となる文言を表示する
-  - ダイアログにはどじるボタン
+  - 原因となる文言を含むエラーダイアログを表示する（閉じるボタン付き）。
+
 ---
 
 ### 5.4. SettingScreen
