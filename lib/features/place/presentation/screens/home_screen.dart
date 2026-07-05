@@ -245,7 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => context.go('/settings'),
+            onPressed: () => context.push('/settings'),
           ),
         ],
       ),
@@ -255,7 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         data: (places) => _buildBody(places, selectedId),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/place/new'),
+        onPressed: () => context.push('/place/new'),
         child: const Icon(Icons.add),
       ),
     );
@@ -300,7 +300,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ref.read(selectedPlaceStateProvider.notifier).select(null);
           },
           onLongPress: (latLng) {
-            context.go(
+            context.push(
               '/place/new',
               extra: {
                 'latitude': latLng.latitude,
@@ -455,7 +455,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right, size: 20),
-                    onPressed: () => context.go('/place/${place.placeId}'),
+                    onPressed: () => context.push('/place/${place.placeId}'),
                     tooltip: l10n.detailTooltip,
                   ),
                 ],

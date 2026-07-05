@@ -65,10 +65,7 @@ class PlaceDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: Colors.red),
-            ),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -117,6 +114,10 @@ class _PlaceDetailBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (place.url.isNotEmpty) ...[
+            _UrlSection(place: place),
+            const SizedBox(height: 16),
+          ],
           _DetailSection(
             label: l10n.placeDetailTitle,
             child: Text(
@@ -126,7 +127,7 @@ class _PlaceDetailBody extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _DetailSection(
-            label: place.address,
+            label: l10n.address,
             child: Row(
               children: [
                 const Icon(Icons.location_on, size: 16, color: Colors.grey),
@@ -149,9 +150,9 @@ class _PlaceDetailBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _MemoSection(place: place),
+          _VisitedSection(isVisited: place.isVisited),
           const SizedBox(height: 16),
-          if (place.url.isNotEmpty) _UrlSection(place: place),
+          _MemoSection(place: place),
         ],
       ),
     );
@@ -175,12 +176,54 @@ class _DetailSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Colors.grey,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
         ),
         const SizedBox(height: 4),
         child,
+        const Divider(),
+      ],
+    );
+  }
+}
+
+class _VisitedSection extends StatelessWidget {
+  const _VisitedSection({required this.isVisited});
+
+  final bool isVisited;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.visitedStatus,
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+        ),
+        const SizedBox(height: 4),
+        Chip(
+          avatar: Icon(
+            isVisited ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 16,
+            color: isVisited ? Colors.green : Colors.grey,
+          ),
+          label: Text(
+            isVisited ? l10n.isVisited : l10n.notVisited,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isVisited ? Colors.green : Colors.grey,
+            ),
+          ),
+          backgroundColor: isVisited
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha: 0.1),
+          side: BorderSide.none,
+        ),
         const Divider(),
       ],
     );
@@ -201,10 +244,10 @@ class _MemoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'メモ',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Colors.grey,
-          ),
+          l10n.memo,
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
         ),
         const SizedBox(height: 4),
         Text(
@@ -236,9 +279,9 @@ class _UrlSection extends ConsumerWidget {
         Expanded(
           child: Text(
             place.url,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.blue,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.blue),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

@@ -260,7 +260,7 @@ Placeの詳細情報を表示し、編集・削除・URLへのアクセスなど
 
 ### 5.3.1 Purpose
 
-Placeの新規作成および編集
+Placeの新規作成および編集。
 
 ---
 
@@ -273,7 +273,7 @@ Placeの新規作成および編集
 
 ### 5.3.3 Data Source
 
-- edit時のみ GetPlaceDetailUseCase
+- edit時のみ GetPlaceDetailUseCase を使用。
 
 ---
 
@@ -282,23 +282,24 @@ Placeの新規作成および編集
 - place_name: 必須
 - latitude: -90〜90
 - longitude: -180〜180
-- latitude, longitudeはaddressから取得する
+- url: 任意（入力時は正しいURLフォーマットであること）
+- latitude, longitudeはaddress入力完了時（onAddressInputCompleted）にジオコーディングUseCase経由で取得する。
 
 ---
 
 ### 5.3.5 操作
 
-#### 保存
+#### 保存（onTap Save）
 
-- CreatePlaceUseCase または UpdatePlaceUseCaseを実行
+- バリデーションを実行。
+- CreatePlaceUseCase または UpdatePlaceUseCase を実行。
 - 成功時：
-  - 画面を閉じる
-  - selected_place_idを新規/更新IDに設定
-  - placesを更新する
+  - 画面を閉じる。
+  - selected_place_idを新規/更新IDに設定する。
+  - placesを更新する。
 - 失敗時：
-  - エラーダイアログを表示する
-  - 文言はエラーの原因となる文言を表示する
-  - ダイアログにはどじるボタン
+  - 原因となる文言を含むエラーダイアログを表示する（閉じるボタン付き）。
+
 ---
 
 ### 5.4. SettingScreen

@@ -71,5 +71,80 @@
   },
 
   "retry": "再試行",
-  "@retry": {}
+  "@retry": {},
+
+  "addPlaceTitle": "場所を追加",
+  "@addPlaceTitle": {},
+
+  "editPlaceTitle": "場所を編集",
+  "@editPlaceTitle": {},
+
+  "save": "保存",
+  "@save": {},
+
+  "placeName": "場所の名前",
+  "@placeName": {},
+
+  "address": "住所",
+  "@address": {},
+
+  "latitude": "緯度",
+  "@latitude": {},
+
+  "longitude": "経度",
+  "@longitude": {},
+
+  "url": "URL",
+  "@url": {},
+
+  "memo": "メモ",
+  "@memo": {},
+
+  "isVisited": "訪問済み",
+  "@isVisited": {},
+
+  "validationErrorTitle": "入力エラー",
+  "@validationErrorTitle": {},
+
+  "validationPlaceNameRequired": "場所の名前は必須です",
+  "@validationPlaceNameRequired": {},
+
+  "validationLatitudeRange": "緯度は -90 〜 90 の範囲で入力してください",
+  "@validationLatitudeRange": {},
+
+  "validationLongitudeRange": "経度は -180 〜 180 の範囲で入力してください",
+  "@validationLongitudeRange": {},
+
+  "validationUrlFormat": "正しい URL 形式で入力してください",
+  "@validationUrlFormat": {},
+
+  "validationLatitudeFormat": "緯度は数値で入力してください",
+  "@validationLatitudeFormat": {},
+
+  "validationLongitudeFormat": "経度は数値で入力してください",
+  "@validationLongitudeFormat": {},
+
+  "saveError": "保存に失敗しました: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+
+  "saveErrorTitle": "保存エラー",
+  "@saveErrorTitle": {},
+
+  "close": "閉じる",
+  "@close": {},
+
+  "geocodeError": "住所から座標を取得できませんでした",
+  "@geocodeError": {},
+
+  "notVisited": "未訪問",
+  "@notVisited": {},
+
+  "visitedStatus": "訪問状況",
+  "@visitedStatus": {}
 }

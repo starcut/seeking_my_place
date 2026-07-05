@@ -213,6 +213,144 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'再試行'**
   String get retry;
+
+  /// No description provided for @addPlaceTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所を追加'**
+  String get addPlaceTitle;
+
+  /// No description provided for @editPlaceTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所を編集'**
+  String get editPlaceTitle;
+
+  /// No description provided for @save.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存'**
+  String get save;
+
+  /// No description provided for @placeName.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所の名前'**
+  String get placeName;
+
+  /// No description provided for @address.
+  ///
+  /// In ja, this message translates to:
+  /// **'住所'**
+  String get address;
+
+  /// No description provided for @latitude.
+  ///
+  /// In ja, this message translates to:
+  /// **'緯度'**
+  String get latitude;
+
+  /// No description provided for @longitude.
+  ///
+  /// In ja, this message translates to:
+  /// **'経度'**
+  String get longitude;
+
+  /// No description provided for @url.
+  ///
+  /// In ja, this message translates to:
+  /// **'URL'**
+  String get url;
+
+  /// No description provided for @memo.
+  ///
+  /// In ja, this message translates to:
+  /// **'メモ'**
+  String get memo;
+
+  /// No description provided for @isVisited.
+  ///
+  /// In ja, this message translates to:
+  /// **'訪問済み'**
+  String get isVisited;
+
+  /// No description provided for @validationErrorTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'入力エラー'**
+  String get validationErrorTitle;
+
+  /// No description provided for @validationPlaceNameRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所の名前は必須です'**
+  String get validationPlaceNameRequired;
+
+  /// No description provided for @validationLatitudeRange.
+  ///
+  /// In ja, this message translates to:
+  /// **'緯度は -90 〜 90 の範囲で入力してください'**
+  String get validationLatitudeRange;
+
+  /// No description provided for @validationLongitudeRange.
+  ///
+  /// In ja, this message translates to:
+  /// **'経度は -180 〜 180 の範囲で入力してください'**
+  String get validationLongitudeRange;
+
+  /// No description provided for @validationUrlFormat.
+  ///
+  /// In ja, this message translates to:
+  /// **'正しい URL 形式で入力してください'**
+  String get validationUrlFormat;
+
+  /// No description provided for @validationLatitudeFormat.
+  ///
+  /// In ja, this message translates to:
+  /// **'緯度は数値で入力してください'**
+  String get validationLatitudeFormat;
+
+  /// No description provided for @validationLongitudeFormat.
+  ///
+  /// In ja, this message translates to:
+  /// **'経度は数値で入力してください'**
+  String get validationLongitudeFormat;
+
+  /// No description provided for @saveError.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存に失敗しました: {error}'**
+  String saveError(Object error);
+
+  /// No description provided for @saveErrorTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存エラー'**
+  String get saveErrorTitle;
+
+  /// No description provided for @close.
+  ///
+  /// In ja, this message translates to:
+  /// **'閉じる'**
+  String get close;
+
+  /// No description provided for @geocodeError.
+  ///
+  /// In ja, this message translates to:
+  /// **'住所から座標を取得できませんでした'**
+  String get geocodeError;
+
+  /// No description provided for @notVisited.
+  ///
+  /// In ja, this message translates to:
+  /// **'未訪問'**
+  String get notVisited;
+
+  /// No description provided for @visitedStatus.
+  ///
+  /// In ja, this message translates to:
+  /// **'訪問状況'**
+  String get visitedStatus;
 }
 
 class _AppLocalizationsDelegate
