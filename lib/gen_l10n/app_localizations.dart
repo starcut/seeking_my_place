@@ -286,6 +286,24 @@ abstract class AppLocalizations {
   /// **'場所の名前は必須です'**
   String get validationPlaceNameRequired;
 
+  /// No description provided for @validationLatitudeRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'緯度は必須です'**
+  String get validationLatitudeRequired;
+
+  /// No description provided for @validationLongitudeRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'経度は必須です'**
+  String get validationLongitudeRequired;
+
+  /// No description provided for @validationUrlRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'URLは必須です'**
+  String get validationUrlRequired;
+
   /// No description provided for @validationLatitudeRange.
   ///
   /// In ja, this message translates to:
