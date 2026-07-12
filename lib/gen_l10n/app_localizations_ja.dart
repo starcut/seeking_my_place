@@ -142,4 +142,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get visitedStatus => '訪問状況';
+
+  @override
+  String get settingTitle => '設定';
+
+  @override
+  String get itemsPerPageLabel => '表示件数';
+
+  @override
+  String get itemsPerPageUnit => '件';
+
+  @override
+  String get itemsPerPageUnlimited => '制限なし';
+
+  @override
+  String get exportButton => 'エクスポート';
+
+  @override
+  String get importButton => 'インポート';
+
+  @override
+  String get exportRun => '書き出し';
+
+  @override
+  String get importSelectFile => 'ファイル選択';
+
+  @override
+  String get importSupportedFormats => '対応形式: .db, .csv';
+
+  @override
+  String get versionLabel => 'バージョン';
+
+  @override
+  String appVersion(String version) {
+    return 'バージョン $version';
+  }
+
+  @override
+  String get settingScreenReserved => '';
 }

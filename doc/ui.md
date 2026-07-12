@@ -469,28 +469,38 @@ Scaffold
  ├── appBar: AppBarDefault
  └── body:
       └── ListView
-           ├── DataSection
-           └── AppInfoSection
+           └── DataSection
 
 ---
 
 ## DataSection
 
 Column
- ├── ExportButton
- └── ImportButton
-
----
-
-## AppInfoSection
-
-Column
- └── AppVersion
-
----
+ ├── Row
+ │   ├── Text("表示件数")
+ │   ├── Space
+ │   ├── PullDown
+ │   └── Text("件")
+ ├── Divider(薄い区切り線)
+ ├── Row
+ │   ├── Text("エクスポート")
+ │   ├── Space
+ │   ├── PullDown
+ │   └── Button("書き出し")
+ ├── Divider(薄い区切り線)
+ ├── Row
+ │   ├── Text("インポート")
+ │   ├── Space
+ │   └── Button("ファイル選択")
+ ├── Divider(薄い区切り線)
+ └── Row
+     ├── Text("バージョン")
+     ├── Space
+     └── Text(AppVersion)
 
 ## Actions
 
+- save リスト表示件数
 - export database
 - import database
 

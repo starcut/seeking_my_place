@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:seeking_my_place/features/place/presentation/screens/add_place_screen.dart';
 import 'package:seeking_my_place/features/place/presentation/screens/home_screen.dart';
 import 'package:seeking_my_place/features/place/presentation/screens/place_detail_screen.dart';
+import 'package:seeking_my_place/features/place/presentation/screens/setting_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -26,6 +27,10 @@ final GoRouter appRouter = GoRouter(
         final placeId = state.pathParameters['id']!;
         return AddPlaceScreen(placeId: placeId);
       },
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingScreen(),
     ),
   ],
 );

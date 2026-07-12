@@ -351,6 +351,78 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'訪問状況'**
   String get visitedStatus;
+
+  /// No description provided for @settingTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'設定'**
+  String get settingTitle;
+
+  /// No description provided for @itemsPerPageLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'表示件数'**
+  String get itemsPerPageLabel;
+
+  /// No description provided for @itemsPerPageUnit.
+  ///
+  /// In ja, this message translates to:
+  /// **'件'**
+  String get itemsPerPageUnit;
+
+  /// No description provided for @itemsPerPageUnlimited.
+  ///
+  /// In ja, this message translates to:
+  /// **'制限なし'**
+  String get itemsPerPageUnlimited;
+
+  /// No description provided for @exportButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'エクスポート'**
+  String get exportButton;
+
+  /// No description provided for @importButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'インポート'**
+  String get importButton;
+
+  /// No description provided for @exportRun.
+  ///
+  /// In ja, this message translates to:
+  /// **'書き出し'**
+  String get exportRun;
+
+  /// No description provided for @importSelectFile.
+  ///
+  /// In ja, this message translates to:
+  /// **'ファイル選択'**
+  String get importSelectFile;
+
+  /// No description provided for @importSupportedFormats.
+  ///
+  /// In ja, this message translates to:
+  /// **'対応形式: .db, .csv'**
+  String get importSupportedFormats;
+
+  /// No description provided for @versionLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'バージョン'**
+  String get versionLabel;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In ja, this message translates to:
+  /// **'バージョン {version}'**
+  String appVersion(String version);
+
+  /// No description provided for @settingScreenReserved.
+  ///
+  /// In ja, this message translates to:
+  /// **''**
+  String get settingScreenReserved;
 }
 
 class _AppLocalizationsDelegate

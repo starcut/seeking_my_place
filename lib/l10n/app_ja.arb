@@ -146,5 +146,47 @@
   "@notVisited": {},
 
   "visitedStatus": "訪問状況",
-  "@visitedStatus": {}
+  "@visitedStatus": {},
+
+  "settingTitle": "設定",
+  "@settingTitle": {},
+
+  "itemsPerPageLabel": "表示件数",
+  "@itemsPerPageLabel": {},
+
+  "itemsPerPageUnit": "件",
+  "@itemsPerPageUnit": {},
+
+  "itemsPerPageUnlimited": "制限なし",
+  "@itemsPerPageUnlimited": {},
+
+  "exportButton": "エクスポート",
+  "@exportButton": {},
+
+  "importButton": "インポート",
+  "@importButton": {},
+
+  "exportRun": "書き出し",
+  "@exportRun": {},
+
+  "importSelectFile": "ファイル選択",
+  "@importSelectFile": {},
+
+  "importSupportedFormats": "対応形式: .db, .csv",
+  "@importSupportedFormats": {},
+
+  "versionLabel": "バージョン",
+  "@versionLabel": {},
+
+  "appVersion": "バージョン {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "settingScreenReserved": "",
+  "@settingScreenReserved": {}
 }
