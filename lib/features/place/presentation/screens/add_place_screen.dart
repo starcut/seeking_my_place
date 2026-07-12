@@ -6,6 +6,7 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/create_place_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/fetch_tabelog_info_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
@@ -79,6 +80,12 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   bool _isVisited = false;
   bool _isSaving = false;
 
+  /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
+  bool _isFetching = false;
+
+  /// 現在取得中のURL。キャンセル時に対象プロバイダを特定して破棄するために保持する。
+  String? _fetchingUrl;
+
   @override
   void initState() {
     super.initState();
@@ -132,6 +139,73 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
         ).showSnackBar(SnackBar(content: Text(l10n.geocodeError)));
       }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 店舗情報の自動取得（URL → 名前・住所・ジャンル）
+  // ---------------------------------------------------------------------------
+
+  Future<void> _onTapFetchPlaceInfo() async {
+    final l10n = AppLocalizations.of(context);
+    final url = _urlController.text.trim();
+
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoUrlRequired)));
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isFetching = true;
+      _fetchingUrl = url;
+    });
+
+    try {
+      final info = await ref.read(fetchTabelogInfoUseCaseProvider(url).future);
+      // await の前後で必ず mounted を確認する。
+      // 戻る操作でキャンセルされた場合は既に unmount 済みのためここで抜ける。
+      if (!mounted) return;
+
+      setState(() {
+        if (info.name.isNotEmpty) _placeNameController.text = info.name;
+        if (info.address.isNotEmpty) _addressController.text = info.address;
+        if (info.genre.isNotEmpty) _memoController.text = info.genre;
+        _isFetching = false;
+        _fetchingUrl = null;
+      });
+
+      // 住所が取得できたら緯度・経度も続けて補完する。
+      if (info.address.isNotEmpty) {
+        await _onAddressInputCompleted();
+      }
+    } catch (_) {
+      // キャンセルによる例外は unmount 済みで弾かれる。
+      // ここに来るのは通信・パース失敗時のみ。入力は保持し、画面は閉じない。
+      if (!mounted) return;
+      setState(() {
+        _isFetching = false;
+        _fetchingUrl = null;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoFetchError)));
+    }
+  }
+
+  /// 実行中の取得処理をキャンセルする。
+  ///
+  /// 対象プロバイダを [Ref.invalidate] で破棄することで、
+  /// UseCase 側の [Ref.onDispose] が発火し、進行中の HTTP 通信が
+  /// `CancelToken` によって中断される。
+  void _cancelFetch() {
+    final url = _fetchingUrl;
+    if (url != null) {
+      ref.invalidate(fetchTabelogInfoUseCaseProvider(url));
+    }
+    _isFetching = false;
+    _fetchingUrl = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -268,6 +342,26 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
+    return PopScope(
+      // 取得中は自動で pop させず、いったん割り込んでキャンセル処理を挟む。
+      canPop: !_isFetching,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // 取得中に戻る操作が行われた場合：
+        // 通信を中断 → ローディング解除 → 即座に前の画面へ戻る。
+        _cancelFetch();
+        Navigator.of(context).pop();
+      },
+      child: Stack(
+        children: [
+          _buildForm(context, l10n),
+          if (_isFetching) _buildLoadingOverlay(l10n),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, AppLocalizations l10n) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
@@ -281,7 +375,14 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
               // URL
               TextFormField(
                 controller: _urlController,
-                decoration: InputDecoration(labelText: l10n.url),
+                decoration: InputDecoration(
+                  labelText: l10n.url,
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.travel_explore),
+                    tooltip: l10n.placeInfoFetchTooltip,
+                    onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
+                  ),
+                ),
                 keyboardType: TextInputType.url,
                 validator: _validateUrl,
                 textInputAction: TextInputAction.next,
@@ -365,6 +466,31 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// 取得通信中に画面全体を覆う半透明のローディングレイヤー。
+  Widget _buildLoadingOverlay(AppLocalizations l10n) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // 半透明の黒レイヤー。背後の操作を吸収する。
+          const ModalBarrier(dismissible: false, color: Colors.black54),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.placeInfoFetching,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

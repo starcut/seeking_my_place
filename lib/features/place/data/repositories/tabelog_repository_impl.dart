@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:seeking_my_place/features/place/data/datasources/remote/tabelog_remote_data_source.dart';
@@ -14,10 +15,10 @@ class TabelogRepositoryImpl implements TabelogRepository {
   static const String _tabelogHost = 'tabelog.com';
 
   @override
-  Future<TabelogInfo> fetchInfo(String url) async {
+  Future<TabelogInfo> fetchInfo(String url, {CancelToken? cancelToken}) async {
     _validateTabelogUrl(url);
 
-    final rawHtml = await _dataSource.fetchHtml(url);
+    final rawHtml = await _dataSource.fetchHtml(url, cancelToken: cancelToken);
 
     final Document document;
     try {

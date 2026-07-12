@@ -8,7 +8,9 @@ part 'tabelog_repository.g.dart';
 
 abstract class TabelogRepository {
   /// 食べログURLから店舗情報（名前・住所・ジャンル）を取得する。
-  Future<TabelogInfo> fetchInfo(String url);
+  ///
+  /// [cancelToken] を渡すと、取得処理の途中でキャンセルできる。
+  Future<TabelogInfo> fetchInfo(String url, {CancelToken? cancelToken});
 }
 
 @Riverpod(keepAlive: true)

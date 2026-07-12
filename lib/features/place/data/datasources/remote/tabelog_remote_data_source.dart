@@ -7,9 +7,10 @@ import 'package:seeking_my_place/features/place/domain/exceptions/tabelog_parse_
 abstract class TabelogRemoteDataSource {
   /// 指定した食べログURLのHTMLソースを文字列として取得する。
   ///
+  /// [cancelToken] を渡すと、通信の途中でキャンセルできる。
   /// 通信に失敗した場合（403 Forbidden を含む）は
   /// [TabelogParseException] を投げる。
-  Future<String> fetchHtml(String url);
+  Future<String> fetchHtml(String url, {CancelToken? cancelToken});
 }
 
 class TabelogRemoteDataSourceImpl implements TabelogRemoteDataSource {
@@ -38,10 +39,11 @@ class TabelogRemoteDataSourceImpl implements TabelogRemoteDataSource {
   };
 
   @override
-  Future<String> fetchHtml(String url) async {
+  Future<String> fetchHtml(String url, {CancelToken? cancelToken}) async {
     try {
       final response = await _dio.get<String>(
         url,
+        cancelToken: cancelToken,
         options: Options(
           headers: _browserHeaders,
           responseType: ResponseType.plain,

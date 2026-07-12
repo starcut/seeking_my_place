@@ -189,4 +189,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingScreenReserved => '';
+
+  @override
+  String get placeInfoFetching => '店舗情報を取得中...';
+
+  @override
+  String get placeInfoFetchTooltip => 'URLから店舗情報を取得';
+
+  @override
+  String get placeInfoFetchError => '店舗情報の取得に失敗しました。URLをご確認ください';
+
+  @override
+  String get placeInfoUrlRequired => 'URLを入力してください';
 }
