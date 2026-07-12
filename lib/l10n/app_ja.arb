@@ -109,6 +109,15 @@
   "validationPlaceNameRequired": "場所の名前は必須です",
   "@validationPlaceNameRequired": {},
 
+  "validationLatitudeRequired": "緯度は必須です",
+  "@validationLatitudeRequired": {},
+
+  "validationLongitudeRequired": "経度は必須です",
+  "@validationLongitudeRequired": {},
+
+  "validationUrlRequired": "URLは必須です",
+  "@validationUrlRequired": {},
+
   "validationLatitudeRange": "緯度は -90 〜 90 の範囲で入力してください",
   "@validationLatitudeRange": {},
 

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
-import 'package:go_router/go_router.dart';
 
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/create_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/primary_button.dart';
@@ -136,42 +136,47 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
 
   // ---------------------------------------------------------------------------
   // Validation
+  //
+  // バリデーションのビジネスルールはドメイン層の [PlaceValidator] に委譲し、
+  // ここでは結果コード [PlaceValidationError] を l10n メッセージへ変換するのみ。
   // ---------------------------------------------------------------------------
 
-  String? _validatePlaceName(String? value) {
+  String? _validatePlaceName(String? value) =>
+      _messageFor(PlaceValidator.validatePlaceName(value));
+
+  String? _validateLatitude(String? value) =>
+      _messageFor(PlaceValidator.validateLatitude(value));
+
+  String? _validateLongitude(String? value) =>
+      _messageFor(PlaceValidator.validateLongitude(value));
+
+  String? _validateUrl(String? value) =>
+      _messageFor(PlaceValidator.validateUrl(value));
+
+  /// ドメインのバリデーション結果コードを、表示用の多言語メッセージへ変換する。
+  String? _messageFor(PlaceValidationError? error) {
+    if (error == null) return null;
     final l10n = AppLocalizations.of(context);
-    if (value == null || value.trim().isEmpty) {
-      return l10n.validationPlaceNameRequired;
+    switch (error) {
+      case PlaceValidationError.placeNameRequired:
+        return l10n.validationPlaceNameRequired;
+      case PlaceValidationError.latitudeRequired:
+        return l10n.validationLatitudeRequired;
+      case PlaceValidationError.latitudeFormat:
+        return l10n.validationLatitudeFormat;
+      case PlaceValidationError.latitudeRange:
+        return l10n.validationLatitudeRange;
+      case PlaceValidationError.longitudeRequired:
+        return l10n.validationLongitudeRequired;
+      case PlaceValidationError.longitudeFormat:
+        return l10n.validationLongitudeFormat;
+      case PlaceValidationError.longitudeRange:
+        return l10n.validationLongitudeRange;
+      case PlaceValidationError.urlRequired:
+        return l10n.validationUrlRequired;
+      case PlaceValidationError.urlFormat:
+        return l10n.validationUrlFormat;
     }
-    return null;
-  }
-
-  String? _validateLatitude(String? value) {
-    final l10n = AppLocalizations.of(context);
-    if (value == null || value.isEmpty) return null;
-    final parsed = double.tryParse(value);
-    if (parsed == null) return l10n.validationLatitudeFormat;
-    if (parsed < -90 || parsed > 90) return l10n.validationLatitudeRange;
-    return null;
-  }
-
-  String? _validateLongitude(String? value) {
-    final l10n = AppLocalizations.of(context);
-    if (value == null || value.isEmpty) return null;
-    final parsed = double.tryParse(value);
-    if (parsed == null) return l10n.validationLongitudeFormat;
-    if (parsed < -180 || parsed > 180) return l10n.validationLongitudeRange;
-    return null;
-  }
-
-  String? _validateUrl(String? value) {
-    final l10n = AppLocalizations.of(context);
-    if (value == null || value.isEmpty) return null;
-    final uri = Uri.tryParse(value);
-    if (uri == null || (!uri.isScheme('http') && !uri.isScheme('https'))) {
-      return l10n.validationUrlFormat;
-    }
-    return null;
   }
 
   // ---------------------------------------------------------------------------

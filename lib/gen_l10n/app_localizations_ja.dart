@@ -109,6 +109,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get validationPlaceNameRequired => '場所の名前は必須です';
 
   @override
+  String get validationLatitudeRequired => '緯度は必須です';
+
+  @override
+  String get validationLongitudeRequired => '経度は必須です';
+
+  @override
+  String get validationUrlRequired => 'URLは必須です';
+
+  @override
   String get validationLatitudeRange => '緯度は -90 〜 90 の範囲で入力してください';
 
   @override
