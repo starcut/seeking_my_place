@@ -339,8 +339,6 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
         // VisitedBadge
         _VisitedSection(isVisited: place.isVisited),
         const SizedBox(height: 16),
-        // メモ欄
-        _MemoSection(place: place),
       ],
     );
   }
@@ -349,33 +347,36 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
   Widget _buildEditLayout(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final place = widget.place;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PlaceForm(
-          formKey: _formKey,
-          placeNameController: _placeNameController,
-          categoryController: _categoryController,
-          urlController: _urlController,
-          addressController: _addressController,
-          latitudeController: _latitudeController,
-          longitudeController: _longitudeController,
-          isVisited: _isVisited,
-          onVisitedChanged: (value) => setState(() => _isVisited = value),
-          placeNameValidator: _validatePlaceName,
-          latitudeValidator: _validateLatitude,
-          longitudeValidator: _validateLongitude,
-          urlValidator: _validateUrl,
-          initialPurposeId: place.purposes.isNotEmpty
-              ? place.purposes.first.purposeId
-              : null,
-        ),
-        const SizedBox(height: 24),
-        PrimaryButton(label: l10n.save, onPressed: _onTapSave),
-        const SizedBox(height: 12),
-        SecondaryButton(label: l10n.cancel, onPressed: _onTapCancel),
-      ],
+    return GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PlaceForm(
+                formKey: _formKey,
+                placeNameController: _placeNameController,
+                categoryController: _categoryController,
+                urlController: _urlController,
+                addressController: _addressController,
+                latitudeController: _latitudeController,
+                longitudeController: _longitudeController,
+                isVisited: _isVisited,
+                onVisitedChanged: (value) => setState(() => _isVisited = value),
+                placeNameValidator: _validatePlaceName,
+                latitudeValidator: _validateLatitude,
+                longitudeValidator: _validateLongitude,
+                urlValidator: _validateUrl,
+                initialPurposeId: place.purposes.isNotEmpty ? place.purposes.first.purposeId  : null,
+              ),
+              const SizedBox(height: 24),
+              PrimaryButton(label: l10n.save, onPressed: _onTapSave),
+              const SizedBox(height: 12),
+              SecondaryButton(label: l10n.cancel, onPressed: _onTapCancel),
+            ],
+          ),
+        )
     );
   }
 }
@@ -444,39 +445,6 @@ class _VisitedSection extends StatelessWidget {
               ? Colors.green.withValues(alpha: 0.1)
               : Colors.grey.withValues(alpha: 0.1),
           side: BorderSide.none,
-        ),
-        const Divider(),
-      ],
-    );
-  }
-}
-
-class _MemoSection extends StatelessWidget {
-  const _MemoSection({required this.place});
-
-  final Place place;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final hasMemo = place.category.isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.memo,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          hasMemo ? place.category : l10n.memoPlaceholder,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: hasMemo ? null : Colors.grey,
-            fontStyle: hasMemo ? FontStyle.normal : FontStyle.italic,
-          ),
         ),
         const Divider(),
       ],

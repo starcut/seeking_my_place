@@ -14,13 +14,6 @@ final placeFormPurposesProvider = FutureProvider.autoDispose<List<Purpose>>(
   (ref) => ref.watch(placeRepositoryProvider).getAllPurposes(),
 );
 
-/// category ドロップダウン用のプレースホルダ選択肢。
-///
-/// このアプリの `category` は本来フリーテキストのため確定したマスタが存在しない。
-/// ui.md の Dropdown(category) を満たすためのレイアウト用プレースホルダであり、
-/// 実データ源が用意でき次第差し替える想定。
-const List<String> _categoryOptions = <String>['カフェ', 'レストラン', 'バー', '居酒屋', 'その他'];
-
 /// ui.md「PlaceForm」に対応する共通フォームウィジェット。
 ///
 /// 本ウィジェットは **レイアウト（Widget の配置）専用のラッパー** であり、
@@ -29,7 +22,7 @@ const List<String> _categoryOptions = <String>['カフェ', 'レストラン', '
 ///
 /// レイアウト（縦並び）:
 ///   1. TextField(place_name)
-///   2. Dropdown(category)
+///   2. TextField(category)
 ///   3. Dropdown(purpose)
 ///   4. TextField(url)
 ///   5. TextField(address)
@@ -95,15 +88,11 @@ class PlaceForm extends ConsumerStatefulWidget {
 }
 
 class _PlaceFormState extends ConsumerState<PlaceForm> {
-  String? _selectedCategory;
   String? _selectedPurposeId;
 
   @override
   void initState() {
     super.initState();
-    final currentCategory = widget.categoryController.text.trim();
-    _selectedCategory = currentCategory.isEmpty ? null : currentCategory;
-    _selectedPurposeId = widget.initialPurposeId;
   }
 
   @override
@@ -126,8 +115,13 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           ),
           const SizedBox(height: 12),
 
-          // 2. category（Dropdown）
-          _buildCategoryDropdown(l10n, readOnly),
+          // 2. category
+          TextFormField(
+            controller: widget.categoryController,
+            decoration: InputDecoration(labelText: l10n.category),
+            readOnly: readOnly,
+            textInputAction: TextInputAction.next,
+          ),
           const SizedBox(height: 12),
 
           // 3. purpose（Dropdown / provider から選択肢を取得）
@@ -202,32 +196,6 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           ),
         ],
       ),
-    );
-  }
-
-  /// category ドロップダウン。選択値は既存の [categoryController] へ反映し、
-  /// 既存の保存ロジック（コントローラ参照）をそのまま活かす。
-  Widget _buildCategoryDropdown(AppLocalizations l10n, bool readOnly) {
-    // 現在値が固定選択肢に無い場合も表示できるよう、選択肢へ含める。
-    final current = _selectedCategory;
-    final items = <String>[
-      ..._categoryOptions,
-      if (current != null && !_categoryOptions.contains(current)) current,
-    ];
-
-    return DropdownButtonFormField<String>(
-      initialValue: current,
-      decoration: InputDecoration(labelText: l10n.category),
-      hint: Text(l10n.notSet),
-      items: items
-          .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
-          .toList(),
-      onChanged: readOnly
-          ? null
-          : (value) {
-              setState(() => _selectedCategory = value);
-              widget.categoryController.text = value ?? '';
-            },
     );
   }
 
