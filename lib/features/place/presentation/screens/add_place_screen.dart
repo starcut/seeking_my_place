@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 
@@ -10,6 +9,7 @@ import 'package:seeking_my_place/features/place/domain/usecases/fetch_tabelog_in
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/primary_button.dart';
@@ -180,9 +180,14 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       if (info.address.isNotEmpty) {
         await _onAddressInputCompleted();
       }
-    } catch (_) {
+    } catch (e) {
       // キャンセルによる例外は unmount 済みで弾かれる。
       // ここに来るのは通信・パース失敗時のみ。入力は保持し、画面は閉じない。
+
+      print("---error---");
+      print(e.toString());
+      print("---error---");
+
       if (!mounted) return;
       setState(() {
         _isFetching = false;
@@ -367,104 +372,41 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       behavior: HitTestBehavior.translucent,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // URL
-              TextFormField(
-                controller: _urlController,
-                decoration: InputDecoration(
-                  labelText: l10n.url,
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.travel_explore),
-                    tooltip: l10n.placeInfoFetchTooltip,
-                    onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
-                  ),
-                ),
-                keyboardType: TextInputType.url,
-                validator: _validateUrl,
-                textInputAction: TextInputAction.next,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ui.md AddPlaceScreen: Column > [PlaceForm, PrimaryButton("Save")]
+            PlaceForm(
+              formKey: _formKey,
+              placeNameController: _placeNameController,
+              categoryController: _memoController,
+              urlController: _urlController,
+              addressController: _addressController,
+              latitudeController: _latitudeController,
+              longitudeController: _longitudeController,
+              isVisited: _isVisited,
+              onVisitedChanged: (value) => setState(() => _isVisited = value),
+              placeNameValidator: _validatePlaceName,
+              latitudeValidator: _validateLatitude,
+              longitudeValidator: _validateLongitude,
+              urlValidator: _validateUrl,
+              onAddressEditingComplete: _onAddressInputCompleted,
+              initialPurposeId: widget.initialPlace?.purposes.isNotEmpty == true
+                  ? widget.initialPlace!.purposes.first.purposeId
+                  : null,
+              urlSuffixIcon: IconButton(
+                icon: const Icon(Icons.travel_explore),
+                tooltip: l10n.placeInfoFetchTooltip,
+                onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 24),
 
-              // 場所の名前
-              TextFormField(
-                controller: _placeNameController,
-                decoration: InputDecoration(labelText: l10n.placeName),
-                validator: _validatePlaceName,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-
-              // 住所
-              TextFormField(
-                controller: _addressController,
-                decoration: InputDecoration(labelText: l10n.address),
-                textInputAction: TextInputAction.done,
-                onEditingComplete: _onAddressInputCompleted,
-              ),
-              const SizedBox(height: 12),
-
-              // 緯度
-              TextFormField(
-                controller: _latitudeController,
-                decoration: InputDecoration(labelText: l10n.latitude),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-                ],
-                validator: _validateLatitude,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-
-              // 経度
-              TextFormField(
-                controller: _longitudeController,
-                decoration: InputDecoration(labelText: l10n.longitude),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-                ],
-                validator: _validateLongitude,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-
-              // 訪問済み
-              CheckboxListTile(
-                value: _isVisited,
-                onChanged: (value) =>
-                    setState(() => _isVisited = value ?? false),
-                title: Text(l10n.isVisited),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 12),
-
-              // メモ
-              TextFormField(
-                controller: _memoController,
-                decoration: InputDecoration(labelText: l10n.memo),
-                maxLines: 3,
-                textInputAction: TextInputAction.newline,
-              ),
-              const SizedBox(height: 24),
-
-              // 保存ボタン
-              _isSaving
-                  ? const Center(child: CircularProgressIndicator())
-                  : PrimaryButton(label: l10n.save, onPressed: _onTapSave),
-            ],
-          ),
+            // 保存ボタン
+            _isSaving
+                ? const Center(child: CircularProgressIndicator())
+                : PrimaryButton(label: l10n.save, onPressed: _onTapSave),
+          ],
         ),
       ),
     );

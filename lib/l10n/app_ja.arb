@@ -209,5 +209,14 @@
   "@placeInfoFetchError": {},
 
   "placeInfoUrlRequired": "URLを入力してください",
-  "@placeInfoUrlRequired": {}
+  "@placeInfoUrlRequired": {},
+
+  "category": "カテゴリー",
+  "@category": {},
+
+  "purpose": "利用目的",
+  "@purpose": {},
+
+  "notSet": "未設定",
+  "@notSet": {}
 }

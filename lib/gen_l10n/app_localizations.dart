@@ -465,6 +465,24 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'URLを入力してください'**
   String get placeInfoUrlRequired;
+
+  /// No description provided for @category.
+  ///
+  /// In ja, this message translates to:
+  /// **'カテゴリー'**
+  String get category;
+
+  /// No description provided for @purpose.
+  ///
+  /// In ja, this message translates to:
+  /// **'利用目的'**
+  String get purpose;
+
+  /// No description provided for @notSet.
+  ///
+  /// In ja, this message translates to:
+  /// **'未設定'**
+  String get notSet;
 }
 
 class _AppLocalizationsDelegate

@@ -3,39 +3,58 @@ import 'package:flutter/services.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
+import 'package:seeking_my_place/shared/widgets/primary_button.dart';
+import 'package:seeking_my_place/shared/widgets/secondary_button.dart';
 
-class PlaceDetailScreen extends ConsumerWidget {
+class PlaceDetailScreen extends ConsumerStatefulWidget {
   const PlaceDetailScreen({super.key, required this.placeId});
 
   final String placeId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlaceDetailScreen> createState() => _PlaceDetailScreenState();
+}
+
+class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
+  // View / Edit モードは AppBar からも切り替えるため、この親で保持する。
+  _DetailMode _mode = _DetailMode.view;
+
+  void _onTapEdit() => setState(() => _mode = _DetailMode.edit);
+
+  void _switchToView() => setState(() => _mode = _DetailMode.view);
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final placeId = widget.placeId;
     final placeAsync = ref.watch(getPlaceDetailUseCaseProvider(placeId));
 
     return Scaffold(
       appBar: AppBarDefault(
         title: l10n.placeDetailTitle,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: l10n.edit,
-            onPressed: () => context.go('/place/$placeId/edit'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: l10n.delete,
-            onPressed: () => _confirmDelete(context, ref, l10n),
-          ),
-        ],
+        // 編集・削除アイコンは view モードのときのみ表示する。
+        actions: _mode == _DetailMode.view
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: l10n.edit,
+                  onPressed: _onTapEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: l10n.delete,
+                  onPressed: () => _confirmDelete(context, ref, l10n),
+                ),
+              ]
+            : null,
       ),
       body: placeAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -43,7 +62,11 @@ class PlaceDetailScreen extends ConsumerWidget {
           message: l10n.fetchError(error),
           onRetry: () => ref.invalidate(getPlaceDetailUseCaseProvider(placeId)),
         ),
-        data: (place) => _PlaceDetailBody(place: place),
+        data: (place) => _PlaceDetailBody(
+          place: place,
+          mode: _mode,
+          onSwitchToView: _switchToView,
+        ),
       ),
     );
   }
@@ -53,6 +76,7 @@ class PlaceDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l10n,
   ) async {
+    final placeId = widget.placeId;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -99,62 +123,259 @@ class PlaceDetailScreen extends ConsumerWidget {
 // Body
 // -----------------------------------------------------------------------------
 
-class _PlaceDetailBody extends StatelessWidget {
-  const _PlaceDetailBody({required this.place});
+/// 詳細画面のモード（閲覧 / 編集）。
+enum _DetailMode { view, edit }
+
+class _PlaceDetailBody extends ConsumerStatefulWidget {
+  const _PlaceDetailBody({
+    required this.place,
+    required this.mode,
+    required this.onSwitchToView,
+  });
 
   final Place place;
 
+  /// 現在の表示モード（親 [PlaceDetailScreen] が保持）。
+  final _DetailMode mode;
+
+  /// view モードへ戻すためのコールバック（Save / Cancel から呼ぶ）。
+  final VoidCallback onSwitchToView;
+
+  @override
+  ConsumerState<_PlaceDetailBody> createState() => _PlaceDetailBodyState();
+}
+
+class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
+  // 編集モード用の入力状態（この画面内モード切り替えのための UI 状態）。
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final TextEditingController _placeNameController;
+  late final TextEditingController _categoryController;
+  late final TextEditingController _urlController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
+  late bool _isVisited;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.place;
+    _placeNameController = TextEditingController(text: p.placeName);
+    _categoryController = TextEditingController(text: p.category);
+    _urlController = TextEditingController(text: p.url);
+    _addressController = TextEditingController(text: p.address);
+    _latitudeController = TextEditingController(text: p.latitude.toString());
+    _longitudeController = TextEditingController(text: p.longitude.toString());
+    _isVisited = p.isVisited;
+  }
+
+  @override
+  void dispose() {
+    _placeNameController.dispose();
+    _categoryController.dispose();
+    _urlController.dispose();
+    _addressController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mode actions
+  // ---------------------------------------------------------------------------
+
+  void _onTapCancel() {
+    // 変更を破棄して view に戻す。
+    final p = widget.place;
+    _placeNameController.text = p.placeName;
+    _categoryController.text = p.category;
+    _urlController.text = p.url;
+    _addressController.text = p.address;
+    _latitudeController.text = p.latitude.toString();
+    _longitudeController.text = p.longitude.toString();
+    setState(() => _isVisited = p.isVisited);
+    widget.onSwitchToView();
+  }
+
+  void _onTapSave() {
+    final l10n = AppLocalizations.of(context)!;
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.validationErrorTitle)));
+      return;
+    }
+    // NOTE: 更新ロジックは枠組みのみ。実データ更新の UseCase 呼び出しは
+    // 既存ロジックを変更しないため本ステップでは行わず、view へ戻すのみとする。
+    widget.onSwitchToView();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Validation（AddPlaceScreen と同様、ドメインの結果コードを l10n へ変換）
+  // ---------------------------------------------------------------------------
+
+  String? _validatePlaceName(String? value) =>
+      _messageFor(PlaceValidator.validatePlaceName(value));
+
+  String? _validateLatitude(String? value) =>
+      _messageFor(PlaceValidator.validateLatitude(value));
+
+  String? _validateLongitude(String? value) =>
+      _messageFor(PlaceValidator.validateLongitude(value));
+
+  String? _validateUrl(String? value) =>
+      _messageFor(PlaceValidator.validateUrl(value));
+
+  String? _messageFor(PlaceValidationError? error) {
+    if (error == null) return null;
+    final l10n = AppLocalizations.of(context)!;
+    switch (error) {
+      case PlaceValidationError.placeNameRequired:
+        return l10n.validationPlaceNameRequired;
+      case PlaceValidationError.latitudeRequired:
+        return l10n.validationLatitudeRequired;
+      case PlaceValidationError.latitudeFormat:
+        return l10n.validationLatitudeFormat;
+      case PlaceValidationError.latitudeRange:
+        return l10n.validationLatitudeRange;
+      case PlaceValidationError.longitudeRequired:
+        return l10n.validationLongitudeRequired;
+      case PlaceValidationError.longitudeFormat:
+        return l10n.validationLongitudeFormat;
+      case PlaceValidationError.longitudeRange:
+        return l10n.validationLongitudeRange;
+      case PlaceValidationError.urlRequired:
+        return l10n.validationUrlRequired;
+      case PlaceValidationError.urlFormat:
+        return l10n.validationUrlFormat;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final dateFormatter = DateFormat('yyyy/MM/dd HH:mm');
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (place.url.isNotEmpty) ...[
-            _UrlSection(place: place),
-            const SizedBox(height: 16),
-          ],
-          _DetailSection(
-            label: l10n.placeDetailTitle,
-            child: Text(
-              place.placeName,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _DetailSection(
-            label: l10n.address,
-            child: Row(
-              children: [
-                const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    place.address,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _DetailSection(
-            label: l10n.registeredAt,
-            child: Text(
-              dateFormatter.format(place.createdAt.toLocal()),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _VisitedSection(isVisited: place.isVisited),
-          const SizedBox(height: 16),
-          _MemoSection(place: place),
-        ],
+    return PopScope(
+      // view モードのときのみ通常どおり前の画面へ戻せる。
+      canPop: widget.mode == _DetailMode.view,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // 編集モード中の戻る操作は、編集を破棄して view モードへ戻す。
+        _onTapCancel();
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: widget.mode == _DetailMode.view
+            ? _buildViewLayout(context)
+            : _buildEditLayout(context),
       ),
+    );
+  }
+
+  /// ViewLayout（ui.md 準拠。GoogleMapPreview は表示しない方針）。
+  Widget _buildViewLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final place = widget.place;
+    final categoryText = place.category.isEmpty ? l10n.notSet : place.category;
+    final purposeText = place.purposes.isEmpty
+        ? l10n.notSet
+        : place.purposes.map((p) => p.purposeName).join(', ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // place_name
+        _DetailSection(
+          label: l10n.placeName,
+          child: Text(
+            place.placeName,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // category
+        _DetailSection(
+          label: l10n.category,
+          child: Text(
+            categoryText,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // purpose
+        _DetailSection(
+          label: l10n.purpose,
+          child: Text(
+            purposeText,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // url
+        if (place.url.isNotEmpty) ...[
+          _UrlSection(place: place),
+          const SizedBox(height: 16),
+        ],
+        // AddressRow
+        _DetailSection(
+          label: l10n.address,
+          child: Row(
+            children: [
+              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  place.address,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // VisitedBadge
+        _VisitedSection(isVisited: place.isVisited),
+        const SizedBox(height: 16),
+        // メモ欄
+        _MemoSection(place: place),
+      ],
+    );
+  }
+
+  /// EditLayout（ui.md 準拠: PlaceForm + Save + Cancel）。
+  Widget _buildEditLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final place = widget.place;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PlaceForm(
+          formKey: _formKey,
+          placeNameController: _placeNameController,
+          categoryController: _categoryController,
+          urlController: _urlController,
+          addressController: _addressController,
+          latitudeController: _latitudeController,
+          longitudeController: _longitudeController,
+          isVisited: _isVisited,
+          onVisitedChanged: (value) => setState(() => _isVisited = value),
+          placeNameValidator: _validatePlaceName,
+          latitudeValidator: _validateLatitude,
+          longitudeValidator: _validateLongitude,
+          urlValidator: _validateUrl,
+          initialPurposeId: place.purposes.isNotEmpty
+              ? place.purposes.first.purposeId
+              : null,
+        ),
+        const SizedBox(height: 24),
+        PrimaryButton(label: l10n.save, onPressed: _onTapSave),
+        const SizedBox(height: 12),
+        SecondaryButton(label: l10n.cancel, onPressed: _onTapCancel),
+      ],
     );
   }
 }

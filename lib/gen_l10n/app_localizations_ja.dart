@@ -201,4 +201,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get placeInfoUrlRequired => 'URLを入力してください';
+
+  @override
+  String get category => 'カテゴリー';
+
+  @override
+  String get purpose => '利用目的';
+
+  @override
+  String get notSet => '未設定';
 }
