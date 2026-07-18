@@ -287,6 +287,11 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // url
+        if (place.url.isNotEmpty) ...[
+          _UrlSection(place: place),
+          const SizedBox(height: 16),
+        ],
         // place_name
         _DetailSection(
           label: l10n.placeName,
@@ -314,11 +319,6 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
           ),
         ),
         const SizedBox(height: 16),
-        // url
-        if (place.url.isNotEmpty) ...[
-          _UrlSection(place: place),
-          const SizedBox(height: 16),
-        ],
         // AddressRow
         _DetailSection(
           label: l10n.address,

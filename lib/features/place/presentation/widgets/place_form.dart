@@ -105,30 +105,7 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. place_name
-          TextFormField(
-            controller: widget.placeNameController,
-            decoration: InputDecoration(labelText: l10n.placeName),
-            readOnly: readOnly,
-            validator: widget.placeNameValidator,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-
-          // 2. category
-          TextFormField(
-            controller: widget.categoryController,
-            decoration: InputDecoration(labelText: l10n.category),
-            readOnly: readOnly,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-
-          // 3. purpose（Dropdown / provider から選択肢を取得）
-          _buildPurposeDropdown(l10n, readOnly),
-          const SizedBox(height: 12),
-
-          // 4. url
+          // 1. url
           TextFormField(
             controller: widget.urlController,
             decoration: InputDecoration(
@@ -140,6 +117,29 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
             validator: widget.urlValidator,
             textInputAction: TextInputAction.next,
           ),
+          const SizedBox(height: 12),
+
+          // 2. place_name
+          TextFormField(
+            controller: widget.placeNameController,
+            decoration: InputDecoration(labelText: l10n.placeName),
+            readOnly: readOnly,
+            validator: widget.placeNameValidator,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+
+          // 3. category
+          TextFormField(
+            controller: widget.categoryController,
+            decoration: InputDecoration(labelText: l10n.category),
+            readOnly: readOnly,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+
+          // 4. purpose（Dropdown / provider から選択肢を取得）
+          _buildPurposeDropdown(l10n, readOnly),
           const SizedBox(height: 12),
 
           // 5. address
