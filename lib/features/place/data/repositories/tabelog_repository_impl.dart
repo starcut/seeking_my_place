@@ -65,7 +65,15 @@ class TabelogRepositoryImpl implements TabelogRepository {
 
   /// ジャンルを抽出する（例: `span.rstinfo-table__sub-info`）。
   String _extractGenre(Document document) {
-    return _firstText(document, const ['span.rstinfo-table__sub-info']);
+    final table = document.querySelector('.rstinfo-table__table');
+    if (table == null) return '';
+
+    for (final row in table.querySelectorAll('tr')) {
+      if (_normalize(row.querySelector('th')?.text ?? '') == 'ジャンル') {
+        return _normalize(row.querySelector('td')?.text ?? '');
+      }
+    }
+    return '';
   }
 
   /// 与えられたCSSセレクタ群を順に試し、最初に見つかった要素の
