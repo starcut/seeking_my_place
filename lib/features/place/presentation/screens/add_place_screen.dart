@@ -75,7 +75,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   late final TextEditingController _latitudeController;
   late final TextEditingController _longitudeController;
   late final TextEditingController _urlController;
-  late final TextEditingController _memoController;
+  late final TextEditingController _categoryController;
 
   bool _isVisited = false;
   bool _isSaving = false;
@@ -99,7 +99,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       text: place != null ? place.longitude.toString() : '',
     );
     _urlController = TextEditingController(text: place?.url ?? '');
-    _memoController = TextEditingController(text: place?.category ?? '');
+    _categoryController = TextEditingController(text: place?.category ?? '');
     _isVisited = place?.isVisited ?? false;
   }
 
@@ -110,7 +110,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _urlController.dispose();
-    _memoController.dispose();
+    _categoryController.dispose();
     super.dispose();
   }
 
@@ -171,7 +171,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       setState(() {
         if (info.name.isNotEmpty) _placeNameController.text = info.name;
         if (info.address.isNotEmpty) _addressController.text = info.address;
-        if (info.genre.isNotEmpty) _memoController.text = info.genre;
+        if (info.genre.isNotEmpty) _categoryController.text = info.genre;
         _isFetching = false;
         _fetchingUrl = null;
       });
@@ -284,7 +284,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       latitude: double.tryParse(_latitudeController.text) ?? 0.0,
       longitude: double.tryParse(_longitudeController.text) ?? 0.0,
       url: _urlController.text.trim(),
-      category: _memoController.text.trim(),
+      category: _categoryController.text.trim(),
       isVisited: _isVisited,
       createdAt: existingPlace?.createdAt ?? now,
       updatedAt: now,
@@ -375,7 +375,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
             PlaceForm(
               formKey: _formKey,
               placeNameController: _placeNameController,
-              categoryController: _memoController,
+              categoryController: _categoryController,
               urlController: _urlController,
               addressController: _addressController,
               latitudeController: _latitudeController,
