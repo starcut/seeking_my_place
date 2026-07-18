@@ -14,14 +14,20 @@ part 'fetch_tabelog_info_use_case.g.dart';
 /// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
 @riverpod
 Future<TabelogInfo> fetchTabelogInfoUseCase(Ref ref, String url) async {
+  final keepAliveLink = ref.keepAlive();
   final cancelToken = CancelToken();
+
   ref.onDispose(() {
     if (!cancelToken.isCancelled) {
       cancelToken.cancel('fetchTabelogInfoUseCase was disposed');
     }
   });
 
-  return ref
-      .read(tabelogRepositoryProvider)
-      .fetchInfo(url, cancelToken: cancelToken);
+  try {
+    return await ref
+        .read(tabelogRepositoryProvider)
+        .fetchInfo(url, cancelToken: cancelToken);
+  } finally {
+    keepAliveLink.close();
+  }
 }
