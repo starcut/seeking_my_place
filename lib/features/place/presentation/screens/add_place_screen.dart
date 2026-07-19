@@ -5,14 +5,15 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/create_place_use_case.dart';
-import 'package:seeking_my_place/features/place/domain/usecases/fetch_tabelog_info_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
+import 'package:seeking_my_place/features/place/presentation/controller/place_info_fetch_service.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/primary_button.dart';
+
 
 // -----------------------------------------------------------------------------
 // Screen
@@ -80,6 +81,8 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   bool _isVisited = false;
   bool _isSaving = false;
 
+  late final PlaceInfoFetchService _fetchService;
+
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
 
@@ -101,6 +104,8 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     _urlController = TextEditingController(text: place?.url ?? '');
     _categoryController = TextEditingController(text: place?.category ?? '');
     _isVisited = place?.isVisited ?? false;
+
+    _fetchService = PlaceInfoFetchService(ref);
   }
 
   @override
@@ -163,7 +168,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     });
 
     try {
-      final info = await ref.read(fetchTabelogInfoUseCaseProvider(url).future);
+      final info = await _fetchService.fetch(url);
       // await の前後で必ず mounted を確認する。
       // 戻る操作でキャンセルされた場合は既に unmount 済みのためここで抜ける。
       if (!mounted) return;
@@ -203,7 +208,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   void _cancelFetch() {
     final url = _fetchingUrl;
     if (url != null) {
-      ref.invalidate(fetchTabelogInfoUseCaseProvider(url));
+      _fetchService.cancel(url);
     }
     _isFetching = false;
     _fetchingUrl = null;

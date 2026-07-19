@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,10 +10,12 @@ import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
+import 'package:seeking_my_place/features/place/presentation/controller/place_info_fetch_service.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/primary_button.dart';
 import 'package:seeking_my_place/shared/widgets/secondary_button.dart';
+
 
 class PlaceDetailScreen extends ConsumerStatefulWidget {
   const PlaceDetailScreen({super.key, required this.placeId});
@@ -154,7 +157,17 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
   late final TextEditingController _addressController;
   late final TextEditingController _latitudeController;
   late final TextEditingController _longitudeController;
-  late bool _isVisited;
+
+  bool _isVisited = false;
+  bool _isSaving = false;
+
+  late final PlaceInfoFetchService _fetchService;
+
+  /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
+  bool _isFetching = false;
+
+  /// 現在取得中のURL。キャンセル時に対象プロバイダを特定して破棄するために保持する。
+  String? _fetchingUrl;
 
   @override
   void initState() {
@@ -167,6 +180,7 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     _latitudeController = TextEditingController(text: p.latitude.toString());
     _longitudeController = TextEditingController(text: p.longitude.toString());
     _isVisited = p.isVisited;
+    _fetchService = PlaceInfoFetchService(ref);
   }
 
   @override
@@ -250,6 +264,101 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
       case PlaceValidationError.urlFormat:
         return l10n.validationUrlFormat;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Geocoding（住所 → 緯度経度）
+  // ---------------------------------------------------------------------------
+
+  Future<void> _onAddressInputCompleted() async {
+    final address = _addressController.text.trim();
+    if (address.isEmpty) return;
+
+    try {
+      final locations = await geocoding.locationFromAddress(address);
+      if (locations.isNotEmpty && mounted) {
+        final location = locations.first;
+        setState(() {
+          _latitudeController.text = location.latitude.toString();
+          _longitudeController.text = location.longitude.toString();
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.geocodeError)));
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 店舗情報の自動取得（URL → 名前・住所・ジャンル）
+  // ---------------------------------------------------------------------------
+
+  Future<void> _onTapFetchPlaceInfo() async {
+    final l10n = AppLocalizations.of(context);
+    final url = _urlController.text.trim();
+
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoUrlRequired)));
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isFetching = true;
+      _fetchingUrl = url;
+    });
+
+    try {
+      final info = await _fetchService.fetch(url);
+      // await の前後で必ず mounted を確認する。
+      // 戻る操作でキャンセルされた場合は既に unmount 済みのためここで抜ける。
+      if (!mounted) return;
+
+      setState(() {
+        if (info.name.isNotEmpty) _placeNameController.text = info.name;
+        if (info.address.isNotEmpty) _addressController.text = info.address;
+        if (info.genre.isNotEmpty) _categoryController.text = info.genre;
+        _isFetching = false;
+        _fetchingUrl = null;
+      });
+
+      // 住所が取得できたら緯度・経度も続けて補完する。
+      if (info.address.isNotEmpty) {
+        await _onAddressInputCompleted();
+      }
+    } catch (e) {
+      // キャンセルによる例外は unmount 済みで弾かれる。
+      // ここに来るのは通信・パース失敗時のみ。入力は保持し、画面は閉じない。
+
+      if (!mounted) return;
+      setState(() {
+        _isFetching = false;
+        _fetchingUrl = null;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoFetchError)));
+    }
+  }
+
+  /// 実行中の取得処理をキャンセルする。
+  ///
+  /// 対象プロバイダを [Ref.invalidate] で破棄することで、
+  /// UseCase 側の [Ref.onDispose] が発火し、進行中の HTTP 通信が
+  /// `CancelToken` によって中断される。
+  void _cancelFetch() {
+    final url = _fetchingUrl;
+    if (url != null) {
+      _fetchService.cancel(url);
+    }
+    _isFetching = false;
+    _fetchingUrl = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -369,6 +478,11 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
                 longitudeValidator: _validateLongitude,
                 urlValidator: _validateUrl,
                 initialPurposeId: place.purposes.isNotEmpty ? place.purposes.first.purposeId  : null,
+                urlSuffixIcon: IconButton(
+                  icon: const Icon(Icons.travel_explore),
+                  tooltip: l10n.placeInfoFetchTooltip,
+                  onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
+                ),
               ),
               const SizedBox(height: 24),
               PrimaryButton(label: l10n.save, onPressed: _onTapSave),
