@@ -4,15 +4,19 @@ import 'package:seeking_my_place/features/place/domain/entities/tabelog_info.dar
 import 'package:seeking_my_place/features/place/domain/usecases/fetch_tabelog_info_use_case.dart';
 
 class PlaceInfoFetchService {
-  PlaceInfoFetchService(this.ref);
+  const PlaceInfoFetchService();
 
-  final WidgetRef ref;
-
-  Future<TabelogInfo> fetch(String url) {
+  Future<TabelogInfo> fetch({
+    required WidgetRef ref,
+    required String url,
+  }) {
     return ref.read(fetchTabelogInfoUseCaseProvider(url).future);
   }
 
-  void cancel(String url) {
+  void cancel({
+    required WidgetRef ref,
+    required String url,
+  }) {
     ref.invalidate(fetchTabelogInfoUseCaseProvider(url));
   }
 }

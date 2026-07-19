@@ -81,8 +81,6 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   bool _isVisited = false;
   bool _isSaving = false;
 
-  late final PlaceInfoFetchService _fetchService;
-
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
 
@@ -104,8 +102,6 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     _urlController = TextEditingController(text: place?.url ?? '');
     _categoryController = TextEditingController(text: place?.category ?? '');
     _isVisited = place?.isVisited ?? false;
-
-    _fetchService = PlaceInfoFetchService(ref);
   }
 
   @override
@@ -168,7 +164,12 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     });
 
     try {
-      final info = await _fetchService.fetch(url);
+      const service = PlaceInfoFetchService();
+      final info = await service.fetch(
+        ref: ref,
+        url: url,
+      );
+
       // await の前後で必ず mounted を確認する。
       // 戻る操作でキャンセルされた場合は既に unmount 済みのためここで抜ける。
       if (!mounted) return;
@@ -208,7 +209,11 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   void _cancelFetch() {
     final url = _fetchingUrl;
     if (url != null) {
-      _fetchService.cancel(url);
+      const service = PlaceInfoFetchService();
+      service.cancel(
+        ref: ref,
+        url: url,
+      );
     }
     _isFetching = false;
     _fetchingUrl = null;
