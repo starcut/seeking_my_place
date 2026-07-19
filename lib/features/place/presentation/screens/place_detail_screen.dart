@@ -371,6 +371,8 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return PopScope(
       // view モードのときのみ通常どおり前の画面へ戻せる。
       canPop: widget.mode == _DetailMode.view,
@@ -379,11 +381,41 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
         // 編集モード中の戻る操作は、編集を破棄して view モードへ戻す。
         _onTapCancel();
       },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: widget.mode == _DetailMode.view
-            ? _buildViewLayout(context)
-            : _buildEditLayout(context),
+      child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: widget.mode == _DetailMode.view
+                ? _buildViewLayout(context)
+                : _buildEditLayout(context),
+            ),
+            if (_isFetching) _buildLoadingOverlay(l10n),
+          ]
+      )
+    );
+  }
+
+  /// 取得通信中に画面全体を覆う半透明のローディングレイヤー。
+  Widget _buildLoadingOverlay(AppLocalizations l10n) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // 半透明の黒レイヤー。背後の操作を吸収する。
+          const ModalBarrier(dismissible: false, color: Colors.black54),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.placeInfoFetching,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
