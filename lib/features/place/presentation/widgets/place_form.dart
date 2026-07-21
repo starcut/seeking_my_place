@@ -110,7 +110,11 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
             controller: widget.urlController,
             decoration: InputDecoration(
               labelText: l10n.url,
-              suffixIcon: widget.urlSuffixIcon,
+              suffixIcon: _clearSuffix(
+                widget.urlController,
+                readOnly,
+                extra: widget.urlSuffixIcon,
+              ),
             ),
             readOnly: readOnly,
             keyboardType: TextInputType.url,
@@ -122,7 +126,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           // 2. place_name
           TextFormField(
             controller: widget.placeNameController,
-            decoration: InputDecoration(labelText: l10n.placeName),
+            decoration: InputDecoration(
+              labelText: l10n.placeName,
+              suffixIcon: _clearSuffix(widget.placeNameController, readOnly),
+            ),
             readOnly: readOnly,
             validator: widget.placeNameValidator,
             textInputAction: TextInputAction.next,
@@ -132,7 +139,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           // 3. category
           TextFormField(
             controller: widget.categoryController,
-            decoration: InputDecoration(labelText: l10n.category),
+            decoration: InputDecoration(
+              labelText: l10n.category,
+              suffixIcon: _clearSuffix(widget.categoryController, readOnly),
+            ),
             readOnly: readOnly,
             textInputAction: TextInputAction.next,
           ),
@@ -145,7 +155,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           // 5. address
           TextFormField(
             controller: widget.addressController,
-            decoration: InputDecoration(labelText: l10n.address),
+            decoration: InputDecoration(
+              labelText: l10n.address,
+              suffixIcon: _clearSuffix(widget.addressController, readOnly),
+            ),
             readOnly: readOnly,
             textInputAction: TextInputAction.done,
             onEditingComplete: widget.onAddressEditingComplete,
@@ -155,7 +168,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           // 6. MapPicker(latitude, longitude) ← 既存の緯度/経度 TextField
           TextFormField(
             controller: widget.latitudeController,
-            decoration: InputDecoration(labelText: l10n.latitude),
+            decoration: InputDecoration(
+              labelText: l10n.latitude,
+              suffixIcon: _clearSuffix(widget.latitudeController, readOnly),
+            ),
             readOnly: readOnly,
             keyboardType: const TextInputType.numberWithOptions(
               decimal: true,
@@ -170,7 +186,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: widget.longitudeController,
-            decoration: InputDecoration(labelText: l10n.longitude),
+            decoration: InputDecoration(
+              labelText: l10n.longitude,
+              suffixIcon: _clearSuffix(widget.longitudeController, readOnly),
+            ),
             readOnly: readOnly,
             keyboardType: const TextInputType.numberWithOptions(
               decimal: true,
@@ -196,6 +215,42 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           ),
         ],
       ),
+    );
+  }
+
+  /// TextField 用の suffix を組み立てる。
+  ///
+  /// - 入力文字がある場合のみ「×」クリアボタンを表示する（readOnly 時は非表示）。
+  /// - タップで [controller] をクリアする。
+  /// - [extra] が渡された場合は「×」と横並びで表示する（例: URL 欄の取得ボタン）。
+  ///
+  /// 入力に追従して suffix だけを再描画するため [ValueListenableBuilder] を使う
+  /// （listener の手動管理・dispose 不要。コントローラは親が所有する）。
+  Widget _clearSuffix(
+    TextEditingController controller,
+    bool readOnly, {
+    Widget? extra,
+  }) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final showClear = !readOnly && value.text.isNotEmpty;
+        final clearButton = showClear
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: controller.clear,
+              )
+            : null;
+
+        final children = <Widget>[
+          if (clearButton != null) clearButton,
+          if (extra != null) extra,
+        ];
+
+        if (children.isEmpty) return const SizedBox.shrink();
+        if (children.length == 1) return children.first;
+        return Row(mainAxisSize: MainAxisSize.min, children: children);
+      },
     );
   }
 
