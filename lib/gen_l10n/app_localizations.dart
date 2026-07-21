@@ -441,6 +441,48 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **''**
   String get settingScreenReserved;
+
+  /// No description provided for @placeInfoFetching.
+  ///
+  /// In ja, this message translates to:
+  /// **'店舗情報を取得中...'**
+  String get placeInfoFetching;
+
+  /// No description provided for @placeInfoFetchTooltip.
+  ///
+  /// In ja, this message translates to:
+  /// **'URLから店舗情報を取得'**
+  String get placeInfoFetchTooltip;
+
+  /// No description provided for @placeInfoFetchError.
+  ///
+  /// In ja, this message translates to:
+  /// **'店舗情報の取得に失敗しました。URLをご確認ください'**
+  String get placeInfoFetchError;
+
+  /// No description provided for @placeInfoUrlRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'URLを入力してください'**
+  String get placeInfoUrlRequired;
+
+  /// No description provided for @category.
+  ///
+  /// In ja, this message translates to:
+  /// **'カテゴリー'**
+  String get category;
+
+  /// No description provided for @purpose.
+  ///
+  /// In ja, this message translates to:
+  /// **'利用目的'**
+  String get purpose;
+
+  /// No description provided for @notSet.
+  ///
+  /// In ja, this message translates to:
+  /// **'未設定'**
+  String get notSet;
 }
 
 class _AppLocalizationsDelegate

@@ -419,7 +419,6 @@ Column
  ├── Text(purpose)
  ├── Text(url)
  ├── AddressRow
- ├── GoogleMapPreview
  ├── VisitedBadge
  ├── PrimaryButton("Edit")
  └── DangerButton("Delete")
@@ -489,7 +488,9 @@ Column
  │   └── Button("書き出し")
  ├── Divider(薄い区切り線)
  ├── Row
- │   ├── Text("インポート")
+ │   ├── Column
+ │   │   ├── Text("インポート")
+ │   │   └── Text("対応形式: .db, .csv", 小さめ/薄めの文字)
  │   ├── Space
  │   └── Button("ファイル選択")
  ├── Divider(薄い区切り線)

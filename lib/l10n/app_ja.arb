@@ -197,5 +197,26 @@
   },
 
   "settingScreenReserved": "",
-  "@settingScreenReserved": {}
+  "@settingScreenReserved": {},
+
+  "placeInfoFetching": "店舗情報を取得中...",
+  "@placeInfoFetching": {},
+
+  "placeInfoFetchTooltip": "URLから店舗情報を取得",
+  "@placeInfoFetchTooltip": {},
+
+  "placeInfoFetchError": "店舗情報の取得に失敗しました。URLをご確認ください",
+  "@placeInfoFetchError": {},
+
+  "placeInfoUrlRequired": "URLを入力してください",
+  "@placeInfoUrlRequired": {},
+
+  "category": "カテゴリー",
+  "@category": {},
+
+  "purpose": "利用目的",
+  "@purpose": {},
+
+  "notSet": "未設定",
+  "@notSet": {}
 }
