@@ -346,6 +346,18 @@ abstract class AppLocalizations {
   /// **'保存エラー'**
   String get saveErrorTitle;
 
+  /// No description provided for @saveSuccessTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存完了'**
+  String get saveSuccessTitle;
+
+  /// No description provided for @saveSuccessMessage.
+  ///
+  /// In ja, this message translates to:
+  /// **'場所を保存しました'**
+  String get saveSuccessMessage;
+
   /// No description provided for @close.
   ///
   /// In ja, this message translates to:

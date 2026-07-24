@@ -141,6 +141,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get saveErrorTitle => '保存エラー';
 
   @override
+  String get saveSuccessTitle => '保存完了';
+
+  @override
+  String get saveSuccessMessage => '場所を保存しました';
+
+  @override
   String get close => '閉じる';
 
   @override

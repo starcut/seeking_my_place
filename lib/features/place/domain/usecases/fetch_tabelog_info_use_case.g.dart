@@ -11,6 +11,10 @@ part of 'fetch_tabelog_info_use_case.dart';
 /// 食べログURLを受け取り、店舗情報（名前・住所・ジャンル）を取得する。
 ///
 /// 取得・解析に失敗した場合は `TabelogParseException` を投げる。
+///
+/// このプロバイダが `ref.invalidate` などで破棄されると、
+/// [Ref.onDispose] を通じて実行中の通信が [CancelToken] でキャンセルされる。
+/// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
 
 @ProviderFor(fetchTabelogInfoUseCase)
 final fetchTabelogInfoUseCaseProvider = FetchTabelogInfoUseCaseFamily._();
@@ -18,6 +22,10 @@ final fetchTabelogInfoUseCaseProvider = FetchTabelogInfoUseCaseFamily._();
 /// 食べログURLを受け取り、店舗情報（名前・住所・ジャンル）を取得する。
 ///
 /// 取得・解析に失敗した場合は `TabelogParseException` を投げる。
+///
+/// このプロバイダが `ref.invalidate` などで破棄されると、
+/// [Ref.onDispose] を通じて実行中の通信が [CancelToken] でキャンセルされる。
+/// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
 
 final class FetchTabelogInfoUseCaseProvider
     extends
@@ -30,6 +38,10 @@ final class FetchTabelogInfoUseCaseProvider
   /// 食べログURLを受け取り、店舗情報（名前・住所・ジャンル）を取得する。
   ///
   /// 取得・解析に失敗した場合は `TabelogParseException` を投げる。
+  ///
+  /// このプロバイダが `ref.invalidate` などで破棄されると、
+  /// [Ref.onDispose] を通じて実行中の通信が [CancelToken] でキャンセルされる。
+  /// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
   FetchTabelogInfoUseCaseProvider._({
     required FetchTabelogInfoUseCaseFamily super.from,
     required String super.argument,
@@ -76,11 +88,15 @@ final class FetchTabelogInfoUseCaseProvider
 }
 
 String _$fetchTabelogInfoUseCaseHash() =>
-    r'5c8f1424724e25e03e33800c632e79a07f8952c8';
+    r'82c1f2be580c7d39110e3852440bb90b39bffff5';
 
 /// 食べログURLを受け取り、店舗情報（名前・住所・ジャンル）を取得する。
 ///
 /// 取得・解析に失敗した場合は `TabelogParseException` を投げる。
+///
+/// このプロバイダが `ref.invalidate` などで破棄されると、
+/// [Ref.onDispose] を通じて実行中の通信が [CancelToken] でキャンセルされる。
+/// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
 
 final class FetchTabelogInfoUseCaseFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<TabelogInfo>, String> {
@@ -96,6 +112,10 @@ final class FetchTabelogInfoUseCaseFamily extends $Family
   /// 食べログURLを受け取り、店舗情報（名前・住所・ジャンル）を取得する。
   ///
   /// 取得・解析に失敗した場合は `TabelogParseException` を投げる。
+  ///
+  /// このプロバイダが `ref.invalidate` などで破棄されると、
+  /// [Ref.onDispose] を通じて実行中の通信が [CancelToken] でキャンセルされる。
+  /// これにより、画面を閉じたあとにバックグラウンドで通信が走り続けるのを防ぐ。
 
   FetchTabelogInfoUseCaseProvider call(String url) =>
       FetchTabelogInfoUseCaseProvider._(argument: url, from: this);
