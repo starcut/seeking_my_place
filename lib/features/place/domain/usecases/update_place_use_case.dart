@@ -4,7 +4,7 @@ import 'package:seeking_my_place/features/place/domain/repositories/place_reposi
 
 part 'update_place_use_case.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UpdatePlaceUseCase extends _$UpdatePlaceUseCase {
   @override
   FutureOr<void> build() {}

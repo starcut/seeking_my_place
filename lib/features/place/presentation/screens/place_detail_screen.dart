@@ -9,6 +9,7 @@ import 'package:seeking_my_place/features/place/application/state/selected_place
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
 import 'package:seeking_my_place/features/place/presentation/controller/place_info_fetch_service.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
@@ -163,6 +164,10 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
 
+  /// UpdatePlaceUseCase による更新が行われたかどうか。
+  /// true の場合、画面を戻る際に呼び出し元（ホーム画面）へ true を返し、一覧を再取得させる。
+  bool _didUpdate = false;
+
   /// 現在取得中のURL。キャンセル時に対象プロバイダを特定して破棄するために保持する。
   String? _fetchingUrl;
 
@@ -207,7 +212,7 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     widget.onSwitchToView();
   }
 
-  void _onTapSave() {
+  Future<void> _onTapSave() async {
     final l10n = AppLocalizations.of(context)!;
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
@@ -216,8 +221,32 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
       ).showSnackBar(SnackBar(content: Text(l10n.validationErrorTitle)));
       return;
     }
-    // NOTE: 更新ロジックは枠組みのみ。実データ更新の UseCase 呼び出しは
-    // 既存ロジックを変更しないため本ステップでは行わず、view へ戻すのみとする。
+
+    final place = widget.place;
+    final updatedPlace = place.copyWith(
+      placeName: _placeNameController.text.trim(),
+      category: _categoryController.text.trim(),
+      url: _urlController.text.trim(),
+      address: _addressController.text.trim(),
+      latitude: double.tryParse(_latitudeController.text) ?? place.latitude,
+      longitude: double.tryParse(_longitudeController.text) ?? place.longitude,
+      isVisited: _isVisited,
+      updatedAt: DateTime.now(),
+    );
+
+    await ref.read(updatePlaceUseCaseProvider.notifier).execute(updatedPlace);
+
+    if (!mounted) return;
+    final updateState = ref.read(updatePlaceUseCaseProvider);
+    if (updateState.hasError) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.saveError(updateState.error!))));
+      return;
+    }
+
+    _didUpdate = true;
+    ref.invalidate(getPlaceDetailUseCaseProvider(place.placeId));
     widget.onSwitchToView();
   }
 
@@ -374,12 +403,18 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     final l10n = AppLocalizations.of(context);
     
     return PopScope(
-      // view モードのときのみ通常どおり前の画面へ戻せる。
-      canPop: widget.mode == _DetailMode.view,
+      // view モードで、かつ更新が発生していない場合のみ通常どおり前の画面へ戻せる。
+      // 更新済みの場合はホーム画面に一覧再取得を促すため、pop 結果に true を渡す必要がある。
+      canPop: widget.mode == _DetailMode.view && !_didUpdate,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // 編集モード中の戻る操作は、編集を破棄して view モードへ戻す。
-        _onTapCancel();
+        if (widget.mode == _DetailMode.edit) {
+          // 編集モード中の戻る操作は、編集を破棄して view モードへ戻す。
+          _onTapCancel();
+          return;
+        }
+        // view モードかつ更新済み: ホーム画面（呼び出し元）へ true を返して一覧を更新させる。
+        Navigator.of(context).pop(true);
       },
       child: Stack(
           children: [
