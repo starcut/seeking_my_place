@@ -12,6 +12,7 @@ import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_list_use_case.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
+import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// build() 実行後に _buildBody() で更新されるため、listen 発火時点では
   /// 直前の build で確定したリストが入っている。
   List<Place> _lastFilteredPlaces = const [];
+
+  /// [Slidable] の onDismissed が発火した後、非表示にしておく placeId の集合。
+  ///
+  /// ref.invalidate は再取得を開始するだけで、完了までは直前のリストが
+  /// 表示され続けるため、削除済みのセルが一瞬再ビルドされてしまい
+  /// "A dismissed Slidable widget is still part of the tree." エラーになる。
+  /// これを避けるため、onDismissed 時点で即座にここへ追加してリストから除外する。
+  final Set<String> _dismissedPlaceIds = {};
 
   static const double _listItemHeight = 88.0;
   static const CameraPosition _defaultCameraPosition = CameraPosition(
@@ -83,7 +92,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // -------------------------------------------------------------------------
 
   List<Place> _filterPlaces(List<Place> places) {
-    var result = places;
+    var result = places
+        .where((place) => !_dismissedPlaceIds.contains(place.placeId))
+        .toList();
 
     if (_searchKeyword.isNotEmpty) {
       final lowerCaseKeyword = _searchKeyword.toLowerCase();
@@ -185,35 +196,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _deletePlace(String placeId) async {
-    if (!mounted) return;
+  Future<bool> _confirmDeletePlace() async {
+    if (!mounted) return false;
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteConfirmTitle),
-        content: Text(l10n.deleteConfirmMessage),
+      builder: (dialogContext) => AppDialog(
+        title: l10n.deleteConfirmTitle,
+        message: l10n.deleteConfirmMessage,
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: l10n.cancel,
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.cancel),
           ),
-          TextButton(
+          AppDialogAction(
+            label: l10n.delete,
+            actionStyle: AppDialogActionStyle.destructive,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
+    return confirmed == true;
+  }
+
+  /// 削除ボタン押下時のハンドラ。
+  ///
+  /// 確認ダイアログで削除が確定した場合、実際の削除処理を完了させてから
+  /// [Slidable] のセルをスライド + 縮小アニメーションで消す。
+  ///
+  /// onDismissed が発火した時点で placeId を [_dismissedPlaceIds] へ追加し、
+  /// 即座に一覧から除外する。ref.invalidate による再取得は非同期で、完了する
+  /// までは直前のリストが表示され続けるため、これを待ってから除外すると
+  /// "A dismissed Slidable widget is still part of the tree." エラーになる。
+  Future<void> _onTapDeleteAction(
+    BuildContext actionContext,
+    String placeId,
+  ) async {
+    final controller = Slidable.of(actionContext);
+    final confirmed = await _confirmDeletePlace();
+    if (!confirmed || !mounted) return;
 
     await ref.read(deletePlaceUseCaseProvider.notifier).execute(placeId);
+    if (!mounted) return;
 
     // 削除対象が選択中だった場合は選択を解除する (spec 5.2.4)
     if (ref.read(selectedPlaceStateProvider) == placeId) {
       ref.read(selectedPlaceStateProvider.notifier).select(null);
     }
-    ref.invalidate(getPlaceListUseCaseProvider);
+
+    controller?.dismiss(
+      ResizeRequest(const Duration(milliseconds: 300), () {
+        setState(() => _dismissedPlaceIds.add(placeId));
+        ref.invalidate(getPlaceListUseCaseProvider);
+      }),
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -255,13 +293,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         data: (places) => _buildBody(places, selectedId),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/place/new'),
+        onPressed: () async {
+          final saved = await context.push('/place/new');
+          if (mounted && saved == true) {
+            ref.invalidate(getPlaceListUseCaseProvider);
+          }
+        },
         child: const Icon(Icons.add),
       ),
     );
   }
 
   Widget _buildBody(List<Place> places, String? selectedId) {
+    // 実際の削除が反映され、一覧から取得できなくなった placeId は
+    // _dismissedPlaceIds に残しておく理由がないので取り除く。
+    final currentPlaceIds = places.map((place) => place.placeId).toSet();
+    _dismissedPlaceIds.removeWhere((id) => !currentPlaceIds.contains(id));
+
     final filteredPlaces = _filterPlaces(places);
     _lastFilteredPlaces = filteredPlaces;
 
@@ -299,14 +347,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onTap: (_) {
             ref.read(selectedPlaceStateProvider.notifier).select(null);
           },
-          onLongPress: (latLng) {
-            context.push(
+          onLongPress: (latLng) async {
+            final saved = await context.push(
               '/place/new',
               extra: {
                 'latitude': latLng.latitude,
                 'longitude': latLng.longitude,
               },
             );
+            if (mounted && saved == true) {
+              ref.invalidate(getPlaceListUseCaseProvider);
+            }
           },
         ),
         DraggableScrollableSheet(
@@ -394,7 +445,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             extentRatio: 0.25,
             children: [
               SlidableAction(
-                onPressed: (_) => _deletePlace(place.placeId),
+                onPressed: (actionContext) =>
+                    _onTapDeleteAction(actionContext, place.placeId),
+                // 削除は確認ダイアログとAPI呼び出しを挟む非同期処理のため、
+                // 完了前に自動でSlidableを閉じさせない。
+                autoClose: false,
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
                 icon: Icons.delete,
@@ -461,7 +516,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right, size: 20),
-                    onPressed: () => context.push('/place/${place.placeId}'),
+                    onPressed: () async {
+                      final saved = await context.push(
+                        '/place/${place.placeId}',
+                      );
+                      if (mounted && saved == true) {
+                        ref.invalidate(getPlaceListUseCaseProvider);
+                      }
+                    },
                     tooltip: l10n.detailTooltip,
                   ),
                 ],

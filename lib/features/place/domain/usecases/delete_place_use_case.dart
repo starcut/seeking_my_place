@@ -3,7 +3,7 @@ import 'package:seeking_my_place/features/place/domain/repositories/place_reposi
 
 part 'delete_place_use_case.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class DeletePlaceUseCase extends _$DeletePlaceUseCase {
   @override
   FutureOr<void> build() {}
