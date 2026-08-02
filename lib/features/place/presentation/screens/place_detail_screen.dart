@@ -3,11 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
-import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
@@ -51,12 +48,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
                   icon: const Icon(Icons.edit),
                   tooltip: l10n.edit,
                   onPressed: _onTapEdit,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  tooltip: l10n.delete,
-                  onPressed: () => _confirmDelete(context, ref, l10n),
-                ),
+                )
               ]
             : null,
       ),
@@ -73,53 +65,6 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-  ) async {
-    final placeId = widget.placeId;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteConfirmTitle),
-        content: Text(l10n.deleteConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    await ref.read(deletePlaceUseCaseProvider.notifier).execute(placeId);
-
-    final deleteState = ref.read(deletePlaceUseCaseProvider);
-    if (deleteState.hasError) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.deleteError(deleteState.error!))),
-        );
-      }
-      return;
-    }
-
-    // 5.2.6: 削除対象が選択中だった場合は選択を解除する
-    if (ref.read(selectedPlaceStateProvider) == placeId) {
-      ref.read(selectedPlaceStateProvider.notifier).select(null);
-    }
-
-    if (context.mounted) {
-      context.go('/');
-    }
   }
 }
 
