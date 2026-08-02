@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,13 +22,41 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
   GoogleMapController? _mapController;
   final TextEditingController _searchController = TextEditingController();
 
-  /// DraggableScrollableSheet の builder から受け取ったコントローラーを保持する。
-  /// ref.listen 発火時にリストをスクロールするために使用する。
-  ScrollController? _sheetScrollController;
+  /// 場所一覧 (ListView) 専用の ScrollController。
+  ///
+  /// DraggableScrollableSheet の builder が渡すコントローラーはリストには使わない。
+  /// あのコントローラーをリストに渡すと「リストが先頭までスクロールされた状態で
+  /// さらにドラッグするとシートが伸縮する」という標準の連動挙動が有効になり、
+  /// リスト領域のスワイプでもシートの高さが変わってしまう。
+  /// 高さ調整はつまみ ([_onHandleDragUpdate] 等) のみで行うため、リストは独立した
+  /// このコントローラーを使う。
+  final ScrollController _placeListScrollController = ScrollController();
+
+  /// つまみのドラッグで DraggableScrollableSheet の childSize を直接操作するための
+  /// コントローラー。
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
+
+  /// つまみを離した後、GoogleMap のパン操作のような慣性で childSize を収束させる
+  /// ための AnimationController。値をそのまま childSize として使用する。
+  late final AnimationController _flingController;
+
+  /// DragHandle + 検索欄 + 半径フィルターバーの実際の描画高さを測定するための Key。
+  /// minChildSize (検索欄 + セル2行分) の計算に使用する。
+  final GlobalKey _headerKey = GlobalKey();
+  double? _headerHeight;
+
+  /// DraggableScrollableSheet が配置されている領域 (GoogleMap と同じ Stack) の高さ。
+  double _sheetContainerHeight = 0;
+
+  double _minChildSize = 0.15;
+  double _maxChildSize = 0.6667;
+  double _initialChildSize = 0.4;
 
   String _searchKeyword = '';
   bool _radiusEnabled = true;
@@ -61,12 +90,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _fetchCurrentLocation();
+    _flingController = AnimationController.unbounded(vsync: this)
+      ..addListener(_onFlingTick);
   }
 
   @override
   void dispose() {
     _mapController?.dispose();
     _searchController.dispose();
+    _placeListScrollController.dispose();
+    _flingController.dispose();
+    _sheetController.dispose();
     super.dispose();
   }
 
@@ -161,12 +195,103 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // -------------------------------------------------------------------------
+  // Sheet sizing (drag handle + inertia)
+  // -------------------------------------------------------------------------
+
+  /// [_headerKey] でラップした DragHandle + 検索欄 + 半径フィルターバーの
+  /// 実際の描画高さを測定する。レイアウト確定後 (postFrameCallback) に呼び出す。
+  void _measureHeaderHeight() {
+    final renderObject = _headerKey.currentContext?.findRenderObject();
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final height = renderObject.size.height;
+      if (mounted && _headerHeight != height) {
+        setState(() => _headerHeight = height);
+      }
+    }
+  }
+
+  /// [containerHeight] (DraggableScrollableSheet が配置される Stack の高さ) から
+  /// minChildSize / maxChildSize / initialChildSize を計算してフィールドへ反映する。
+  ///
+  /// - 最低の高さ: DragHandle + 検索欄 + 半径フィルターバー + セル2行分
+  ///   ([_headerHeight] が未計測の間は前回値を維持する)
+  /// - 最大の高さ: 画面全体の高さ (MediaQuery) の3分の2
+  ///
+  /// DraggableScrollableSheet は minChildSize <= initialChildSize <=
+  /// maxChildSize を毎回のビルドで検証するため、_initialChildSize は固定せず
+  /// 都度クランプし直す。
+  void _updateChildSizeBounds(double containerHeight) {
+    if (containerHeight <= 0) return;
+    _sheetContainerHeight = containerHeight;
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    _maxChildSize = ((screenHeight * 2 / 3) / containerHeight).clamp(0.1, 1.0);
+
+    final headerHeight = _headerHeight;
+    if (headerHeight != null) {
+      final minPixelHeight = headerHeight + _listItemHeight * 2;
+      _minChildSize = (minPixelHeight / containerHeight).clamp(
+        0.05,
+        _maxChildSize,
+      );
+    } else {
+      _minChildSize = _minChildSize.clamp(0.05, _maxChildSize);
+    }
+
+    _initialChildSize = 0.4.clamp(_minChildSize, _maxChildSize);
+  }
+
+  void _onFlingTick() {
+    if (!_sheetController.isAttached) return;
+    final value = _flingController.value;
+    if (value <= _minChildSize) {
+      _sheetController.jumpTo(_minChildSize);
+      _flingController.stop();
+      return;
+    }
+    if (value >= _maxChildSize) {
+      _sheetController.jumpTo(_maxChildSize);
+      _flingController.stop();
+      return;
+    }
+    _sheetController.jumpTo(value);
+  }
+
+  void _onHandleDragStart(DragStartDetails details) {
+    _flingController.stop();
+  }
+
+  void _onHandleDragUpdate(DragUpdateDetails details) {
+    if (!_sheetController.isAttached || _sheetContainerHeight <= 0) return;
+    final deltaFraction = details.primaryDelta! / _sheetContainerHeight;
+    final newSize = (_sheetController.size - deltaFraction).clamp(
+      _minChildSize,
+      _maxChildSize,
+    );
+    _sheetController.jumpTo(newSize);
+  }
+
+  /// GoogleMap のパン操作と同様に、指を離した速度から摩擦のシミュレーション
+  /// ([FrictionSimulation]) を作り、慣性で childSize を収束させる。
+  void _onHandleDragEnd(DragEndDetails details) {
+    if (!_sheetController.isAttached || _sheetContainerHeight <= 0) return;
+    final velocityFraction =
+        -details.velocity.pixelsPerSecond.dy / _sheetContainerHeight;
+    final simulation = FrictionSimulation(
+      0.135,
+      _sheetController.size,
+      velocityFraction,
+    );
+    _flingController.animateWith(simulation);
+  }
+
+  // -------------------------------------------------------------------------
   // List helpers
   // -------------------------------------------------------------------------
 
   void _scrollToIndex(int index) {
-    final controller = _sheetScrollController;
-    if (controller == null || !controller.hasClients) return;
+    final controller = _placeListScrollController;
+    if (!controller.hasClients) return;
     final targetOffset = index * _listItemHeight;
     controller.animateTo(
       targetOffset.clamp(0.0, controller.position.maxScrollExtent),
@@ -290,7 +415,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: placesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text(l10n.fetchError(error))),
-        data: (places) => _buildBody(places, selectedId),
+        data: (places) => LayoutBuilder(
+          builder: (context, constraints) =>
+              _buildBody(places, selectedId, constraints.maxHeight),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -304,7 +432,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildBody(List<Place> places, String? selectedId) {
+  Widget _buildBody(
+    List<Place> places,
+    String? selectedId,
+    double containerHeight,
+  ) {
     // 実際の削除が反映され、一覧から取得できなくなった placeId は
     // _dismissedPlaceIds に残しておく理由がないので取り除く。
     final currentPlaceIds = places.map((place) => place.placeId).toSet();
@@ -312,6 +444,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final filteredPlaces = _filterPlaces(places);
     _lastFilteredPlaces = filteredPlaces;
+
+    _updateChildSizeBounds(containerHeight);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeaderHeight());
 
     // フィルター適用で選択中 Place が除外されたら選択を解除する (spec 5.1.4)
     if (selectedId != null &&
@@ -361,11 +496,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
         DraggableScrollableSheet(
-          initialChildSize: 0.4,
-          minChildSize: 0.15,
-          maxChildSize: 0.85,
+          controller: _sheetController,
+          initialChildSize: _initialChildSize,
+          minChildSize: _minChildSize,
+          maxChildSize: _maxChildSize,
           builder: (sheetContext, sheetScrollController) {
-            _sheetScrollController = sheetScrollController;
             return Container(
               decoration: BoxDecoration(
                 color: Theme.of(sheetContext).colorScheme.surface,
@@ -382,26 +517,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: Column(
                 children: [
-                  const _DragHandle(),
-                  _HomeSearchBar(
-                    controller: _searchController,
-                    keyword: _searchKeyword,
-                    onChanged: (keyword) =>
-                        setState(() => _searchKeyword = keyword),
-                  ),
-                  _RadiusFilterBar(
-                    enabled: _radiusEnabled,
-                    radiusMeter: _radiusMeter,
-                    onEnabledChanged: (isEnabled) =>
-                        setState(() => _radiusEnabled = isEnabled),
-                    onRadiusChanged: (radius) =>
-                        setState(() => _radiusMeter = radius),
+                  Column(
+                    key: _headerKey,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onVerticalDragStart: _onHandleDragStart,
+                        onVerticalDragUpdate: _onHandleDragUpdate,
+                        onVerticalDragEnd: _onHandleDragEnd,
+                        child: const _DragHandle(),
+                      ),
+                      _HomeSearchBar(
+                        controller: _searchController,
+                        keyword: _searchKeyword,
+                        onChanged: (keyword) =>
+                            setState(() => _searchKeyword = keyword),
+                      ),
+                      _RadiusFilterBar(
+                        enabled: _radiusEnabled,
+                        radiusMeter: _radiusMeter,
+                        onEnabledChanged: (isEnabled) =>
+                            setState(() => _radiusEnabled = isEnabled),
+                        onRadiusChanged: (radius) =>
+                            setState(() => _radiusMeter = radius),
+                      ),
+                    ],
                   ),
                   Expanded(
                     child: _buildPlaceList(
                       filteredPlaces,
                       selectedId,
-                      sheetScrollController,
+                      _placeListScrollController,
+                    ),
+                  ),
+                  // DraggableScrollableSheet 内部の scrollController は、
+                  // builder が返すツリーのどこかで実際に使われていないと
+                  // DraggableScrollableController.jumpTo/size が
+                  // 「アタッチされていない」例外を起こす。
+                  // しかし可視のリストにこれを使うと、リストが先頭までスクロール
+                  // された状態でのスワイプがシートの高さ調整として扱われてしまい、
+                  // 要件(リストのスワイプでは高さ調整しない)に反する。
+                  // そのため画面には表示されない Offstage な ScrollView にのみ
+                  // このコントローラーを繋ぎ、アタッチ状態だけを満たす。
+                  Offstage(
+                    child: SingleChildScrollView(
+                      controller: sheetScrollController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: const SizedBox.shrink(),
                     ),
                   ),
                 ],
@@ -543,16 +706,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _DragHandle extends StatelessWidget {
   const _DragHandle();
 
+  /// 元の高さ (上下 padding 8 + pill 4 = 20) から要望により 15pt 高くした値。
+  static const double _height = 35;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Colors.grey[400],
-          borderRadius: BorderRadius.circular(2),
+    return SizedBox(
+      // ドラッグ領域(GestureDetector の当たり判定)を画面幅一杯にするため、
+      // 幅を親の最大幅まで広げる。
+      width: double.infinity,
+      height: _height,
+      child: Center(
+        child: Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey[400],
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
       ),
     );
