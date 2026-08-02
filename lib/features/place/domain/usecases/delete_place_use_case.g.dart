@@ -20,7 +20,7 @@ final class DeletePlaceUseCaseProvider
         argument: null,
         retry: null,
         name: r'deletePlaceUseCaseProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -34,7 +34,7 @@ final class DeletePlaceUseCaseProvider
 }
 
 String _$deletePlaceUseCaseHash() =>
-    r'39c341e6da0e8925665ee9c9dda38f9b0f2f94bb';
+    r'a3f9d36f11aff25decd576f61c4d5443167da1d2';
 
 abstract class _$DeletePlaceUseCase extends $AsyncNotifier<void> {
   FutureOr<void> build();

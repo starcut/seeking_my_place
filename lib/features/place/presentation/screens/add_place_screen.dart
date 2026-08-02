@@ -323,7 +323,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     await _showSaveSuccessDialog();
 
     if (mounted) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     }
   }
 

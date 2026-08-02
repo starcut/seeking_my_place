@@ -20,7 +20,7 @@ final class UpdatePlaceUseCaseProvider
         argument: null,
         retry: null,
         name: r'updatePlaceUseCaseProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -34,7 +34,7 @@ final class UpdatePlaceUseCaseProvider
 }
 
 String _$updatePlaceUseCaseHash() =>
-    r'fb9209823a371d5075b39d38ba9f05f0c22e9dd7';
+    r'c91f2b710e428e0cdf1fb31d105e67dd41d69ed8';
 
 abstract class _$UpdatePlaceUseCase extends $AsyncNotifier<void> {
   FutureOr<void> build();
