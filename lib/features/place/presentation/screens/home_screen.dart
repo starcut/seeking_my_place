@@ -63,6 +63,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   double _radiusMeter = 1000.0;
   Position? _currentPosition;
 
+  /// GoogleMap 上に現在地 (青い点) と現在地ボタンを表示するかどうか。
+  bool _showCurrentLocation = true;
+
+  /// GoogleMap 中央 (十字カーソル) が指す座標。ピンやリストの絞り込み範囲の中心に使う。
+  LatLng? _mapCenter;
+
   /// ref.listen コールバック内でフィルター済みリストへアクセスするために保持する。
   /// build() 実行後に _buildBody() で更新されるため、listen 発火時点では
   /// 直前の build で確定したリストが入っている。
@@ -77,6 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final Set<String> _dismissedPlaceIds = {};
 
   static const double _listItemHeight = 88.0;
+  static const double _sheetCornerRadius = 16.0;
   static const CameraPosition _defaultCameraPosition = CameraPosition(
     target: LatLng(35.6812, 139.7671),
     zoom: 12,
@@ -138,11 +145,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }).toList();
     }
 
-    if (_radiusEnabled && _currentPosition != null) {
+    if (_radiusEnabled && _mapCenter != null) {
       result = result.where((place) {
         final distance = Geolocator.distanceBetween(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
+          _mapCenter!.latitude,
+          _mapCenter!.longitude,
           place.latitude,
           place.longitude,
         );
@@ -175,11 +182,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Set<Circle> _buildCircles() {
-    if (!_radiusEnabled || _currentPosition == null) return {};
+    if (!_radiusEnabled || _mapCenter == null) return {};
     return {
       Circle(
         circleId: const CircleId('radius_overlay'),
-        center: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        center: _mapCenter!,
         radius: _radiusMeter,
         fillColor: Colors.blue.withOpacity(0.10),
         strokeColor: Colors.blue.withOpacity(0.40),
@@ -468,32 +475,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           )
         : _defaultCameraPosition;
 
+    // データリストが最小の高さのときの View 上端 + 角丸半径分だけ下を
+    // GoogleMap の下端とする。これより下は最小時のシートに隠れるため描画不要。
+    final mapHeight =
+        (containerHeight - _minChildSize * containerHeight + _sheetCornerRadius)
+            .clamp(0.0, containerHeight);
+
     return Stack(
       children: [
-        GoogleMap(
-          initialCameraPosition: initialCamera,
-          markers: _buildMarkers(filteredPlaces, selectedId),
-          circles: _buildCircles(),
-          myLocationEnabled: _currentPosition != null,
-          myLocationButtonEnabled: _currentPosition != null,
-          onMapCreated: (controller) {
-            _mapController = controller;
-          },
-          onTap: (_) {
-            ref.read(selectedPlaceStateProvider.notifier).select(null);
-          },
-          onLongPress: (latLng) async {
-            final saved = await context.push(
-              '/place/new',
-              extra: {
-                'latitude': latLng.latitude,
-                'longitude': latLng.longitude,
-              },
-            );
-            if (mounted && saved == true) {
-              ref.invalidate(getPlaceListUseCaseProvider);
-            }
-          },
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: mapHeight,
+          child: GoogleMap(
+            initialCameraPosition: initialCamera,
+            markers: _buildMarkers(filteredPlaces, selectedId),
+            circles: _buildCircles(),
+            myLocationEnabled: _showCurrentLocation && _currentPosition != null,
+            myLocationButtonEnabled: false,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              setState(() => _mapCenter = initialCamera.target);
+            },
+            onCameraMove: (position) {
+              setState(() => _mapCenter = position.target);
+            },
+            onTap: (_) {
+              ref.read(selectedPlaceStateProvider.notifier).select(null);
+            },
+            onLongPress: (latLng) async {
+              final saved = await context.push(
+                '/place/new',
+                extra: {
+                  'latitude': latLng.latitude,
+                  'longitude': latLng.longitude,
+                },
+              );
+              if (mounted && saved == true) {
+                ref.invalidate(getPlaceListUseCaseProvider);
+              }
+            },
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: mapHeight,
+          child: const IgnorePointer(
+            child: Center(child: _MapCenterCrosshair()),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: mapHeight,
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16, bottom: 26),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _RoundMapButton(
+                    heroTag: 'toggleCurrentLocationButton',
+                    onPressed: () => setState(
+                      () => _showCurrentLocation = !_showCurrentLocation,
+                    ),
+                    icon: _showCurrentLocation
+                        ? Icons.gps_fixed_outlined
+                        : Icons.gps_off_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                  _RoundMapButton(
+                    heroTag: 'moveToCurrentLocationButton',
+                    onPressed: _currentPosition == null
+                        ? null
+                        : () => _mapController?.animateCamera(
+                            CameraUpdate.newLatLng(
+                              LatLng(
+                                _currentPosition!.latitude,
+                                _currentPosition!.longitude,
+                              ),
+                            ),
+                          ),
+                    icon: Icons.near_me,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         DraggableScrollableSheet(
           controller: _sheetController,
@@ -505,7 +579,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               decoration: BoxDecoration(
                 color: Theme.of(sheetContext).colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+                  top: Radius.circular(_sheetCornerRadius),
                 ),
                 boxShadow: const [
                   BoxShadow(
@@ -702,6 +776,114 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 // -----------------------------------------------------------------------------
 // Private sub-widgets
 // -----------------------------------------------------------------------------
+
+/// GoogleMap 中央に表示する十字カーソル。
+///
+/// 上下左右 4 本の腕 (中央から [_centerGap] 離れた位置に、長さ [_armLength] ・
+/// 太さ [_thickness] ・角丸 [_cornerRadius] の棒) と、中央の円
+/// (直径 [_centerDiameter]) で構成する。
+class _MapCenterCrosshair extends StatelessWidget {
+  const _MapCenterCrosshair();
+
+  static const double _armLength = 10;
+  static const double _centerGap = 10;
+  static const double _thickness = 4;
+  static const double _cornerRadius = 2;
+  static const double _centerDiameter = 4;
+  static const double _size = (_centerGap + _armLength) * 2;
+  static const Color _color = Color.fromRGBO(255, 0, 0, 1);
+
+  static const double _armOffset = (_size - _thickness) / 2;
+  static const double _centerOffset = (_size - _centerDiameter) / 2;
+
+  Widget _arm({required double width, required double height}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: _color,
+        borderRadius: BorderRadius.circular(_cornerRadius),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: _armOffset,
+            child: _arm(width: _thickness, height: _armLength),
+          ),
+          Positioned(
+            bottom: 0,
+            left: _armOffset,
+            child: _arm(width: _thickness, height: _armLength),
+          ),
+          Positioned(
+            left: 0,
+            top: _armOffset,
+            child: _arm(width: _armLength, height: _thickness),
+          ),
+          Positioned(
+            right: 0,
+            top: _armOffset,
+            child: _arm(width: _armLength, height: _thickness),
+          ),
+          Positioned(
+            left: _centerOffset,
+            top: _centerOffset,
+            child: Container(
+              width: _centerDiameter,
+              height: _centerDiameter,
+              decoration: const BoxDecoration(
+                color: _color,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// GoogleMap 右下に配置する丸形の操作ボタン。
+///
+/// 標準の [FloatingActionButton.small] (40pt) の 1.5 倍 ([_size]) の大きさで、
+/// 円形・白背景にする。
+class _RoundMapButton extends StatelessWidget {
+  const _RoundMapButton({
+    required this.heroTag,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final Object heroTag;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  static const double _size = 40 * 1.5;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: FloatingActionButton(
+        heroTag: heroTag,
+        backgroundColor: Colors.white,
+        shape: const CircleBorder(),
+        onPressed: onPressed,
+        child: Icon(icon),
+      ),
+    );
+  }
+}
 
 class _DragHandle extends StatelessWidget {
   const _DragHandle();
