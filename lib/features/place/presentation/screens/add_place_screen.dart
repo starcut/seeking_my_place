@@ -12,6 +12,7 @@ import 'package:seeking_my_place/features/place/presentation/controller/place_in
 import 'package:seeking_my_place/features/place/presentation/widgets/place_form.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
+import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
 import 'package:seeking_my_place/shared/widgets/primary_button.dart';
 
 
@@ -79,7 +80,6 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
   late final TextEditingController _categoryController;
 
   bool _isVisited = false;
-  bool _isSaving = false;
 
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
@@ -279,8 +279,6 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       return;
     }
 
-    setState(() => _isSaving = true);
-
     final now = DateTime.now();
     final existingPlace = widget.initialPlace;
     final savedPlaceId =
@@ -306,8 +304,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       final resultState = ref.read(createPlaceUseCaseProvider);
       if (!mounted) return;
       if (resultState.hasError) {
-        setState(() => _isSaving = false);
-        _showSaveErrorDialog(l10n.saveError(resultState.error ?? ''));
+        await _showSaveErrorDialog(l10n.saveError(resultState.error ?? ''));
         return;
       }
     } else {
@@ -315,30 +312,49 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       final resultState = ref.read(updatePlaceUseCaseProvider);
       if (!mounted) return;
       if (resultState.hasError) {
-        setState(() => _isSaving = false);
-        _showSaveErrorDialog(l10n.saveError(resultState.error ?? ''));
+        await _showSaveErrorDialog(l10n.saveError(resultState.error ?? ''));
         return;
       }
     }
 
     ref.read(selectedPlaceStateProvider.notifier).select(savedPlaceId);
 
+    if (!mounted) return;
+    await _showSaveSuccessDialog();
+
     if (mounted) {
       Navigator.of(context).pop();
     }
   }
 
-  void _showSaveErrorDialog(String message) {
+  Future<void> _showSaveErrorDialog(String message) {
     final l10n = AppLocalizations.of(context);
-    showDialog<void>(
+    return showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.saveErrorTitle),
-        content: Text(message),
+      builder: (dialogContext) => AppDialog(
+        title: l10n.saveErrorTitle,
+        message: message,
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: l10n.close,
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSaveSuccessDialog() {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AppDialog(
+        title: l10n.saveSuccessTitle,
+        message: l10n.saveSuccessMessage,
+        actions: [
+          AppDialogAction(
+            label: l10n.close,
+            onPressed: () => Navigator.of(dialogContext).pop(),
           ),
         ],
       ),
@@ -409,9 +425,7 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
             const SizedBox(height: 24),
 
             // 保存ボタン
-            _isSaving
-                ? const Center(child: CircularProgressIndicator())
-                : PrimaryButton(label: l10n.save, onPressed: _onTapSave),
+            PrimaryButton(label: l10n.save, onPressed: _onTapSave),
           ],
         ),
       ),

@@ -4,7 +4,7 @@ import 'package:seeking_my_place/features/place/domain/repositories/place_reposi
 
 part 'create_place_use_case.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CreatePlaceUseCase extends _$CreatePlaceUseCase {
   @override
   FutureOr<void> build() {}

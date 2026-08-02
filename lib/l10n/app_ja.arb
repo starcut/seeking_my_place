@@ -145,6 +145,12 @@
   "saveErrorTitle": "保存エラー",
   "@saveErrorTitle": {},
 
+  "saveSuccessTitle": "保存完了",
+  "@saveSuccessTitle": {},
+
+  "saveSuccessMessage": "場所を保存しました",
+  "@saveSuccessMessage": {},
+
   "close": "閉じる",
   "@close": {},
 
