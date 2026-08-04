@@ -13,6 +13,8 @@ import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_list_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/observe_app_settings_use_case.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/home_search_bar.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/radius_filter_bar.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
 
@@ -626,13 +628,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         onVerticalDragEnd: _onHandleDragEnd,
                         child: const _DragHandle(),
                       ),
-                      _HomeSearchBar(
+                      HomeSearchBar(
                         controller: _searchController,
                         keyword: _searchKeyword,
                         onChanged: (keyword) =>
                             setState(() => _searchKeyword = keyword),
                       ),
-                      _RadiusFilterBar(
+                      RadiusFilterBar(
                         enabled: _radiusEnabled,
                         radiusMeter: _radiusMeter,
                         onEnabledChanged: (isEnabled) =>
@@ -935,104 +937,6 @@ class _DragHandle extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HomeSearchBar extends StatelessWidget {
-  const _HomeSearchBar({
-    required this.controller,
-    required this.keyword,
-    required this.onChanged,
-  });
-
-  final TextEditingController controller;
-
-  /// 親が保持するキーワード文字列。クリアボタンの表示制御に使用する。
-  final String keyword;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey, width: 1)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.search, color: Colors.grey),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: l10n.searchHint,
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-                onChanged: onChanged,
-              ),
-            ),
-            if (keyword.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  controller.clear();
-                  onChanged('');
-                },
-                child: const Icon(Icons.clear, color: Colors.grey, size: 18),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RadiusFilterBar extends StatelessWidget {
-  const _RadiusFilterBar({
-    required this.enabled,
-    required this.radiusMeter,
-    required this.onEnabledChanged,
-    required this.onRadiusChanged,
-  });
-
-  final bool enabled;
-  final double radiusMeter;
-  final ValueChanged<bool> onEnabledChanged;
-  final ValueChanged<double> onRadiusChanged;
-
-  String _formatDistance(double meters) {
-    if (meters >= 1000) {
-      return '${(meters / 1000).toStringAsFixed(1)}km';
-    }
-    return '${meters.toStringAsFixed(0)}m';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Slider(
-              value: radiusMeter,
-              min: 100,
-              max: 50000,
-              onChanged: enabled ? onRadiusChanged : null,
-            ),
-          ),
-          Text(
-            _formatDistance(radiusMeter),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(width: 4),
-          Switch(value: enabled, onChanged: onEnabledChanged),
-        ],
       ),
     );
   }
