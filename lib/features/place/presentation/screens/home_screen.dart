@@ -15,6 +15,7 @@ import 'package:seeking_my_place/features/place/domain/usecases/get_place_list_u
 import 'package:seeking_my_place/features/place/domain/usecases/observe_app_settings_use_case.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_screen_sub_widgets.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_search_bar.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/home/items_per_page_filter_bar.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/radius_filter_bar.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
@@ -65,6 +66,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String _searchKeyword = '';
   bool _radiusEnabled = true;
   double _radiusMeter = 1000.0;
+
+  /// 表示件数の選択肢。
+  /// null は「制限なし」を表す。
+  static const List<int?> _itemsPerPageOptions = [
+    10,
+    20,
+    30,
+    50,
+    100,
+    500,
+    1000,
+    null,
+  ];
+
+  /// 現在選択中の表示件数。null は「制限なし」。
+  int? _selectedItemsPerPage = 10;
+
   Position? _currentPosition;
 
   /// GoogleMap 上に現在地 (青い点) と現在地ボタンを表示するかどうか。
@@ -167,6 +185,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
         return distance <= _radiusMeter;
       }).toList();
+    }
+
+    final itemsPerPage = _selectedItemsPerPage;
+    if (itemsPerPage != null && result.length > itemsPerPage) {
+      result = result.take(itemsPerPage).toList();
     }
 
     return result;
@@ -635,17 +658,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         onChanged: (keyword) =>
                             setState(() => _searchKeyword = keyword),
                       ),
-                      RadiusFilterBar(
-                        enabled: _radiusEnabled,
-                        radiusMeter: _radiusMeter,
-                        onEnabledChanged: (isEnabled) =>
-                            setState(() => _radiusEnabled = isEnabled),
-                        onRadiusChanged: (radius) {
-                          setState(() => _radiusMeter = radius);
-                          ref
-                              .read(observeAppSettingsUseCaseProvider.notifier)
-                              .updateSearchRange(radius);
-                        },
+                      Row(
+                        children: [
+                          Expanded(
+                            child: RadiusFilterBar(
+                              enabled: _radiusEnabled,
+                              radiusMeter: _radiusMeter,
+                              onEnabledChanged: (isEnabled) =>
+                                  setState(() => _radiusEnabled = isEnabled),
+                              onRadiusChanged: (radius) {
+                                setState(() => _radiusMeter = radius);
+                                ref
+                                    .read(
+                                      observeAppSettingsUseCaseProvider
+                                          .notifier,
+                                    )
+                                    .updateSearchRange(radius);
+                              },
+                            ),
+                          ),
+                          ItemsPerPageFilterBar(
+                            options: _itemsPerPageOptions,
+                            value: _selectedItemsPerPage,
+                            onChanged: (value) =>
+                                setState(() => _selectedItemsPerPage = value),
+                          ),
+                        ],
                       ),
                     ],
                   ),
