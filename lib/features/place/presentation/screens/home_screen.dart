@@ -12,6 +12,7 @@ import 'package:seeking_my_place/features/place/application/state/selected_place
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_list_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/observe_app_settings_use_case.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
 
@@ -97,6 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
     _fetchCurrentLocation();
+    _radiusMeter = ref.read(observeAppSettingsUseCaseProvider).searchRange;
     _flingController = AnimationController.unbounded(vsync: this)
       ..addListener(_onFlingTick);
   }
@@ -125,7 +127,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return;
     }
     final position = await Geolocator.getCurrentPosition();
-    if (mounted) setState(() => _currentPosition = position);
+    if (!mounted) return;
+    setState(() => _currentPosition = position);
+
+    // GoogleMap が initialCameraPosition (デフォルト位置) で先に生成済みの場合、
+    // initialCameraPosition を書き換えても地図は移動しないため、
+    // 現在地取得完了後に明示的にカメラを移動させる。
+    final target = LatLng(position.latitude, position.longitude);
+    _mapController?.moveCamera(CameraUpdate.newLatLngZoom(target, 14));
   }
 
   // -------------------------------------------------------------------------
@@ -497,6 +506,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onMapCreated: (controller) {
               _mapController = controller;
               setState(() => _mapCenter = initialCamera.target);
+
+              // initialCameraPosition は地図生成時にしか反映されないため、
+              // 生成完了時点で既に現在地を取得済みなら明示的にカメラを合わせる。
+              final currentPosition = _currentPosition;
+              if (currentPosition != null) {
+                controller.moveCamera(
+                  CameraUpdate.newLatLngZoom(
+                    LatLng(
+                      currentPosition.latitude,
+                      currentPosition.longitude,
+                    ),
+                    14,
+                  ),
+                );
+              }
             },
             onCameraMove: (position) {
               setState(() => _mapCenter = position.target);
@@ -613,8 +637,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         radiusMeter: _radiusMeter,
                         onEnabledChanged: (isEnabled) =>
                             setState(() => _radiusEnabled = isEnabled),
-                        onRadiusChanged: (radius) =>
-                            setState(() => _radiusMeter = radius),
+                        onRadiusChanged: (radius) {
+                          setState(() => _radiusMeter = radius);
+                          ref
+                              .read(observeAppSettingsUseCaseProvider.notifier)
+                              .updateSearchRange(radius);
+                        },
                       ),
                     ],
                   ),

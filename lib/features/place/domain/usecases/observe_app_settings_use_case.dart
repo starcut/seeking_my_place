@@ -15,4 +15,9 @@ class ObserveAppSettingsUseCase extends _$ObserveAppSettingsUseCase {
     await ref.read(settingsRepositoryProvider).save(settings);
     state = ref.read(settingsRepositoryProvider).get();
   }
+
+  /// searchRange のみを更新する。他のフィールドは現在の設定値を引き継ぐ。
+  Future<void> updateSearchRange(double searchRange) async {
+    await update(state.copyWith(searchRange: searchRange));
+  }
 }
