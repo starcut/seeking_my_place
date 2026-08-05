@@ -7,7 +7,7 @@ import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 /// SettingScreen (spec 5.4 / ui.md 9)
 ///
 /// UI 先行実装フェーズのためビジネスロジックは未接続。
-/// 表示件数・エクスポート形式の選択のみ画面内 State で切り替わる簡易実装とし、
+/// エクスポート形式の選択のみ画面内 State で切り替わる簡易実装とし、
 /// 書き出し / ファイル選択は debugPrint のモックとする。
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -17,24 +17,8 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  /// 表示件数の選択肢。
-  /// null は「制限なし」を表し、データ上も null を保存する (spec 5.4)。
-  static const List<int?> _itemsPerPageOptions = [
-    10,
-    20,
-    30,
-    50,
-    100,
-    500,
-    1000,
-    null,
-  ];
-
   /// エクスポート形式の選択肢 (spec 5.4)。
   static const List<String> _exportFormatOptions = ['db', 'csv', 'txt'];
-
-  /// 現在選択中の表示件数。null は「制限なし」。
-  int? _selectedItemsPerPage = 10;
 
   /// 現在選択中のエクスポート形式。
   String _selectedExportFormat = 'db';
@@ -65,10 +49,6 @@ class _SettingScreenState extends State<SettingScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _DataSection(
-            itemsPerPageOptions: _itemsPerPageOptions,
-            selectedItemsPerPage: _selectedItemsPerPage,
-            onItemsPerPageChanged: (value) =>
-                setState(() => _selectedItemsPerPage = value),
             exportFormatOptions: _exportFormatOptions,
             selectedExportFormat: _selectedExportFormat,
             onExportFormatChanged: (value) {
@@ -86,14 +66,11 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 }
 
-/// DataSection: 表示件数・エクスポート・インポート・バージョンの各行 (ui.md 9)
+/// DataSection: エクスポート・インポート・バージョンの各行 (ui.md 9)
 ///
 /// 各行は [MainAxisAlignment.spaceBetween] で両端に広げ、行間は [Divider] で区切る。
 class _DataSection extends StatelessWidget {
   const _DataSection({
-    required this.itemsPerPageOptions,
-    required this.selectedItemsPerPage,
-    required this.onItemsPerPageChanged,
     required this.exportFormatOptions,
     required this.selectedExportFormat,
     required this.onExportFormatChanged,
@@ -102,9 +79,6 @@ class _DataSection extends StatelessWidget {
     required this.appVersion,
   });
 
-  final List<int?> itemsPerPageOptions;
-  final int? selectedItemsPerPage;
-  final ValueChanged<int?> onItemsPerPageChanged;
   final List<String> exportFormatOptions;
   final String selectedExportFormat;
   final ValueChanged<String?> onExportFormatChanged;
@@ -121,32 +95,6 @@ class _DataSection extends StatelessWidget {
 
     return Column(
       children: [
-        // 表示件数
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(l10n.itemsPerPageLabel),
-            Row(
-              children: [
-                DropdownButton<int?>(
-                  value: selectedItemsPerPage,
-                  items: itemsPerPageOptions.map((value) {
-                    return DropdownMenuItem<int?>(
-                      value: value,
-                      child: Text(
-                        value?.toString() ?? l10n.itemsPerPageUnlimited,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: onItemsPerPageChanged,
-                ),
-                const SizedBox(width: 8),
-                Text(l10n.itemsPerPageUnit),
-              ],
-            ),
-          ],
-        ),
-        _divider,
         // エクスポート
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
