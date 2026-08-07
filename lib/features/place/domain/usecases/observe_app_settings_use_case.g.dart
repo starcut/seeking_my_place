@@ -42,7 +42,7 @@ final class ObserveAppSettingsUseCaseProvider
 }
 
 String _$observeAppSettingsUseCaseHash() =>
-    r'e5ad2759f886f9d27698269a701ad6db80d80f6a';
+    r'f78276c72eec2680decb3b67b22f158e839885b6';
 
 abstract class _$ObserveAppSettingsUseCase extends $Notifier<AppSettings> {
   AppSettings build();

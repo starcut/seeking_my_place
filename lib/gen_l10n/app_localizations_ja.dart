@@ -216,4 +216,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notSet => '未設定';
+
+  @override
+  String get exportSuccess => 'エクスポートが完了しました';
+
+  @override
+  String get exportCancelled => 'エクスポートをキャンセルしました';
+
+  @override
+  String get exportUnavailable => 'エクスポート処理を実行しました';
+
+  @override
+  String exportError(Object error) {
+    return 'エクスポートに失敗しました: $error';
+  }
 }

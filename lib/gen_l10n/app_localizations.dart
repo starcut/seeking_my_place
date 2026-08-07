@@ -495,6 +495,30 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'未設定'**
   String get notSet;
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In ja, this message translates to:
+  /// **'エクスポートが完了しました'**
+  String get exportSuccess;
+
+  /// No description provided for @exportCancelled.
+  ///
+  /// In ja, this message translates to:
+  /// **'エクスポートをキャンセルしました'**
+  String get exportCancelled;
+
+  /// No description provided for @exportUnavailable.
+  ///
+  /// In ja, this message translates to:
+  /// **'エクスポート処理を実行しました'**
+  String get exportUnavailable;
+
+  /// No description provided for @exportError.
+  ///
+  /// In ja, this message translates to:
+  /// **'エクスポートに失敗しました: {error}'**
+  String exportError(Object error);
 }
 
 class _AppLocalizationsDelegate
