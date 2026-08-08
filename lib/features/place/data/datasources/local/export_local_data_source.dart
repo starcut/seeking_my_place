@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:seeking_my_place/features/place/data/datasources/local/database_helper.dart';
@@ -8,15 +9,17 @@ import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
 abstract class ExportLocalDataSource {
-  /// place_list のみを含む .db ファイルを共有シート経由で書き出す。
+  /// place_list のみを含む .db ファイルを書き出す。
+  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
   Future<ShareResultStatus> exportDatabaseFile();
 
-  /// place_list を .csv ファイルとして共有シート経由で書き出す。
+  /// place_list を .csv ファイルとして書き出す。
+  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
   Future<ShareResultStatus> exportCsvFiles();
 
   /// place_list の内容を、紐づく purpose 名（relation_place_purpose 経由で
-  /// master_table_purpose から解決）を含めた .txt ファイルとして
-  /// 共有シート経由で書き出す。
+  /// master_table_purpose から解決）を含めた .txt ファイルとして書き出す。
+  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
   Future<ShareResultStatus> exportTxtFile();
 }
 
@@ -27,6 +30,46 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
 
   @override
   Future<ShareResultStatus> exportDatabaseFile() async {
+    return _deliver(await _prepareDbFile());
+  }
+
+  @override
+  Future<ShareResultStatus> exportCsvFiles() async {
+    return _deliver(await _prepareCsvFile());
+  }
+
+  @override
+  Future<ShareResultStatus> exportTxtFile() async {
+    return _deliver(await _prepareTxtFile());
+  }
+
+  /// [file] を書き出す。iOS では共有シート、Android では OS 標準の保存先選択
+  /// ダイアログ（Storage Access Framework）経由で端末のストレージへ保存する。
+  ///
+  /// Android の共有シートには iOS の「ファイル」に相当する、保存先を問わず
+  /// 確実に使えるローカル保存の選択肢がないため、Android のみ保存ダイアログを
+  /// 直接呼び出す。
+  Future<ShareResultStatus> _deliver(XFile file) async {
+    if (Platform.isAndroid) {
+      final bytes = await file.readAsBytes();
+      final savedPath = await FilePicker.platform.saveFile(
+        fileName: basename(file.path),
+        bytes: bytes,
+      );
+      return savedPath != null
+          ? ShareResultStatus.success
+          : ShareResultStatus.dismissed;
+    }
+
+    final result = await SharePlus.instance.share(
+      ShareParams(files: [file]),
+    );
+    return result.status;
+  }
+
+  /// place_list のみを含む .db ファイルを一時領域に作成する。
+  /// 元の DB ファイルには一切手を加えない。
+  Future<XFile> _prepareDbFile() async {
     final db = _databaseHelper.database;
     // WAL モードで未反映のまま残っている変更があれば本体ファイルへ反映する。
     await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
@@ -40,7 +83,6 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     await File(db.path).copy(exportPath);
 
     // コピー先ファイルから place_list 以外のテーブルを取り除く。
-    // 元の DB ファイルには一切手を加えない。
     final exportDb = await openDatabase(exportPath);
     await exportDb.execute(
       'DROP TABLE ${DatabaseHelper.tableRelationPlacePurpose}',
@@ -49,14 +91,10 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     await exportDb.execute('VACUUM');
     await exportDb.close();
 
-    final result = await SharePlus.instance.share(
-      ShareParams(files: [XFile(exportPath)]),
-    );
-    return result.status;
+    return XFile(exportPath);
   }
 
-  @override
-  Future<ShareResultStatus> exportCsvFiles() async {
+  Future<XFile> _prepareCsvFile() async {
     final db = _databaseHelper.database;
     await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
 
@@ -74,21 +112,15 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     ];
 
     final tempDir = await getTemporaryDirectory();
-    final file = await _writeCsv(
+    return _writeCsv(
       directory: tempDir,
       fileName: DatabaseHelper.tablePlace,
       columns: columns,
       rows: await db.query(DatabaseHelper.tablePlace, columns: columns),
     );
-
-    final result = await SharePlus.instance.share(
-      ShareParams(files: [file]),
-    );
-    return result.status;
   }
 
-  @override
-  Future<ShareResultStatus> exportTxtFile() async {
+  Future<XFile> _prepareTxtFile() async {
     final db = _databaseHelper.database;
     await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
 
@@ -104,17 +136,12 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     final purposeNamesByPlaceId = await _queryPurposeNamesByPlaceId(db);
 
     final tempDir = await getTemporaryDirectory();
-    final file = await _writeTxt(
+    return _writeTxt(
       directory: tempDir,
       fileName: DatabaseHelper.tablePlace,
       places: places,
       purposeNamesByPlaceId: purposeNamesByPlaceId,
     );
-
-    final result = await SharePlus.instance.share(
-      ShareParams(files: [file]),
-    );
-    return result.status;
   }
 
   /// relation_place_purpose と master_table_purpose を結合し、
