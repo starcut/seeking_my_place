@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'package:seeking_my_place/features/place/domain/entities/export_result.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/export_csv_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/export_database_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/export_txt_use_case.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 
@@ -8,15 +13,16 @@ import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 ///
 /// UI 先行実装フェーズのためビジネスロジックは未接続。
 /// エクスポート形式の選択のみ画面内 State で切り替わる簡易実装とし、
-/// 書き出し / ファイル選択は debugPrint のモックとする。
-class SettingScreen extends StatefulWidget {
+/// ファイル選択は debugPrint のモックとする。
+/// エクスポート（db 形式）は [ExportDatabaseUseCase] に接続済み。
+class SettingScreen extends ConsumerStatefulWidget {
   const SettingScreen({super.key});
 
   @override
-  State<SettingScreen> createState() => _SettingScreenState();
+  ConsumerState<SettingScreen> createState() => _SettingScreenState();
 }
 
-class _SettingScreenState extends State<SettingScreen> {
+class _SettingScreenState extends ConsumerState<SettingScreen> {
   /// エクスポート形式の選択肢 (spec 5.4)。
   static const List<String> _exportFormatOptions = ['db', 'csv', 'txt'];
 
@@ -39,6 +45,66 @@ class _SettingScreenState extends State<SettingScreen> {
     }
   }
 
+  /// エクスポートボタン押下時の処理。選択中の形式ごとに分岐する。
+  Future<void> _onExportPressed() async {
+    switch (_selectedExportFormat) {
+      case 'db':
+        await _exportAsDb();
+        break;
+      case 'csv':
+        await _exportAsCsv();
+        break;
+      case 'txt':
+        await _exportAsTxt();
+      default:
+        break;
+    }
+  }
+
+  /// place_list のみを含む .db ファイルを共有シート (ActionSheet) 経由で
+  /// 書き出す。
+  Future<void> _exportAsDb() async {
+    await ref.read(exportDatabaseUseCaseProvider.notifier).execute();
+    if (!mounted) return;
+    _showExportResultSnackBar(ref.read(exportDatabaseUseCaseProvider));
+  }
+
+  /// place_list を .csv ファイルとして共有シート (ActionSheet) 経由で書き出す。
+  Future<void> _exportAsCsv() async {
+    await ref.read(exportCsvUseCaseProvider.notifier).execute();
+    if (!mounted) return;
+    _showExportResultSnackBar(ref.read(exportCsvUseCaseProvider));
+  }
+
+  /// place_list の内容（紐づく purpose 名を含む）を .txt ファイルとして
+  /// 共有シート (ActionSheet) 経由で書き出す。
+  Future<void> _exportAsTxt() async {
+    await ref.read(exportTxtUseCaseProvider.notifier).execute();
+    if (!mounted) return;
+    _showExportResultSnackBar(ref.read(exportTxtUseCaseProvider));
+  }
+
+  /// エクスポート結果に応じたメッセージを SnackBar で表示する。
+  void _showExportResultSnackBar(AsyncValue<ExportResult?> resultState) {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (resultState.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportError(resultState.error ?? ''))),
+      );
+      return;
+    }
+
+    final message = switch (resultState.value) {
+      ExportResult.success => l10n.exportSuccess,
+      ExportResult.cancelled => l10n.exportCancelled,
+      ExportResult.unavailable || null => l10n.exportUnavailable,
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -56,7 +122,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 setState(() => _selectedExportFormat = value);
               }
             },
-            onExport: () => debugPrint('export database (mock)'),
+            onExport: _onExportPressed,
             onImport: () => debugPrint('import database (mock)'),
             appVersion: _appVersion,
           ),

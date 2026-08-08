@@ -224,5 +224,23 @@
   "@purpose": {},
 
   "notSet": "未設定",
-  "@notSet": {}
+  "@notSet": {},
+
+  "exportSuccess": "エクスポートが完了しました",
+  "@exportSuccess": {},
+
+  "exportCancelled": "エクスポートをキャンセルしました",
+  "@exportCancelled": {},
+
+  "exportUnavailable": "エクスポート処理を実行しました",
+  "@exportUnavailable": {},
+
+  "exportError": "エクスポートに失敗しました: {error}",
+  "@exportError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  }
 }
