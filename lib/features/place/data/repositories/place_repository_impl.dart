@@ -17,7 +17,13 @@ class PlaceRepositoryImpl implements PlaceRepository {
   @override
   Future<List<Place>> getAll() async {
     final rows = await _dataSource.getAllPlaces();
-    return rows.map((row) => PlaceDto.fromRow(row).toEntity()).toList();
+    final places = <Place>[];
+    for (final row in rows) {
+      final dto = PlaceDto.fromRow(row);
+      final purposes = await _resolvePurposes(dto.placeId);
+      places.add(dto.toEntity().copyWith(purposes: purposes));
+    }
+    return places;
   }
 
   @override
@@ -26,17 +32,36 @@ class PlaceRepositoryImpl implements PlaceRepository {
     if (row == null) {
       throw Exception('Place not found: $placeId');
     }
-    return PlaceDto.fromRow(row).toEntity();
+    final purposes = await _resolvePurposes(placeId);
+    return PlaceDto.fromRow(row).toEntity().copyWith(purposes: purposes);
   }
 
   @override
   Future<void> create(Place place) async {
     await _dataSource.savePlace(place.toDto().toRow());
+    await _dataSource.savePlacePurposes(
+      place.placeId,
+      place.purposes.map((purpose) => purpose.purposeId).toList(),
+    );
   }
 
   @override
   Future<void> update(Place place) async {
     await _dataSource.savePlace(place.toDto().toRow());
+    await _dataSource.savePlacePurposes(
+      place.placeId,
+      place.purposes.map((purpose) => purpose.purposeId).toList(),
+    );
+  }
+
+  /// [placeId] に紐づく purpose_id を relation_place_purpose から取得し、
+  /// master_table_purpose の内容（getAllPurposes）と突き合わせて解決する。
+  Future<List<Purpose>> _resolvePurposes(String placeId) async {
+    final purposeIds = await _dataSource.getPurposeIdsForPlace(placeId);
+    if (purposeIds.isEmpty) return [];
+    final idSet = purposeIds.toSet();
+    final allPurposes = await getAllPurposes();
+    return allPurposes.where((p) => idSet.contains(p.purposeId)).toList();
   }
 
   @override

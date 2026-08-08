@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
+import 'package:seeking_my_place/features/place/domain/entities/purpose.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/create_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
@@ -81,6 +82,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
 
   bool _isVisited = false;
 
+  /// ドロップダウンで選択中の purpose id。
+  String? _selectedPurposeId;
+
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
 
@@ -102,6 +106,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     _urlController = TextEditingController(text: place?.url ?? '');
     _categoryController = TextEditingController(text: place?.category ?? '');
     _isVisited = place?.isVisited ?? false;
+    _selectedPurposeId = place?.purposes.isNotEmpty == true
+        ? place!.purposes.first.purposeId
+        : null;
   }
 
   @override
@@ -296,7 +303,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       isVisited: _isVisited,
       createdAt: existingPlace?.createdAt ?? now,
       updatedAt: now,
-      purposes: existingPlace?.purposes ?? [],
+      purposes: _selectedPurposeId != null
+          ? [Purpose(purposeId: _selectedPurposeId!, purposeName: '')]
+          : [],
     );
 
     if (existingPlace == null) {
@@ -413,9 +422,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
               longitudeValidator: _validateLongitude,
               urlValidator: _validateUrl,
               onAddressEditingComplete: _onAddressInputCompleted,
-              initialPurposeId: widget.initialPlace?.purposes.isNotEmpty == true
-                  ? widget.initialPlace!.purposes.first.purposeId
-                  : null,
+              initialPurposeId: _selectedPurposeId,
+              onPurposeChanged: (value) =>
+                  setState(() => _selectedPurposeId = value),
               urlSuffixIcon: IconButton(
                 icon: const Icon(Icons.travel_explore),
                 tooltip: l10n.placeInfoFetchTooltip,

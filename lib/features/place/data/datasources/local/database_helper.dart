@@ -1,12 +1,14 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'purpose_master_entry.dart';
+
 class DatabaseHelper {
   static DatabaseHelper? _instance;
   static Future<DatabaseHelper>? _initFuture;
 
   static const _databaseName = 'seeking_my_place.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 4;
 
   // place_list
   static const tablePlace = 'place_list';
@@ -66,6 +68,7 @@ class DatabaseHelper {
       version: _databaseVersion,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
 
     final instance = DatabaseHelper._(db);
@@ -102,6 +105,13 @@ class DatabaseHelper {
       )
     ''');
 
+    for (final entry in masterPurposeSeedData) {
+      await db.insert(tablePurpose, {
+        colPurposeId: entry.id,
+        colPurposeName: entry.name,
+      });
+    }
+
     await db.execute('''
       CREATE TABLE $tableRelationPlacePurpose (
         $colPlaceId   TEXT NOT NULL,
@@ -115,5 +125,30 @@ class DatabaseHelper {
           ON DELETE CASCADE
       )
     ''');
+  }
+
+  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      for (final entry in masterPurposeSeedData) {
+        await db.insert(
+          tablePurpose,
+          {colPurposeId: entry.id, colPurposeName: entry.name},
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    }
+
+    if (oldVersion < 4) {
+      // purpose_id の形式を 'purpose_N' から 'N' へ変更したため、
+      // 旧形式のマスタデータを一旦全削除してから最新の内容を入れ直す。
+      // ON DELETE CASCADE により、旧IDに紐づく relation_place_purpose も削除される。
+      await db.delete(tablePurpose);
+      for (final entry in masterPurposeSeedData) {
+        await db.insert(tablePurpose, {
+          colPurposeId: entry.id,
+          colPurposeName: entry.name,
+        });
+      }
+    }
   }
 }

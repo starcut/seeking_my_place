@@ -147,7 +147,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         permission == LocationPermission.deniedForever) {
       return;
     }
-    final position = await Geolocator.getCurrentPosition();
+    final Position position;
+    try {
+      position = await Geolocator.getCurrentPosition();
+    } catch (_) {
+      // 端末の位置情報サービスが無効等で取得できない場合は、デフォルトの
+      // カメラ位置 (_defaultCameraPosition) にフォールバックさせる。
+      return;
+    }
     if (!mounted) return;
     setState(() => _currentPosition = position);
 
