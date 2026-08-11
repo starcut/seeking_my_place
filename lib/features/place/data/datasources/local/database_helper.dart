@@ -8,7 +8,7 @@ class DatabaseHelper {
   static Future<DatabaseHelper>? _initFuture;
 
   static const _databaseName = 'seeking_my_place.db';
-  static const _databaseVersion = 4;
+  static const _databaseVersion = 5;
 
   // place_list
   static const tablePlace = 'place_list';
@@ -138,10 +138,10 @@ class DatabaseHelper {
       }
     }
 
-    if (oldVersion < 4) {
-      // purpose_id の形式を 'purpose_N' から 'N' へ変更したため、
-      // 旧形式のマスタデータを一旦全削除してから最新の内容を入れ直す。
-      // ON DELETE CASCADE により、旧IDに紐づく relation_place_purpose も削除される。
+    if (oldVersion < 5) {
+      // masterPurposeSeedData の内容（ID形式・項目）が変わった場合に備え、
+      // 既存のマスタデータを一旦全削除してから最新の内容を入れ直す。
+      // ON DELETE CASCADE により、削除されたIDに紐づく relation_place_purpose も削除される。
       await db.delete(tablePurpose);
       for (final entry in masterPurposeSeedData) {
         await db.insert(tablePurpose, {

@@ -6,7 +6,6 @@ class PurposeMasterEntry {
 }
 
 const List<PurposeMasterEntry> masterPurposeSeedData = [
-  PurposeMasterEntry(id: '0', name: '指定なし'),
   PurposeMasterEntry(id: '1', name: '作業'),
   PurposeMasterEntry(id: '2', name: '食事'),
   PurposeMasterEntry(id: '3', name: '休憩'),

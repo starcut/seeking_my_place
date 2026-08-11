@@ -16,6 +16,7 @@ import 'package:seeking_my_place/features/place/domain/usecases/observe_app_sett
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_screen_sub_widgets.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_search_bar.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/items_per_page_filter_bar.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/home/place_cell.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/radius_filter_bar.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
@@ -751,98 +752,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final place = places[index];
         final isSelected = place.placeId == selectedId;
 
-        return Slidable(
-          key: ValueKey(place.placeId),
-          endActionPane: ActionPane(
-            motion: const DrawerMotion(),
-            extentRatio: 0.25,
-            children: [
-              SlidableAction(
-                onPressed: (actionContext) =>
-                    _onTapDeleteAction(actionContext, place.placeId),
-                // 削除は確認ダイアログとAPI呼び出しを挟む非同期処理のため、
-                // 完了前に自動でSlidableを閉じさせない。
-                autoClose: false,
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                icon: Icons.delete,
-                label: l10n.delete,
-              ),
-            ],
-          ),
-          child: GestureDetector(
-            onTap: () {
-              ref
-                  .read(selectedPlaceStateProvider.notifier)
-                  .select(place.placeId);
-            },
-            child: Container(
-              color: isSelected
-                  ? const Color(0xFFFFF2B8)
-                  : Theme.of(itemContext).colorScheme.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: [
-                            if (place.category.isNotEmpty)
-                              Text(
-                                place.category,
-                                style: Theme.of(
-                                  itemContext,
-                                ).textTheme.labelSmall,
-                              ),
-                            const Spacer(),
-                            if (place.isVisited)
-                              const Icon(
-                                Icons.check_circle,
-                                size: 16,
-                                color: Colors.green,
-                              ),
-                          ],
-                        ),
-                        Text(
-                          place.placeName,
-                          style: Theme.of(itemContext).textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          place.address,
-                          style: Theme.of(itemContext).textTheme.bodySmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.link, size: 20),
-                    onPressed: () => _copyUrl(place),
-                    tooltip: l10n.copyUrlTooltip,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, size: 20),
-                    onPressed: () async {
-                      final saved = await context.push(
-                        '/place/${place.placeId}',
-                      );
-                      if (mounted && saved == true) {
-                        ref.invalidate(getPlaceListUseCaseProvider);
-                      }
-                    },
-                    tooltip: l10n.detailTooltip,
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return PlaceCell(
+          place: place,
+          isSelected: isSelected,
+          onTap: () =>
+              ref.read(selectedPlaceStateProvider.notifier).select(place.placeId),
+          onCopyUrl: () => _copyUrl(place),
+          onDeleteRequested: (actionContext) =>
+              _onTapDeleteAction(actionContext, place.placeId),
+          onDetailTap: () async {
+            final saved = await context.push('/place/${place.placeId}');
+            if (mounted && saved == true) {
+              ref.invalidate(getPlaceListUseCaseProvider);
+            }
+          },
         );
       },
     );

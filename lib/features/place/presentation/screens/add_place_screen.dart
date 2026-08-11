@@ -82,8 +82,8 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
 
   bool _isVisited = false;
 
-  /// ドロップダウンで選択中の purpose id。
-  String? _selectedPurposeId;
+  /// チェックボックスで選択中の purpose id リスト（複数選択）。
+  List<String> _selectedPurposeIds = [];
 
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
@@ -106,9 +106,8 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     _urlController = TextEditingController(text: place?.url ?? '');
     _categoryController = TextEditingController(text: place?.category ?? '');
     _isVisited = place?.isVisited ?? false;
-    _selectedPurposeId = place?.purposes.isNotEmpty == true
-        ? place!.purposes.first.purposeId
-        : null;
+    _selectedPurposeIds =
+        place?.purposes.map((p) => p.purposeId).toList() ?? [];
   }
 
   @override
@@ -303,9 +302,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       isVisited: _isVisited,
       createdAt: existingPlace?.createdAt ?? now,
       updatedAt: now,
-      purposes: _selectedPurposeId != null
-          ? [Purpose(purposeId: _selectedPurposeId!, purposeName: '')]
-          : [],
+      purposes: _selectedPurposeIds
+          .map((id) => Purpose(purposeId: id, purposeName: ''))
+          .toList(),
     );
 
     if (existingPlace == null) {
@@ -422,9 +421,9 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
               longitudeValidator: _validateLongitude,
               urlValidator: _validateUrl,
               onAddressEditingComplete: _onAddressInputCompleted,
-              initialPurposeId: _selectedPurposeId,
+              initialPurposeIds: _selectedPurposeIds,
               onPurposeChanged: (value) =>
-                  setState(() => _selectedPurposeId = value),
+                  setState(() => _selectedPurposeIds = value),
               urlSuffixIcon: IconButton(
                 icon: const Icon(Icons.travel_explore),
                 tooltip: l10n.placeInfoFetchTooltip,
