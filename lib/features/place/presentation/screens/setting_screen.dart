@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:seeking_my_place/features/place/domain/entities/export_result.dart';
+import 'package:seeking_my_place/features/place/domain/entities/import_result.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/export_csv_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/export_database_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/export_txt_use_case.dart';
+import 'package:seeking_my_place/features/place/domain/usecases/import_database_use_case.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
 
@@ -31,6 +33,11 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
 
   /// pubspec.yaml (seeking_my_place) のバージョン。package_info_plus から取得する。
   String _appVersion = '';
+
+  /// この画面を開いている間にインポートが成功したかどうか。
+  /// 画面を閉じる際にこの値を返し、呼び出し元 (HomeScreen) で場所一覧の
+  /// 再取得を行うために使う。
+  bool _hasImported = false;
 
   @override
   void initState() {
@@ -84,6 +91,18 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
     _showExportResultSnackBar(ref.read(exportTxtUseCaseProvider));
   }
 
+  /// 選択した .db ファイルの place_list をアプリのデータベースへ取り込む。
+  /// PlaceId は既存データと重複しない値を新たに発行して登録する。
+  Future<void> _importAsDb() async {
+    await ref.read(importDatabaseUseCaseProvider.notifier).execute();
+    if (!mounted) return;
+    final resultState = ref.read(importDatabaseUseCaseProvider);
+    if (resultState.value == ImportResult.success) {
+      _hasImported = true;
+    }
+    _showImportResultSnackBar(resultState);
+  }
+
   /// エクスポート結果に応じたメッセージを SnackBar で表示する。
   void _showExportResultSnackBar(AsyncValue<ExportResult?> resultState) {
     final l10n = AppLocalizations.of(context)!;
@@ -105,28 +124,55 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// インポート結果に応じたメッセージを SnackBar で表示する。
+  void _showImportResultSnackBar(AsyncValue<ImportResult?> resultState) {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (resultState.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.importError(resultState.error ?? ''))),
+      );
+      return;
+    }
+
+    final message = switch (resultState.value) {
+      ImportResult.success => l10n.importSuccess,
+      ImportResult.cancelled || null => l10n.importCancelled,
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBarDefault(title: l10n.settingTitle),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _DataSection(
-            exportFormatOptions: _exportFormatOptions,
-            selectedExportFormat: _selectedExportFormat,
-            onExportFormatChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedExportFormat = value);
-              }
-            },
-            onExport: _onExportPressed,
-            onImport: () => debugPrint('import database (mock)'),
-            appVersion: _appVersion,
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).pop(_hasImported);
+      },
+      child: Scaffold(
+        appBar: AppBarDefault(title: l10n.settingTitle),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _DataSection(
+              exportFormatOptions: _exportFormatOptions,
+              selectedExportFormat: _selectedExportFormat,
+              onExportFormatChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedExportFormat = value);
+                }
+              },
+              onExport: _onExportPressed,
+              onImport: _importAsDb,
+              appVersion: _appVersion,
+            ),
+          ],
+        ),
       ),
     );
   }

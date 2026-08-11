@@ -519,6 +519,24 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'エクスポートに失敗しました: {error}'**
   String exportError(Object error);
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In ja, this message translates to:
+  /// **'インポートが完了しました'**
+  String get importSuccess;
+
+  /// No description provided for @importCancelled.
+  ///
+  /// In ja, this message translates to:
+  /// **'インポートをキャンセルしました'**
+  String get importCancelled;
+
+  /// No description provided for @importError.
+  ///
+  /// In ja, this message translates to:
+  /// **'インポートに失敗しました: {error}'**
+  String importError(Object error);
 }
 
 class _AppLocalizationsDelegate

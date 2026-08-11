@@ -458,7 +458,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
+            onPressed: () async {
+              final imported = await context.push('/settings');
+              if (mounted && imported == true) {
+                ref.invalidate(getPlaceListUseCaseProvider);
+              }
+            },
           ),
         ],
       ),

@@ -242,5 +242,20 @@
         "type": "Object"
       }
     }
+  },
+
+  "importSuccess": "インポートが完了しました",
+  "@importSuccess": {},
+
+  "importCancelled": "インポートをキャンセルしました",
+  "@importCancelled": {},
+
+  "importError": "インポートに失敗しました: {error}",
+  "@importError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
   }
 }

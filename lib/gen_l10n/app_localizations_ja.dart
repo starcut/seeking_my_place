@@ -230,4 +230,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String exportError(Object error) {
     return 'エクスポートに失敗しました: $error';
   }
+
+  @override
+  String get importSuccess => 'インポートが完了しました';
+
+  @override
+  String get importCancelled => 'インポートをキャンセルしました';
+
+  @override
+  String importError(Object error) {
+    return 'インポートに失敗しました: $error';
+  }
 }
