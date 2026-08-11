@@ -7,6 +7,8 @@ abstract class PlaceLocalDataSource {
   Future<List<Map<String, dynamic>>> getAllPlaces();
   Future<void> deletePlace(String id);
   Future<List<Map<String, dynamic>>> getAllPurposes();
+  Future<List<String>> getPurposeIdsForPlace(String placeId);
+  Future<void> savePlacePurposes(String placeId, List<String> purposeIds);
 }
 
 class PlaceLocalDataSourceImpl implements PlaceLocalDataSource {
@@ -56,6 +58,39 @@ class PlaceLocalDataSourceImpl implements PlaceLocalDataSource {
   @override
   Future<List<Map<String, dynamic>>> getAllPurposes() async {
     final db = _databaseHelper.database;
-    return db.query(DatabaseHelper.tablePurpose);
+    return db.query(
+      DatabaseHelper.tablePurpose,
+      orderBy: DatabaseHelper.colPurposeId,
+    );
+  }
+
+  @override
+  Future<List<String>> getPurposeIdsForPlace(String placeId) async {
+    final db = _databaseHelper.database;
+    final rows = await db.query(
+      DatabaseHelper.tableRelationPlacePurpose,
+      columns: [DatabaseHelper.colPurposeId],
+      where: '${DatabaseHelper.colPlaceId} = ?',
+      whereArgs: [placeId],
+    );
+    return rows.map((row) => row[DatabaseHelper.colPurposeId] as String).toList();
+  }
+
+  @override
+  Future<void> savePlacePurposes(String placeId, List<String> purposeIds) async {
+    final db = _databaseHelper.database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        DatabaseHelper.tableRelationPlacePurpose,
+        where: '${DatabaseHelper.colPlaceId} = ?',
+        whereArgs: [placeId],
+      );
+      for (final purposeId in purposeIds) {
+        await txn.insert(DatabaseHelper.tableRelationPlacePurpose, {
+          DatabaseHelper.colPlaceId: placeId,
+          DatabaseHelper.colPurposeId: purposeId,
+        });
+      }
+    });
   }
 }

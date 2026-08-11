@@ -47,7 +47,7 @@ class PlaceForm extends ConsumerStatefulWidget {
     this.urlValidator,
     this.onAddressEditingComplete,
     this.urlSuffixIcon,
-    this.initialPurposeId,
+    this.initialPurposeIds = const [],
     this.onPurposeChanged,
   });
 
@@ -79,20 +79,22 @@ class PlaceForm extends ConsumerStatefulWidget {
   /// URL フィールドの suffix（例: 自動取得ボタン）。呼び出し側から任意で差し込む。
   final Widget? urlSuffixIcon;
 
-  /// 初期選択の purpose id。
-  final String? initialPurposeId;
-  final ValueChanged<String?>? onPurposeChanged;
+  /// 初期選択の purpose id リスト（複数選択）。
+  final List<String> initialPurposeIds;
+  final ValueChanged<List<String>>? onPurposeChanged;
 
   @override
   ConsumerState<PlaceForm> createState() => _PlaceFormState();
 }
 
 class _PlaceFormState extends ConsumerState<PlaceForm> {
-  String? _selectedPurposeId;
+  late List<String> _selectedPurposeIds;
+  final MenuController _purposeMenuController = MenuController();
 
   @override
   void initState() {
     super.initState();
+    _selectedPurposeIds = List<String>.from(widget.initialPurposeIds);
   }
 
   @override
@@ -148,7 +150,7 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           ),
           const SizedBox(height: 12),
 
-          // 4. purpose（Dropdown / provider から選択肢を取得）
+          // 4. purpose（ドロップダウン形式のメニュー / provider から選択肢を取得。複数選択可）
           _buildPurposeDropdown(l10n, readOnly),
           const SizedBox(height: 12),
 
@@ -254,7 +256,8 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
     );
   }
 
-  /// purpose ドロップダウン。選択肢は [placeFormPurposesProvider] から取得する。
+  /// purpose ドロップダウンメニュー。選択肢は [placeFormPurposesProvider] から取得する。
+  /// 項目をタップしてもメニューは閉じず、左のチェックの付け外しで複数選択できる。
   Widget _buildPurposeDropdown(AppLocalizations l10n, bool readOnly) {
     final purposesAsync = ref.watch(placeFormPurposesProvider);
 
@@ -263,24 +266,66 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
       orElse: () => const <Purpose>[],
     );
 
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedPurposeId,
-      decoration: InputDecoration(labelText: l10n.purpose),
-      hint: Text(l10n.notSet),
-      items: purposes
-          .map(
-            (p) => DropdownMenuItem<String>(
-              value: p.purposeId,
-              child: Text(p.purposeName),
+    final selectedNames = purposes
+        .where((p) => _selectedPurposeIds.contains(p.purposeId))
+        .map((p) => p.purposeName)
+        .join(', ');
+
+    return MenuAnchor(
+      controller: _purposeMenuController,
+      onOpen: () => setState(() {}),
+      onClose: () => setState(() {}),
+      menuChildren: purposes.map((p) {
+        final checked = _selectedPurposeIds.contains(p.purposeId);
+        return MenuItemButton(
+          closeOnActivate: false,
+          leadingIcon: Icon(
+            checked ? Icons.check_box : Icons.check_box_outline_blank,
+          ),
+          onPressed: readOnly
+              ? null
+              : () {
+                  setState(() {
+                    if (checked) {
+                      _selectedPurposeIds.remove(p.purposeId);
+                    } else {
+                      _selectedPurposeIds.add(p.purposeId);
+                    }
+                  });
+                  widget.onPurposeChanged?.call(
+                    List.unmodifiable(_selectedPurposeIds),
+                  );
+                },
+          child: Text(p.purposeName),
+        );
+      }).toList(),
+      builder: (context, controller, child) {
+        return InkWell(
+          onTap: readOnly
+              ? null
+              : () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: l10n.purpose,
+              border: const OutlineInputBorder(),
+              suffixIcon: Icon(
+                controller.isOpen
+                    ? Icons.arrow_drop_up
+                    : Icons.arrow_drop_down,
+              ),
             ),
-          )
-          .toList(),
-      onChanged: readOnly
-          ? null
-          : (value) {
-              setState(() => _selectedPurposeId = value);
-              widget.onPurposeChanged?.call(value);
-            },
+            child: Text(
+              selectedNames.isEmpty ? l10n.notSet : selectedNames,
+            ),
+          ),
+        );
+      },
     );
   }
 }

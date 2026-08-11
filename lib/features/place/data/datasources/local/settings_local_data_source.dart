@@ -32,7 +32,7 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
   static const keyIsSearchEnabled = 'is_search_enabled';
   static const keyItemsPerPage = 'items_per_page';
 
-  static const _defaultSearchRange = 10.0;
+  static const _defaultSearchRange = 10000.0;
   static const _defaultIsSearchEnabled = true;
   static const _defaultItemsPerPage = 50;
 

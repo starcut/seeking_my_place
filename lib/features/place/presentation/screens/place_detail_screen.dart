@@ -5,6 +5,7 @@ import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
+import 'package:seeking_my_place/features/place/domain/entities/purpose.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_detail_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/update_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/validators/place_validator.dart';
@@ -106,6 +107,9 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
 
   bool _isVisited = false;
 
+  /// チェックボックスで選択中の purpose id リスト（複数選択）。
+  List<String> _selectedPurposeIds = [];
+
   /// URLからの店舗情報取得中かどうか（画面全体のローディング表示に使用）。
   bool _isFetching = false;
 
@@ -127,6 +131,7 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     _latitudeController = TextEditingController(text: p.latitude.toString());
     _longitudeController = TextEditingController(text: p.longitude.toString());
     _isVisited = p.isVisited;
+    _selectedPurposeIds = p.purposes.map((purpose) => purpose.purposeId).toList();
   }
 
   @override
@@ -153,7 +158,10 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
     _addressController.text = p.address;
     _latitudeController.text = p.latitude.toString();
     _longitudeController.text = p.longitude.toString();
-    setState(() => _isVisited = p.isVisited);
+    setState(() {
+      _isVisited = p.isVisited;
+      _selectedPurposeIds = p.purposes.map((purpose) => purpose.purposeId).toList();
+    });
     widget.onSwitchToView();
   }
 
@@ -177,6 +185,9 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
       longitude: double.tryParse(_longitudeController.text) ?? place.longitude,
       isVisited: _isVisited,
       updatedAt: DateTime.now(),
+      purposes: _selectedPurposeIds
+          .map((id) => Purpose(purposeId: id, purposeName: ''))
+          .toList(),
     );
 
     await ref.read(updatePlaceUseCaseProvider.notifier).execute(updatedPlace);
@@ -471,7 +482,6 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
   /// EditLayout（ui.md 準拠: PlaceForm + Save + Cancel）。
   Widget _buildEditLayout(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final place = widget.place;
     return GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
@@ -493,7 +503,9 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
                 latitudeValidator: _validateLatitude,
                 longitudeValidator: _validateLongitude,
                 urlValidator: _validateUrl,
-                initialPurposeId: place.purposes.isNotEmpty ? place.purposes.first.purposeId  : null,
+                initialPurposeIds: _selectedPurposeIds,
+                onPurposeChanged: (value) =>
+                    setState(() => _selectedPurposeIds = value),
                 urlSuffixIcon: IconButton(
                   icon: const Icon(Icons.travel_explore),
                   tooltip: l10n.placeInfoFetchTooltip,
