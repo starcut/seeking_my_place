@@ -232,6 +232,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get importSuccessTitle => 'インポート完了';
+
+  @override
   String get importSuccess => 'インポートが完了しました';
 
   @override

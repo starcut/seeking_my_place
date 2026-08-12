@@ -244,6 +244,9 @@
     }
   },
 
+  "importSuccessTitle": "インポート完了",
+  "@importSuccessTitle": {},
+
   "importSuccess": "インポートが完了しました",
   "@importSuccess": {},
 

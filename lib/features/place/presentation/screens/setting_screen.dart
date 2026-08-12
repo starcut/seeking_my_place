@@ -10,6 +10,7 @@ import 'package:seeking_my_place/features/place/domain/usecases/export_txt_use_c
 import 'package:seeking_my_place/features/place/domain/usecases/import_database_use_case.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
+import 'package:seeking_my_place/shared/widgets/app_dialog.dart';
 
 /// SettingScreen (spec 5.4 / ui.md 9)
 ///
@@ -93,12 +94,29 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
 
   /// 選択した .db ファイルの place_list をアプリのデータベースへ取り込む。
   /// PlaceId は既存データと重複しない値を新たに発行して登録する。
-  Future<void> _importAsDb() async {
+  Future<void> _importDbFile() async {
     await ref.read(importDatabaseUseCaseProvider.notifier).execute();
     if (!mounted) return;
     final resultState = ref.read(importDatabaseUseCaseProvider);
     if (resultState.value == ImportResult.success) {
       _hasImported = true;
+      final l10n = AppLocalizations.of(context)!;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AppDialog(
+          title: l10n.importSuccessTitle,
+          message: l10n.importSuccess,
+          actions: [
+            AppDialogAction(
+              label: l10n.close,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(_hasImported);
+      return;
     }
     _showImportResultSnackBar(resultState);
   }
@@ -168,7 +186,7 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
                 }
               },
               onExport: _onExportPressed,
-              onImport: _importAsDb,
+              onImport: _importDbFile,
               appVersion: _appVersion,
             ),
           ],

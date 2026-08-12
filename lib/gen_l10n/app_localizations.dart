@@ -520,6 +520,12 @@ abstract class AppLocalizations {
   /// **'エクスポートに失敗しました: {error}'**
   String exportError(Object error);
 
+  /// No description provided for @importSuccessTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'インポート完了'**
+  String get importSuccessTitle;
+
   /// No description provided for @importSuccess.
   ///
   /// In ja, this message translates to:
