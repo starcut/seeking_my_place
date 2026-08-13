@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
@@ -121,7 +123,7 @@ class PlaceCell extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.link, size: 20),
+                icon: Icon(Platform.isIOS ? Icons.ios_share : Icons.share, size: 20),
                 onPressed: onCopyUrl,
                 tooltip: l10n.copyUrlTooltip,
               ),

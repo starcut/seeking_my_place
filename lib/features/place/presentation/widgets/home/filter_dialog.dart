@@ -77,7 +77,6 @@ class _FilterDialogState extends State<FilterDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final dialogWidth = (MediaQuery.sizeOf(context).width * 0.9).clamp(
       280.0,
       480.0,
@@ -96,15 +95,7 @@ class _FilterDialogState extends State<FilterDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.filterDialogTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+              const _FilterDialogHeader(),
               const SizedBox(height: 12),
               const Divider(height: 1),
               Flexible(
@@ -112,135 +103,262 @@ class _FilterDialogState extends State<FilterDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Text(
-                            l10n.itemsPerPageLabel,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const Spacer(),
-                          ItemsPerPageFilterBar(
-                            options: widget.itemsPerPageOptions,
-                            value: _selectedItemsPerPage,
-                            onChanged: (value) =>
-                                setState(() => _selectedItemsPerPage = value),
-                          ),
-                        ],
+                      _ItemsPerPageSection(
+                        options: widget.itemsPerPageOptions,
+                        value: _selectedItemsPerPage,
+                        onChanged: (value) =>
+                            setState(() => _selectedItemsPerPage = value),
                       ),
-                      const SizedBox(height: 8),
                       const Divider(height: 1),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _visitStatusLabels.entries.map((entry) {
-                          final status = entry.key;
-                          final selected = _visitedStatuses.contains(status);
-                          return ChoiceChip(
-                            showCheckmark: false,
-                            label: Text(entry.value),
-                            selected: selected,
-                            onSelected: (value) {
-                              setState(() {
-                                if (value) {
-                                  _visitedStatuses.add(status);
-                                } else {
-                                  _visitedStatuses.remove(status);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
+                      _VisitStatusSection(
+                        selectedStatuses: _visitedStatuses,
+                        onChanged: (status, value) {
+                          setState(() {
+                            if (value) {
+                              _visitedStatuses.add(status);
+                            } else {
+                              _visitedStatuses.remove(status);
+                            }
+                          });
+                        },
                       ),
-                      const SizedBox(height: 8),
                       const Divider(height: 1),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.category,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _categoryController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      _CategorySection(controller: _categoryController),
                       const Divider(height: 1),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.purposeMultiSelectLabel,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        alignment: WrapAlignment.start,
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _purposeLabels.entries.map((entry) {
-                          final purpose = entry.key;
-                          final selected = _selectedPurposes.contains(purpose);
-                          return ChoiceChip(
-                            avatar: Icon(purpose.icon, size: 18),
-                            showCheckmark: false,
-                            label: Text(entry.value),
-                            selected: selected,
-                            onSelected: (value) {
-                              setState(() {
-                                if (value) {
-                                  _selectedPurposes.add(purpose);
-                                } else {
-                                  _selectedPurposes.remove(purpose);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
+                      _PurposeSection(
+                        selectedPurposes: _selectedPurposes,
+                        onChanged: (purpose, value) {
+                          setState(() {
+                            if (value) {
+                              _selectedPurposes.add(purpose);
+                            } else {
+                              _selectedPurposes.remove(purpose);
+                            }
+                          });
+                        },
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop<FilterResult>((
-                          itemsPerPage: widget.defaultItemsPerPage,
-                          visitStatuses: const <VisitStatus>{},
-                          category: '',
-                          purposes: const <PurposeIcon>{},
-                        ));
-                      },
-                      child: Text(l10n.resetButton),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.of(context).pop<FilterResult>((
-                          itemsPerPage: _selectedItemsPerPage,
-                          visitStatuses: _visitedStatuses,
-                          category: _categoryController.text,
-                          purposes: _selectedPurposes,
-                        ));
-                      },
-                      child: Text(l10n.applyButton),
-                    ),
-                  ),
-                ],
+              _FilterDialogActions(
+                onReset: () {
+                  Navigator.of(context).pop<FilterResult>((
+                    itemsPerPage: widget.defaultItemsPerPage,
+                    visitStatuses: const <VisitStatus>{},
+                    category: '',
+                    purposes: const <PurposeIcon>{},
+                  ));
+                },
+                onApply: () {
+                  Navigator.of(context).pop<FilterResult>((
+                    itemsPerPage: _selectedItemsPerPage,
+                    visitStatuses: _visitedStatuses,
+                    category: _categoryController.text,
+                    purposes: _selectedPurposes,
+                  ));
+                },
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FilterDialogActions extends StatelessWidget {
+  const _FilterDialogActions({required this.onReset, required this.onApply});
+
+  final VoidCallback onReset;
+  final VoidCallback onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onReset,
+            child: Text(l10n.resetButton),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton(
+            onPressed: onApply,
+            child: Text(l10n.applyButton),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterDialogHeader extends StatelessWidget {
+  const _FilterDialogHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      width: double.infinity,
+      color: Theme.of(context).colorScheme.primary,
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Text(
+            l10n.filterDialogTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ItemsPerPageSection extends StatelessWidget {
+  const _ItemsPerPageSection({
+    required this.options,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final List<int?> options;
+  final int? value;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              l10n.itemsPerPageLabel,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const Spacer(),
+            ItemsPerPageFilterBar(
+              options: options,
+              value: value,
+              onChanged: onChanged,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+class _PurposeSection extends StatelessWidget {
+  const _PurposeSection({
+    required this.selectedPurposes,
+    required this.onChanged,
+  });
+
+  final Set<PurposeIcon> selectedPurposes;
+  final void Function(PurposeIcon purpose, bool selected) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          l10n.purposeMultiSelectLabel,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.start,
+          spacing: 8,
+          runSpacing: 8,
+          children: _purposeLabels.entries.map((entry) {
+            final purpose = entry.key;
+            final selected = selectedPurposes.contains(purpose);
+            return ChoiceChip(
+              avatar: Icon(purpose.icon, size: 18),
+              showCheckmark: false,
+              label: Text(entry.value),
+              selected: selected,
+              onSelected: (value) => onChanged(purpose, value),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategorySection extends StatelessWidget {
+  const _CategorySection({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(l10n.category, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _VisitStatusSection extends StatelessWidget {
+  const _VisitStatusSection({
+    required this.selectedStatuses,
+    required this.onChanged,
+  });
+
+  final Set<VisitStatus> selectedStatuses;
+  final void Function(VisitStatus status, bool selected) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _visitStatusLabels.entries.map((entry) {
+            final status = entry.key;
+            final selected = selectedStatuses.contains(status);
+            return ChoiceChip(
+              showCheckmark: false,
+              label: Text(entry.value),
+              selected: selected,
+              onSelected: (value) => onChanged(status, value),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }
