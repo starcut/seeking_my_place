@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'import_database_use_case.dart';
+part of 'import_json_use_case.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,34 +9,33 @@ part of 'import_database_use_case.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(ImportDatabaseUseCase)
-final importDatabaseUseCaseProvider = ImportDatabaseUseCaseProvider._();
+@ProviderFor(ImportJsonUseCase)
+final importJsonUseCaseProvider = ImportJsonUseCaseProvider._();
 
-final class ImportDatabaseUseCaseProvider
-    extends $AsyncNotifierProvider<ImportDatabaseUseCase, ImportResult?> {
-  ImportDatabaseUseCaseProvider._()
+final class ImportJsonUseCaseProvider
+    extends $AsyncNotifierProvider<ImportJsonUseCase, ImportResult?> {
+  ImportJsonUseCaseProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'importDatabaseUseCaseProvider',
+        name: r'importJsonUseCaseProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$importDatabaseUseCaseHash();
+  String debugGetCreateSourceHash() => _$importJsonUseCaseHash();
 
   @$internal
   @override
-  ImportDatabaseUseCase create() => ImportDatabaseUseCase();
+  ImportJsonUseCase create() => ImportJsonUseCase();
 }
 
-String _$importDatabaseUseCaseHash() =>
-    r'7465a9c4eb0f8d4119262c237e27a229bfec7ffd';
+String _$importJsonUseCaseHash() => r'4fb7fe93336775ed332cafeccde8a32874329fcc';
 
-abstract class _$ImportDatabaseUseCase extends $AsyncNotifier<ImportResult?> {
+abstract class _$ImportJsonUseCase extends $AsyncNotifier<ImportResult?> {
   FutureOr<ImportResult?> build();
   @$mustCallSuper
   @override

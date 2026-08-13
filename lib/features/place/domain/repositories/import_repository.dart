@@ -7,7 +7,7 @@ import 'package:seeking_my_place/features/place/domain/entities/import_result.da
 part 'import_repository.g.dart';
 
 abstract class ImportRepository {
-  Future<ImportResult> importAsDb();
+  Future<ImportResult> importAsJson();
 }
 
 @Riverpod(keepAlive: true)

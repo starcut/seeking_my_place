@@ -7,9 +7,8 @@ import 'package:seeking_my_place/features/place/domain/entities/export_result.da
 part 'export_repository.g.dart';
 
 abstract class ExportRepository {
-  Future<ExportResult> exportAsDb();
-  Future<ExportResult> exportAsCsv();
   Future<ExportResult> exportAsTxt();
+  Future<ExportResult> exportAsJson();
 }
 
 @Riverpod(keepAlive: true)

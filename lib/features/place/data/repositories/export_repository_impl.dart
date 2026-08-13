@@ -9,20 +9,14 @@ class ExportRepositoryImpl implements ExportRepository {
   ExportRepositoryImpl(this._dataSource);
 
   @override
-  Future<ExportResult> exportAsDb() async {
-    final status = await _dataSource.exportDatabaseFile();
-    return _toExportResult(status);
-  }
-
-  @override
-  Future<ExportResult> exportAsCsv() async {
-    final status = await _dataSource.exportCsvFiles();
-    return _toExportResult(status);
-  }
-
-  @override
   Future<ExportResult> exportAsTxt() async {
     final status = await _dataSource.exportTxtFile();
+    return _toExportResult(status);
+  }
+
+  @override
+  Future<ExportResult> exportAsJson() async {
+    final status = await _dataSource.exportJsonFile();
     return _toExportResult(status);
   }
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'export_csv_use_case.dart';
+part of 'export_json_use_case.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,33 +9,33 @@ part of 'export_csv_use_case.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(ExportCsvUseCase)
-final exportCsvUseCaseProvider = ExportCsvUseCaseProvider._();
+@ProviderFor(ExportJsonUseCase)
+final exportJsonUseCaseProvider = ExportJsonUseCaseProvider._();
 
-final class ExportCsvUseCaseProvider
-    extends $AsyncNotifierProvider<ExportCsvUseCase, ExportResult?> {
-  ExportCsvUseCaseProvider._()
+final class ExportJsonUseCaseProvider
+    extends $AsyncNotifierProvider<ExportJsonUseCase, ExportResult?> {
+  ExportJsonUseCaseProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'exportCsvUseCaseProvider',
+        name: r'exportJsonUseCaseProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$exportCsvUseCaseHash();
+  String debugGetCreateSourceHash() => _$exportJsonUseCaseHash();
 
   @$internal
   @override
-  ExportCsvUseCase create() => ExportCsvUseCase();
+  ExportJsonUseCase create() => ExportJsonUseCase();
 }
 
-String _$exportCsvUseCaseHash() => r'09afe63d3c18374aabcd9263da00b1575871b5b7';
+String _$exportJsonUseCaseHash() => r'86f9a294705567fbae6bfa2ab574b8308542a76d';
 
-abstract class _$ExportCsvUseCase extends $AsyncNotifier<ExportResult?> {
+abstract class _$ExportJsonUseCase extends $AsyncNotifier<ExportResult?> {
   FutureOr<ExportResult?> build();
   @$mustCallSuper
   @override
