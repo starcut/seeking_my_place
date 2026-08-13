@@ -100,9 +100,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get memo => 'メモ';
 
   @override
-  String get isVisited => '訪問済み';
-
-  @override
   String get validationErrorTitle => '入力エラー';
 
   @override
@@ -151,6 +148,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get geocodeError => '住所から座標を取得できませんでした';
+
+  @override
+  String get isVisited => '訪問済み';
 
   @override
   String get notVisited => '未訪問';
@@ -244,4 +244,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String importError(Object error) {
     return 'インポートに失敗しました: $error';
   }
+
+  @override
+  String get searchRangeLabel => '検索範囲';
+
+  @override
+  String get filterDialogTitle => '絞り込み';
+
+  @override
+  String get purposeMultiSelectLabel => '目的（複数選択可）';
+
+  @override
+  String get resetButton => 'リセット';
+
+  @override
+  String get applyButton => '適用';
 }

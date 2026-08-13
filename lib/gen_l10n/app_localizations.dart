@@ -268,12 +268,6 @@ abstract class AppLocalizations {
   /// **'メモ'**
   String get memo;
 
-  /// No description provided for @isVisited.
-  ///
-  /// In ja, this message translates to:
-  /// **'訪問済み'**
-  String get isVisited;
-
   /// No description provided for @validationErrorTitle.
   ///
   /// In ja, this message translates to:
@@ -369,6 +363,12 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'住所から座標を取得できませんでした'**
   String get geocodeError;
+
+  /// No description provided for @isVisited.
+  ///
+  /// In ja, this message translates to:
+  /// **'訪問済み'**
+  String get isVisited;
 
   /// No description provided for @notVisited.
   ///
@@ -543,6 +543,36 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'インポートに失敗しました: {error}'**
   String importError(Object error);
+
+  /// No description provided for @searchRangeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'検索範囲'**
+  String get searchRangeLabel;
+
+  /// No description provided for @filterDialogTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'絞り込み'**
+  String get filterDialogTitle;
+
+  /// No description provided for @purposeMultiSelectLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'目的（複数選択可）'**
+  String get purposeMultiSelectLabel;
+
+  /// No description provided for @resetButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'リセット'**
+  String get resetButton;
+
+  /// No description provided for @applyButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'適用'**
+  String get applyButton;
 }
 
 class _AppLocalizationsDelegate

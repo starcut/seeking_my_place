@@ -100,9 +100,6 @@
   "memo": "メモ",
   "@memo": {},
 
-  "isVisited": "訪問済み",
-  "@isVisited": {},
-
   "validationErrorTitle": "入力エラー",
   "@validationErrorTitle": {},
 
@@ -156,6 +153,9 @@
 
   "geocodeError": "住所から座標を取得できませんでした",
   "@geocodeError": {},
+
+  "isVisited": "訪問済み",
+  "@isVisited": {},
 
   "notVisited": "未訪問",
   "@notVisited": {},
@@ -260,5 +260,20 @@
         "type": "Object"
       }
     }
-  }
+  },
+
+  "searchRangeLabel": "検索範囲",
+  "@searchRangeLabel": {},
+
+  "filterDialogTitle": "絞り込み",
+  "@filterDialogTitle": {},
+
+  "purposeMultiSelectLabel": "目的（複数選択可）",
+  "@purposeMultiSelectLabel": {},
+
+  "resetButton": "リセット",
+  "@resetButton": {},
+
+  "applyButton": "適用",
+  "@applyButton": {}
 }
