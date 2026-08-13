@@ -123,12 +123,12 @@ class PlaceCell extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: Icon(Platform.isIOS ? Icons.ios_share : Icons.share, size: 20),
+                icon: Icon(Platform.isIOS ? Icons.ios_share : Icons.share, size: 25),
                 onPressed: onCopyUrl,
                 tooltip: l10n.copyUrlTooltip,
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, size: 20),
+                icon: const Icon(Icons.info_outline, size: 25),
                 onPressed: onDetailTap,
                 tooltip: l10n.detailTooltip,
               ),
