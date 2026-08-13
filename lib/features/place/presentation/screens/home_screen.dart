@@ -114,6 +114,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final Set<String> _dismissedPlaceIds = {};
 
   static const double _listItemHeight = 88.0;
+
+  /// FloatingActionButton とセルが重ならないように確保する下部の余白。
+  static const double _fabReservedHeight = 100.0;
+
   static const double _sheetCornerRadius = 16.0;
   static const CameraPosition _defaultCameraPosition = CameraPosition(
     target: LatLng(35.6812, 139.7671),
@@ -777,10 +781,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ],
                   ),
                   Expanded(
-                    child: _buildPlaceList(
-                      filteredPlaces,
-                      selectedId,
-                      _placeListScrollController,
+                    child: LayoutBuilder(
+                      builder: (context, listConstraints) => _buildPlaceList(
+                        filteredPlaces,
+                        selectedId,
+                        _placeListScrollController,
+                        listConstraints.maxHeight,
+                      ),
                     ),
                   ),
                   // DraggableScrollableSheet 内部の scrollController は、
@@ -812,6 +819,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     List<Place> places,
     String? selectedId,
     ScrollController scrollController,
+    double availableHeight,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -825,10 +833,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
     }
 
+    // 表示領域の余白が FAB 分 (_fabReservedHeight) に満たない場合のみ、
+    // その不足分だけ下部にスクロール余地を追加する。
+    // contentHeight が表示領域より大きい場合、余白の計算上は表示領域いっぱいに
+    // 埋まっているものとして扱う (これ以上はみ出した分を余白計算に含めない)。
+    final contentHeight = _listItemHeight * places.length;
+    final clampedContentHeight = contentHeight > availableHeight
+        ? availableHeight
+        : contentHeight;
+    final margin = availableHeight - clampedContentHeight;
+    final adjustedMargin = margin < _fabReservedHeight
+        ? _fabReservedHeight
+        : margin;
+    final bottomPadding = adjustedMargin - margin;
+
     return ListView.builder(
       controller: scrollController,
       itemCount: places.length,
       itemExtent: _listItemHeight,
+      padding: EdgeInsets.only(bottom: bottomPadding),
       itemBuilder: (itemContext, index) {
         final place = places[index];
         final isSelected = place.placeId == selectedId;

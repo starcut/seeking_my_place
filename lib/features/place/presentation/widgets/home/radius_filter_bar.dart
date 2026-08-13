@@ -30,12 +30,12 @@ class RadiusFilterBar extends StatelessWidget {
             children: [
               Text(
                 l10n.searchRangeLabel,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(width: 8),
               Text(
                 _formatDistance(radiusMeter),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
