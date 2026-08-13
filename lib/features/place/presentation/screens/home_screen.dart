@@ -10,12 +10,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:seeking_my_place/features/place/application/state/selected_place_state.dart';
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
+import 'package:seeking_my_place/features/place/domain/enums/purpose_icon.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/delete_place_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/get_place_list_use_case.dart';
 import 'package:seeking_my_place/features/place/domain/usecases/observe_app_settings_use_case.dart';
+import 'package:seeking_my_place/features/place/presentation/widgets/home/filter_dialog.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_screen_sub_widgets.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/home_search_bar.dart';
-import 'package:seeking_my_place/features/place/presentation/widgets/home/items_per_page_filter_bar.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/place_cell.dart';
 import 'package:seeking_my_place/features/place/presentation/widgets/home/radius_filter_bar.dart';
 import 'package:seeking_my_place/shared/widgets/app_bar_default.dart';
@@ -81,8 +82,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     null,
   ];
 
+  /// 表示件数のデフォルト値。絞り込みダイアログのリセット時にも使用する。
+  static const int? _defaultItemsPerPage = 10;
+
   /// 現在選択中の表示件数。null は「制限なし」。
-  int? _selectedItemsPerPage = 10;
+  int? _selectedItemsPerPage = _defaultItemsPerPage;
+
+  Set<VisitStatus> _visitedStatuses = {};
+  String _category = '';
+  Set<PurposeIcon> _selectedPurposes = {};
 
   Position? _currentPosition;
 
@@ -106,6 +114,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final Set<String> _dismissedPlaceIds = {};
 
   static const double _listItemHeight = 88.0;
+
+  /// FloatingActionButton とセルが重ならないように確保する下部の余白。
+  static const double _fabReservedHeight = 100.0;
+
   static const double _sheetCornerRadius = 16.0;
   static const CameraPosition _defaultCameraPosition = CameraPosition(
     target: LatLng(35.6812, 139.7671),
@@ -183,6 +195,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }).toList();
     }
 
+    if (_visitedStatuses.length == 1) {
+      final wantVisited = _visitedStatuses.contains(VisitStatus.visited);
+      result = result.where((place) => place.isVisited == wantVisited).toList();
+    }
+
+    if (_category.isNotEmpty) {
+      final categoryKeywords = _category
+          .toLowerCase()
+          .split(RegExp(r'[\s　]+'))
+          .where((keyword) => keyword.isNotEmpty);
+      result = result
+          .where(
+            (place) => categoryKeywords.every(
+              (keyword) => place.category.toLowerCase().contains(keyword),
+            ),
+          )
+          .toList();
+    }
+
+    if (_selectedPurposes.isNotEmpty) {
+      result = result.where((place) {
+        return place.purposes.any((purpose) {
+          final icon = PurposeIcon.fromPurposeName(purpose.purposeName);
+          return icon != null && _selectedPurposes.contains(icon);
+        });
+      }).toList();
+    }
+
     if (_radiusEnabled && _mapCenter != null) {
       result = result.where((place) {
         final distance = Geolocator.distanceBetween(
@@ -202,6 +242,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return result;
   }
+
+  /// 訪問状態・カテゴリ・目的のいずれかが絞り込まれているかどうか。
+  /// フィルターボタンの見た目切り替えに使用する。
+  bool get _isFilterActive =>
+      _visitedStatuses.length == 1 ||
+      _category.isNotEmpty ||
+      _selectedPurposes.isNotEmpty;
 
   // -------------------------------------------------------------------------
   // Map helpers
@@ -369,6 +416,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.urlCopied)));
     }
+  }
+
+  Future<void> _showFilterDialog() async {
+    final result = await showDialog<FilterResult>(
+      context: context,
+      builder: (dialogContext) => FilterDialog(
+        itemsPerPageOptions: _itemsPerPageOptions,
+        initialItemsPerPage: _selectedItemsPerPage,
+        defaultItemsPerPage: _defaultItemsPerPage,
+        initialVisitedStatuses: _visitedStatuses,
+        initialCategory: _category,
+        initialSelectedPurposes: _selectedPurposes,
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _selectedItemsPerPage = result.itemsPerPage;
+      _visitedStatuses = result.visitStatuses;
+      _category = result.category;
+      _selectedPurposes = result.purposes;
+    });
   }
 
   Future<bool> _confirmDeletePlace() async {
@@ -665,46 +733,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         onVerticalDragEnd: _onHandleDragEnd,
                         child: const DragHandle(),
                       ),
-                      HomeSearchBar(
-                        controller: _searchController,
-                        keyword: _searchKeyword,
-                        onChanged: (keyword) =>
-                            setState(() => _searchKeyword = keyword),
-                      ),
                       Row(
                         children: [
                           Expanded(
-                            child: RadiusFilterBar(
-                              enabled: _radiusEnabled,
-                              radiusMeter: _radiusMeter,
-                              onEnabledChanged: (isEnabled) =>
-                                  setState(() => _radiusEnabled = isEnabled),
-                              onRadiusChanged: (radius) {
-                                setState(() => _radiusMeter = radius);
-                                ref
-                                    .read(
-                                      observeAppSettingsUseCaseProvider
-                                          .notifier,
-                                    )
-                                    .updateSearchRange(radius);
-                              },
+                            child: HomeSearchBar(
+                              controller: _searchController,
+                              keyword: _searchKeyword,
+                              onChanged: (keyword) =>
+                                  setState(() => _searchKeyword = keyword),
                             ),
                           ),
-                          ItemsPerPageFilterBar(
-                            options: _itemsPerPageOptions,
-                            value: _selectedItemsPerPage,
-                            onChanged: (value) =>
-                                setState(() => _selectedItemsPerPage = value),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: _isFilterActive
+                                ? IconButton.filled(
+                                    style: IconButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.tune),
+                                    onPressed: _showFilterDialog,
+                                  )
+                                : IconButton.outlined(
+                                    style: IconButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.tune),
+                                    onPressed: _showFilterDialog,
+                                  ),
                           ),
                         ],
+                      ),
+                      RadiusFilterBar(
+                        radiusMeter: _radiusMeter,
+                        onRadiusChanged: (radius) {
+                          setState(() => _radiusMeter = radius);
+                          ref
+                              .read(
+                                observeAppSettingsUseCaseProvider.notifier,
+                              )
+                              .updateSearchRange(radius);
+                        },
                       ),
                     ],
                   ),
                   Expanded(
-                    child: _buildPlaceList(
-                      filteredPlaces,
-                      selectedId,
-                      _placeListScrollController,
+                    child: LayoutBuilder(
+                      builder: (context, listConstraints) => _buildPlaceList(
+                        filteredPlaces,
+                        selectedId,
+                        _placeListScrollController,
+                        listConstraints.maxHeight,
+                      ),
                     ),
                   ),
                   // DraggableScrollableSheet 内部の scrollController は、
@@ -736,6 +819,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     List<Place> places,
     String? selectedId,
     ScrollController scrollController,
+    double availableHeight,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -749,28 +833,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
     }
 
+    // 表示領域の余白が FAB 分 (_fabReservedHeight) に満たない場合のみ、
+    // その不足分だけ下部にスクロール余地を追加する。
+    // contentHeight が表示領域より大きい場合、余白の計算上は表示領域いっぱいに
+    // 埋まっているものとして扱う (これ以上はみ出した分を余白計算に含めない)。
+    final contentHeight = _listItemHeight * places.length;
+    final clampedContentHeight = contentHeight > availableHeight
+        ? availableHeight
+        : contentHeight;
+    final margin = availableHeight - clampedContentHeight;
+    final adjustedMargin = margin < _fabReservedHeight
+        ? _fabReservedHeight
+        : margin;
+    final bottomPadding = adjustedMargin - margin;
+
     return ListView.builder(
       controller: scrollController,
       itemCount: places.length,
       itemExtent: _listItemHeight,
+      padding: EdgeInsets.only(bottom: bottomPadding),
       itemBuilder: (itemContext, index) {
         final place = places[index];
         final isSelected = place.placeId == selectedId;
 
-        return PlaceCell(
-          place: place,
-          isSelected: isSelected,
-          onTap: () =>
-              ref.read(selectedPlaceStateProvider.notifier).select(place.placeId),
-          onCopyUrl: () => _copyUrl(place),
-          onDeleteRequested: (actionContext) =>
-              _onTapDeleteAction(actionContext, place.placeId),
-          onDetailTap: () async {
-            final saved = await context.push('/place/${place.placeId}');
-            if (mounted && saved == true) {
-              ref.invalidate(getPlaceListUseCaseProvider);
-            }
-          },
+        return Container(
+          decoration: BoxDecoration(
+            border: index == 0
+                ? null
+                : Border(
+                    top: BorderSide(color: Theme.of(itemContext).dividerColor),
+                  ),
+          ),
+          child: PlaceCell(
+            place: place,
+            isSelected: isSelected,
+            onTap: () =>
+                ref.read(selectedPlaceStateProvider.notifier).select(place.placeId),
+            onCopyUrl: () => _copyUrl(place),
+            onDeleteRequested: (actionContext) =>
+                _onTapDeleteAction(actionContext, place.placeId),
+            onDetailTap: () async {
+              final saved = await context.push('/place/${place.placeId}');
+              if (mounted && saved == true) {
+                ref.invalidate(getPlaceListUseCaseProvider);
+              }
+            },
+          ),
         );
       },
     );

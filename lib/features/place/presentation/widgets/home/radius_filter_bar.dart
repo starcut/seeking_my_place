@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 
 class RadiusFilterBar extends StatelessWidget {
   const RadiusFilterBar({
     super.key,
-    required this.enabled,
     required this.radiusMeter,
-    required this.onEnabledChanged,
     required this.onRadiusChanged,
   });
 
-  final bool enabled;
   final double radiusMeter;
-  final ValueChanged<bool> onEnabledChanged;
   final ValueChanged<double> onRadiusChanged;
 
   String _formatDistance(double meters) {
@@ -23,24 +20,32 @@ class RadiusFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Slider(
-              value: radiusMeter,
-              min: 100,
-              max: 50000,
-              onChanged: enabled ? onRadiusChanged : null,
-            ),
+          Row(
+            children: [
+              Text(
+                l10n.searchRangeLabel,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatDistance(radiusMeter),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
-          Text(
-            _formatDistance(radiusMeter),
-            style: Theme.of(context).textTheme.bodySmall,
+          Slider(
+            value: radiusMeter,
+            min: 100,
+            max: 50000,
+            onChanged: onRadiusChanged,
+            padding: const EdgeInsets.symmetric(vertical: 6),
           ),
-          const SizedBox(width: 4),
-          Switch(value: enabled, onChanged: onEnabledChanged),
         ],
       ),
     );
