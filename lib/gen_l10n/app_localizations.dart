@@ -433,7 +433,7 @@ abstract class AppLocalizations {
   /// No description provided for @importSupportedFormats.
   ///
   /// In ja, this message translates to:
-  /// **'対応形式: .db, .csv'**
+  /// **'対応形式：.json'**
   String get importSupportedFormats;
 
   /// No description provided for @versionLabel.

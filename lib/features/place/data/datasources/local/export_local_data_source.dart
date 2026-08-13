@@ -1,26 +1,25 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:seeking_my_place/features/place/data/datasources/local/database_helper.dart';
+import 'package:seeking_my_place/features/place/data/datasources/local/place_local_data_source.dart';
+import 'package:seeking_my_place/features/place/data/dto/place_dto.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
 abstract class ExportLocalDataSource {
-  /// place_list のみを含む .db ファイルを書き出す。
-  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
-  Future<ShareResultStatus> exportDatabaseFile();
-
-  /// place_list を .csv ファイルとして書き出す。
-  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
-  Future<ShareResultStatus> exportCsvFiles();
-
   /// place_list の内容を、紐づく purpose 名（relation_place_purpose 経由で
   /// master_table_purpose から解決）を含めた .txt ファイルとして書き出す。
   /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
   Future<ShareResultStatus> exportTxtFile();
+
+  /// place_list の全カラムと、紐づく purpose_id（relation_place_purpose 経由）
+  /// を含めた .json ファイルとして書き出す。
+  /// iOS では共有シート、Android では端末のストレージへの保存ダイアログ経由となる。
+  Future<ShareResultStatus> exportJsonFile();
 }
 
 class ExportLocalDataSourceImpl implements ExportLocalDataSource {
@@ -28,19 +27,18 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
 
   ExportLocalDataSourceImpl(this._databaseHelper);
 
-  @override
-  Future<ShareResultStatus> exportDatabaseFile() async {
-    return _deliver(await _prepareDbFile());
-  }
-
-  @override
-  Future<ShareResultStatus> exportCsvFiles() async {
-    return _deliver(await _prepareCsvFile());
-  }
+  late final PlaceLocalDataSource _placeDataSource = PlaceLocalDataSourceImpl(
+    _databaseHelper,
+  );
 
   @override
   Future<ShareResultStatus> exportTxtFile() async {
     return _deliver(await _prepareTxtFile());
+  }
+
+  @override
+  Future<ShareResultStatus> exportJsonFile() async {
+    return _deliver(await _prepareJsonFile());
   }
 
   /// [file] を書き出す。iOS では共有シート、Android では OS 標準の保存先選択
@@ -67,59 +65,6 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     return result.status;
   }
 
-  /// place_list のみを含む .db ファイルを一時領域に作成する。
-  /// 元の DB ファイルには一切手を加えない。
-  Future<XFile> _prepareDbFile() async {
-    final db = _databaseHelper.database;
-    // WAL モードで未反映のまま残っている変更があれば本体ファイルへ反映する。
-    await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
-
-    final tempDir = await getTemporaryDirectory();
-    final exportPath = join(tempDir.path, '${DatabaseHelper.tablePlace}.db');
-    final exportFile = File(exportPath);
-    if (await exportFile.exists()) {
-      await exportFile.delete();
-    }
-    await File(db.path).copy(exportPath);
-
-    // コピー先ファイルから place_list 以外のテーブルを取り除く。
-    final exportDb = await openDatabase(exportPath);
-    await exportDb.execute(
-      'DROP TABLE ${DatabaseHelper.tableRelationPlacePurpose}',
-    );
-    await exportDb.execute('DROP TABLE ${DatabaseHelper.tablePurpose}');
-    await exportDb.execute('VACUUM');
-    await exportDb.close();
-
-    return XFile(exportPath);
-  }
-
-  Future<XFile> _prepareCsvFile() async {
-    final db = _databaseHelper.database;
-    await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
-
-    const columns = [
-      DatabaseHelper.colPlaceId,
-      DatabaseHelper.colPlaceName,
-      DatabaseHelper.colAddress,
-      DatabaseHelper.colLatitude,
-      DatabaseHelper.colLongitude,
-      DatabaseHelper.colUrl,
-      DatabaseHelper.colCategory,
-      DatabaseHelper.colIsVisited,
-      DatabaseHelper.colCreatedAt,
-      DatabaseHelper.colUpdatedAt,
-    ];
-
-    final tempDir = await getTemporaryDirectory();
-    return _writeCsv(
-      directory: tempDir,
-      fileName: DatabaseHelper.tablePlace,
-      columns: columns,
-      rows: await db.query(DatabaseHelper.tablePlace, columns: columns),
-    );
-  }
-
   Future<XFile> _prepareTxtFile() async {
     final db = _databaseHelper.database;
     await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
@@ -141,6 +86,33 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
       fileName: DatabaseHelper.tablePlace,
       places: places,
       purposeNamesByPlaceId: purposeNamesByPlaceId,
+    );
+  }
+
+  /// place_list の全カラムに、relation_place_purpose から取得した purpose_id
+  /// 一覧を "purposes" として追加した JSON データを一時領域に作成する。
+  /// master_table_purpose の内容は含めない。
+  Future<XFile> _prepareJsonFile() async {
+    final rows = await _placeDataSource.getAllPlaces();
+
+    final places = <Map<String, Object?>>[];
+    for (final row in rows) {
+      final dto = PlaceDto.fromRow(row);
+      final purposeIds = await _placeDataSource.getPurposeIdsForPlace(
+        dto.placeId,
+      );
+      places.add({
+        ...dto.toRow(),
+        DatabaseHelper.colIsVisited: dto.isVisited == 1,
+        'purposes': purposeIds,
+      });
+    }
+
+    final tempDir = await getTemporaryDirectory();
+    return _writeJson(
+      directory: tempDir,
+      fileName: DatabaseHelper.tablePlace,
+      data: {'places': places},
     );
   }
 
@@ -198,20 +170,16 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     return XFile(file.path);
   }
 
-  Future<XFile> _writeCsv({
+  Future<XFile> _writeJson({
     required Directory directory,
     required String fileName,
-    required List<String> columns,
-    required List<Map<String, Object?>> rows,
+    required Map<String, Object?> data,
   }) async {
-    final csvRows = <List<Object?>>[
-      columns,
-      ...rows.map((row) => columns.map((column) => row[column]).toList()),
-    ];
-    final csvContent = const ListToCsvConverter().convert(csvRows);
+    const encoder = JsonEncoder.withIndent('  ');
+    final jsonContent = encoder.convert(data);
 
-    final file = File(join(directory.path, '$fileName.csv'));
-    await file.writeAsString(csvContent);
+    final file = File(join(directory.path, '$fileName.json'));
+    await file.writeAsString(jsonContent);
     return XFile(file.path);
   }
 }

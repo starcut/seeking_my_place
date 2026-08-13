@@ -8,7 +8,7 @@ class ImportRepositoryImpl implements ImportRepository {
   ImportRepositoryImpl(this._dataSource);
 
   @override
-  Future<ImportResult> importAsDb() {
-    return _dataSource.importDatabaseFile();
+  Future<ImportResult> importAsJson() {
+    return _dataSource.importJsonFile();
   }
 }

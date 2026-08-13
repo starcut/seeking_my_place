@@ -183,7 +183,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importSelectFile => 'ファイル選択';
 
   @override
-  String get importSupportedFormats => '対応形式: .db, .csv';
+  String get importSupportedFormats => '対応形式：.json';
 
   @override
   String get versionLabel => 'バージョン';

@@ -187,7 +187,7 @@
   "importSelectFile": "ファイル選択",
   "@importSelectFile": {},
 
-  "importSupportedFormats": "対応形式: .db, .csv",
+  "importSupportedFormats": "対応形式：.json",
   "@importSupportedFormats": {},
 
   "versionLabel": "バージョン",
