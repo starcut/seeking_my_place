@@ -1,16 +1,43 @@
-# seeking_my_place
+# 場所管理アプリ
 
-appoint place
+お気に入りの場所を登録・管理するFlutterアプリです。
+場所ごとにカテゴリや目的を設定し、登録した場所の検索・絞り込みなどを行えます。
 
-## Getting Started
+## 主な機能
 
-This project is a starting point for a Flutter application.
+- 場所の登録・編集・削除
+- 場所の検索・絞り込み
+- カテゴリ・目的による場所の管理
+- 地図上での場所の確認
+- Google Mapsとの連携
+- 外部サービスからの店舗情報取得
+- JSON / TXTによるデータのエクスポート
+- JSONデータのインポート
+- アプリ設定
 
-A few resources to get you started if this is your first Flutter project:
+## 技術スタック
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter / Dart
+- Riverpod
+- GoRouter
+- Freezed
+- Google Maps
+- Clean Architecture
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## アーキテクチャ
+
+機能単位で責務を分離するfeature-based構成を採用し、
+各機能を `data` / `domain` / `presentation` のレイヤーに分離しています。
+
+```text
+lib/
+├── features/
+│   └── place/
+│       ├── data/
+│       ├── domain/
+│       └── presentation/
+├── routes/
+├── shared/
+├── l10n/
+└── main.dart
+
