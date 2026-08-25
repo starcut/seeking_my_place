@@ -172,40 +172,64 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
 
           // 6. MapPicker(latitude, longitude) ← 既存の緯度/経度 TextField
           // 手入力不可（プログラムからの値設定のみ許可）のため常に enabled: false。
-          TextFormField(
-            controller: widget.latitudeController,
-            decoration: InputDecoration(
-              labelText: l10n.latitude,
-              suffixIcon: _clearSuffix(widget.latitudeController, true),
-            ),
-            enabled: false,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-            ],
-            validator: widget.latitudeValidator,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: widget.longitudeController,
-            decoration: InputDecoration(
-              labelText: l10n.longitude,
-              suffixIcon: _clearSuffix(widget.longitudeController, true),
-            ),
-            enabled: false,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-            ],
-            validator: widget.longitudeValidator,
-            textInputAction: TextInputAction.next,
+          // 緯度（左）・経度（右）を一行に横並び表示する。
+          // 各フィールドの幅は利用可能幅から中央マージン(16px)を除いた残りの半分。
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final fieldWidth = (constraints.maxWidth - 16) / 2;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: fieldWidth,
+                    child: TextFormField(
+                      controller: widget.latitudeController,
+                      decoration: InputDecoration(
+                        labelText: l10n.latitude,
+                        suffixIcon: _clearSuffix(
+                          widget.latitudeController,
+                          true,
+                        ),
+                      ),
+                      enabled: false,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
+                      ],
+                      validator: widget.latitudeValidator,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: TextFormField(
+                      controller: widget.longitudeController,
+                      decoration: InputDecoration(
+                        labelText: l10n.longitude,
+                        suffixIcon: _clearSuffix(
+                          widget.longitudeController,
+                          true,
+                        ),
+                      ),
+                      enabled: false,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
+                      ],
+                      validator: widget.longitudeValidator,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
 
