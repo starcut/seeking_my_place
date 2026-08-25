@@ -171,13 +171,14 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
           const SizedBox(height: 12),
 
           // 6. MapPicker(latitude, longitude) ← 既存の緯度/経度 TextField
+          // 手入力不可（プログラムからの値設定のみ許可）のため常に enabled: false。
           TextFormField(
             controller: widget.latitudeController,
             decoration: InputDecoration(
               labelText: l10n.latitude,
-              suffixIcon: _clearSuffix(widget.latitudeController, readOnly),
+              suffixIcon: _clearSuffix(widget.latitudeController, true),
             ),
-            readOnly: readOnly,
+            enabled: false,
             keyboardType: const TextInputType.numberWithOptions(
               decimal: true,
               signed: true,
@@ -193,9 +194,9 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
             controller: widget.longitudeController,
             decoration: InputDecoration(
               labelText: l10n.longitude,
-              suffixIcon: _clearSuffix(widget.longitudeController, readOnly),
+              suffixIcon: _clearSuffix(widget.longitudeController, true),
             ),
-            readOnly: readOnly,
+            enabled: false,
             keyboardType: const TextInputType.numberWithOptions(
               decimal: true,
               signed: true,
