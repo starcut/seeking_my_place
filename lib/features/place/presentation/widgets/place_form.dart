@@ -46,6 +46,7 @@ class PlaceForm extends ConsumerStatefulWidget {
     this.longitudeValidator,
     this.urlValidator,
     this.onAddressEditingComplete,
+    this.onUrlEditingComplete,
     this.urlSuffixIcon,
     this.initialPurposeIds = const [],
     this.onPurposeChanged,
@@ -75,6 +76,7 @@ class PlaceForm extends ConsumerStatefulWidget {
   final FormFieldValidator<String>? urlValidator;
 
   final VoidCallback? onAddressEditingComplete;
+  final VoidCallback? onUrlEditingComplete;
 
   /// URL フィールドの suffix（例: 自動取得ボタン）。呼び出し側から任意で差し込む。
   final Widget? urlSuffixIcon;
@@ -122,6 +124,7 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
             keyboardType: TextInputType.url,
             validator: widget.urlValidator,
             textInputAction: TextInputAction.next,
+            onEditingComplete: widget.onUrlEditingComplete,
           ),
           const SizedBox(height: 12),
 

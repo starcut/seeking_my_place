@@ -421,14 +421,10 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
               longitudeValidator: _validateLongitude,
               urlValidator: _validateUrl,
               onAddressEditingComplete: _onAddressInputCompleted,
+              onUrlEditingComplete: _onTapFetchPlaceInfo,
               initialPurposeIds: _selectedPurposeIds,
               onPurposeChanged: (value) =>
                   setState(() => _selectedPurposeIds = value),
-              urlSuffixIcon: IconButton(
-                icon: const Icon(Icons.travel_explore),
-                tooltip: l10n.placeInfoFetchTooltip,
-                onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
-              ),
             ),
             const SizedBox(height: 24),
 
