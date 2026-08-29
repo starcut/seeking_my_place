@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:seeking_my_place/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:seeking_my_place/features/place/domain/entities/place.dart';
 import 'package:seeking_my_place/features/place/domain/entities/purpose.dart';
@@ -599,26 +600,30 @@ class _UrlSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Row(
-      children: [
-        const Icon(Icons.link, color: Colors.grey),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            place.url,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.blue),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+    return GestureDetector(
+      onTap: _openUrl,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          const Icon(Icons.link, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              place.url,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.blue),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.copy, size: 20),
-          tooltip: l10n.copyUrlTooltip,
-          onPressed: () => _copyUrl(context, l10n),
-        ),
-      ],
+          IconButton(
+            icon: const Icon(Icons.copy, size: 20),
+            tooltip: l10n.copyUrlTooltip,
+            onPressed: () => _copyUrl(context, l10n),
+          ),
+        ],
+      ),
     );
   }
 
@@ -629,6 +634,12 @@ class _UrlSection extends ConsumerWidget {
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.urlCopied)));
     }
+  }
+
+  Future<void> _openUrl() async {
+    final uri = Uri.tryParse(place.url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
 
