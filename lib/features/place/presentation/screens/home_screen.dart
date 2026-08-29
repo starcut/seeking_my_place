@@ -72,10 +72,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// 表示件数の選択肢。
   /// null は「制限なし」を表す。
   static const List<int?> _itemsPerPageOptions = [
-    10,
-    20,
-    30,
-    50,
     100,
     500,
     1000,
@@ -83,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ];
 
   /// 表示件数のデフォルト値。絞り込みダイアログのリセット時にも使用する。
-  static const int? _defaultItemsPerPage = 10;
+  static const int? _defaultItemsPerPage = 100;
 
   /// 現在選択中の表示件数。null は「制限なし」。
   int? _selectedItemsPerPage = _defaultItemsPerPage;
@@ -113,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// これを避けるため、onDismissed 時点で即座にここへ追加してリストから除外する。
   final Set<String> _dismissedPlaceIds = {};
 
-  static const double _listItemHeight = 88.0;
+  static const double _listItemHeight = 105.0;
 
   /// FloatingActionButton とセルが重ならないように確保する下部の余白。
   static const double _fabReservedHeight = 100.0;
@@ -566,6 +562,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _dismissedPlaceIds.removeWhere((id) => !currentPlaceIds.contains(id));
 
     final filteredPlaces = _filterPlaces(places);
+
+    final currentPosition = _currentPosition;
+    if (currentPosition != null) {
+      filteredPlaces.sort((a, b) {
+        final distanceA = Geolocator.distanceBetween(
+          currentPosition.latitude,
+          currentPosition.longitude,
+          a.latitude,
+          a.longitude,
+        );
+        final distanceB = Geolocator.distanceBetween(
+          currentPosition.latitude,
+          currentPosition.longitude,
+          b.latitude,
+          b.longitude,
+        );
+        return distanceA.compareTo(distanceB);
+      });
+    }
+
     _lastFilteredPlaces = filteredPlaces;
 
     _updateChildSizeBounds(containerHeight);
@@ -855,6 +871,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       itemBuilder: (itemContext, index) {
         final place = places[index];
         final isSelected = place.placeId == selectedId;
+        final currentPosition = _currentPosition;
+        final distanceInMeters = currentPosition == null
+            ? null
+            : Geolocator.distanceBetween(
+                currentPosition.latitude,
+                currentPosition.longitude,
+                place.latitude,
+                place.longitude,
+              );
 
         return Container(
           decoration: BoxDecoration(
@@ -867,6 +892,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: PlaceCell(
             place: place,
             isSelected: isSelected,
+            distanceInMeters: distanceInMeters,
             onTap: () =>
                 ref.read(selectedPlaceStateProvider.notifier).select(place.placeId),
             onCopyUrl: () => _copyUrl(place),

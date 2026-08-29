@@ -503,14 +503,10 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
                 latitudeValidator: _validateLatitude,
                 longitudeValidator: _validateLongitude,
                 urlValidator: _validateUrl,
+                onUrlEditingComplete: _onTapFetchPlaceInfo,
                 initialPurposeIds: _selectedPurposeIds,
                 onPurposeChanged: (value) =>
                     setState(() => _selectedPurposeIds = value),
-                urlSuffixIcon: IconButton(
-                  icon: const Icon(Icons.travel_explore),
-                  tooltip: l10n.placeInfoFetchTooltip,
-                  onPressed: _isFetching ? null : _onTapFetchPlaceInfo,
-                ),
               ),
               const SizedBox(height: 24),
               PrimaryButton(label: l10n.save, onPressed: _onTapSave),
