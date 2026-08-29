@@ -55,10 +55,16 @@ dependencies:
   path: ^1.9.1
   html: ^0.15.6
   material_symbols_icons: ^4.2960.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/seeking_place_icon.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
