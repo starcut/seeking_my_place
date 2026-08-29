@@ -16,10 +16,14 @@ class PlaceCell extends StatelessWidget {
     required this.onCopyUrl,
     required this.onDeleteRequested,
     required this.onDetailTap,
+    required this.distanceInMeters,
   });
 
   final Place place;
   final bool isSelected;
+
+  /// 現在地からこの場所までの距離 (メートル)。取得できない場合は null。
+  final double? distanceInMeters;
 
   /// セルタップ時 (選択状態にする)
   final VoidCallback onTap;
@@ -70,6 +74,13 @@ class PlaceCell extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    if (distanceInMeters != null)
+                      Text(
+                        distanceInMeters! < 1000
+                            ? '${distanceInMeters!.round()}m'
+                            : '${(distanceInMeters! / 1000).toStringAsFixed(1)}km',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
                     Row(
                       children: [
                         if (place.category.isNotEmpty)
