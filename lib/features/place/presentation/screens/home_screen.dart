@@ -531,12 +531,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ],
       ),
-      body: placesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text(l10n.fetchError(error))),
-        data: (places) => LayoutBuilder(
-          builder: (context, constraints) =>
-              _buildBody(places, selectedId, constraints.maxHeight),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: placesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(child: Text(l10n.fetchError(error))),
+          data: (places) => LayoutBuilder(
+            builder: (context, constraints) =>
+                _buildBody(places, selectedId, constraints.maxHeight),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
