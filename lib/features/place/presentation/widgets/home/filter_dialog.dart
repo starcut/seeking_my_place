@@ -101,7 +101,7 @@ class _FilterDialogState extends State<FilterDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const _FilterDialogHeader(),
-                Expanded(
+                Flexible(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
