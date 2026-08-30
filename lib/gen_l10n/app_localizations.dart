@@ -262,6 +262,12 @@ abstract class AppLocalizations {
   /// **'URL'**
   String get url;
 
+  /// No description provided for @urlHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'食べログのページ https://s.tabelog.com/...'**
+  String get urlHint;
+
   /// No description provided for @memo.
   ///
   /// In ja, this message translates to:

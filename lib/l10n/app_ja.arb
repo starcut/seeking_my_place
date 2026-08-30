@@ -97,6 +97,9 @@
   "url": "URL",
   "@url": {},
 
+  "urlHint": "食べログのページ https://s.tabelog.com/...",
+  "@urlHint": {},
+
   "memo": "メモ",
   "@memo": {},
 

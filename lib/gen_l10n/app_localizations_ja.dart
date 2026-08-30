@@ -97,6 +97,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get url => 'URL';
 
   @override
+  String get urlHint => '食べログのページ https://s.tabelog.com/...';
+
+  @override
   String get memo => 'メモ';
 
   @override
