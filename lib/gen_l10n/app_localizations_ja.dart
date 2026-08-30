@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'Stellar Archive';
+  String get appTitle => '道行の手記';
 
   @override
   String get searchHint => 'キーワード検索...';

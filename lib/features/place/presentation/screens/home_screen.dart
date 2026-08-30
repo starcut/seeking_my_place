@@ -516,6 +516,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBarDefault(
         title: l10n.appTitle,
         showBackButton: false,
@@ -531,12 +532,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ],
       ),
-      body: placesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text(l10n.fetchError(error))),
-        data: (places) => LayoutBuilder(
-          builder: (context, constraints) =>
-              _buildBody(places, selectedId, constraints.maxHeight),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: placesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(child: Text(l10n.fetchError(error))),
+          data: (places) => LayoutBuilder(
+            builder: (context, constraints) => _buildBody(
+              places,
+              selectedId,
+              constraints.maxHeight,
+              MediaQuery.viewInsetsOf(context).bottom,
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -552,9 +561,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildBody(
-    List<Place> places,
-    String? selectedId,
-    double containerHeight,
+      List<Place> places,
+      String? selectedId,
+      double containerHeight,
+      double keyboardHeight,
   ) {
     // 実際の削除が反映され、一覧から取得できなくなった placeId は
     // _dismissedPlaceIds に残しておく理由がないので取り除く。
@@ -584,7 +594,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     _lastFilteredPlaces = filteredPlaces;
 
-    _updateChildSizeBounds(containerHeight);
+    // キーボード表示中は Sheet の Positioned 領域自体が keyboardHeight 分
+    // 縮むため、childSize の比率もその縮んだ高さを基準に計算する。
+    // (mapHeight は Map が Positioned で固定領域を占めるため containerHeight のまま使う)
+    final sheetAreaHeight = (containerHeight - keyboardHeight).clamp(
+      0.0,
+      containerHeight,
+    );
+    _updateChildSizeBounds(sheetAreaHeight);
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeaderHeight());
 
     // フィルター適用で選択中 Place が除外されたら選択を解除する (spec 5.1.4)
@@ -716,117 +733,123 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
         ),
-        DraggableScrollableSheet(
-          controller: _sheetController,
-          initialChildSize: _initialChildSize,
-          minChildSize: _minChildSize,
-          maxChildSize: _maxChildSize,
-          builder: (sheetContext, sheetScrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Theme.of(sheetContext).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(_sheetCornerRadius),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Column(
-                    key: _headerKey,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onVerticalDragStart: _onHandleDragStart,
-                        onVerticalDragUpdate: _onHandleDragUpdate,
-                        onVerticalDragEnd: _onHandleDragEnd,
-                        child: const DragHandle(),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: HomeSearchBar(
-                              controller: _searchController,
-                              keyword: _searchKeyword,
-                              onChanged: (keyword) =>
-                                  setState(() => _searchKeyword = keyword),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: _isFilterActive
-                                ? IconButton.filled(
-                                    style: IconButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.tune),
-                                    onPressed: _showFilterDialog,
-                                  )
-                                : IconButton.outlined(
-                                    style: IconButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.tune),
-                                    onPressed: _showFilterDialog,
-                                  ),
-                          ),
-                        ],
-                      ),
-                      RadiusFilterBar(
-                        radiusMeter: _radiusMeter,
-                        onRadiusChanged: (radius) {
-                          setState(() => _radiusMeter = radius);
-                          ref
-                              .read(
-                                observeAppSettingsUseCaseProvider.notifier,
-                              )
-                              .updateSearchRange(radius);
-                        },
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: keyboardHeight,
+          child: DraggableScrollableSheet(
+              controller: _sheetController,
+              initialChildSize: _initialChildSize,
+              minChildSize: _minChildSize,
+              maxChildSize: _maxChildSize,
+              builder: (sheetContext, sheetScrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(sheetContext).colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(_sheetCornerRadius),
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, -2),
                       ),
                     ],
                   ),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, listConstraints) => _buildPlaceList(
-                        filteredPlaces,
-                        selectedId,
-                        _placeListScrollController,
-                        listConstraints.maxHeight,
+                  child: Column(
+                    children: [
+                      Column(
+                        key: _headerKey,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onVerticalDragStart: _onHandleDragStart,
+                            onVerticalDragUpdate: _onHandleDragUpdate,
+                            onVerticalDragEnd: _onHandleDragEnd,
+                            child: const DragHandle(),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: HomeSearchBar(
+                                  controller: _searchController,
+                                  keyword: _searchKeyword,
+                                  onChanged: (keyword) =>
+                                      setState(() => _searchKeyword = keyword),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _isFilterActive
+                                    ? IconButton.filled(
+                                        style: IconButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.tune),
+                                        onPressed: _showFilterDialog,
+                                      )
+                                    : IconButton.outlined(
+                                        style: IconButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.tune),
+                                        onPressed: _showFilterDialog,
+                                      ),
+                              ),
+                            ],
+                          ),
+                          RadiusFilterBar(
+                            radiusMeter: _radiusMeter,
+                            onRadiusChanged: (radius) {
+                              setState(() => _radiusMeter = radius);
+                              ref
+                                  .read(
+                                    observeAppSettingsUseCaseProvider.notifier,
+                                  )
+                                  .updateSearchRange(radius);
+                            },
+                          ),
+                        ],
                       ),
-                    ),
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, listConstraints) => _buildPlaceList(
+                            filteredPlaces,
+                            selectedId,
+                            _placeListScrollController,
+                            listConstraints.maxHeight,
+                          ),
+                        ),
+                      ),
+                      // DraggableScrollableSheet 内部の scrollController は、
+                      // builder が返すツリーのどこかで実際に使われていないと
+                      // DraggableScrollableController.jumpTo/size が
+                      // 「アタッチされていない」例外を起こす。
+                      // しかし可視のリストにこれを使うと、リストが先頭までスクロール
+                      // された状態でのスワイプがシートの高さ調整として扱われてしまい、
+                      // 要件(リストのスワイプでは高さ調整しない)に反する。
+                      // そのため画面には表示されない Offstage な ScrollView にのみ
+                      // このコントローラーを繋ぎ、アタッチ状態だけを満たす。
+                      Offstage(
+                        child: SingleChildScrollView(
+                          controller: sheetScrollController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          child: const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
                   ),
-                  // DraggableScrollableSheet 内部の scrollController は、
-                  // builder が返すツリーのどこかで実際に使われていないと
-                  // DraggableScrollableController.jumpTo/size が
-                  // 「アタッチされていない」例外を起こす。
-                  // しかし可視のリストにこれを使うと、リストが先頭までスクロール
-                  // された状態でのスワイプがシートの高さ調整として扱われてしまい、
-                  // 要件(リストのスワイプでは高さ調整しない)に反する。
-                  // そのため画面には表示されない Offstage な ScrollView にのみ
-                  // このコントローラーを繋ぎ、アタッチ状態だけを満たす。
-                  Offstage(
-                    child: SingleChildScrollView(
-                      controller: sheetScrollController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      child: const SizedBox.shrink(),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
+        )
       ],
     );
   }

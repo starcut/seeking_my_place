@@ -97,7 +97,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In ja, this message translates to:
-  /// **'Stellar Archive'**
+  /// **'道行の手記'**
   String get appTitle;
 
   /// No description provided for @searchHint.

@@ -81,94 +81,106 @@ class _FilterDialogState extends State<FilterDialog> {
       280.0,
       480.0,
     );
-    final dialogMaxHeight = MediaQuery.sizeOf(context).height * 0.8;
+    final preferredMaxHeight = MediaQuery.sizeOf(context).height * 0.8;
 
     return Dialog(
       clipBehavior: Clip.antiAlias,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: dialogWidth,
-          maxHeight: dialogMaxHeight,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _FilterDialogHeader(),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _ItemsPerPageSection(
-                            options: widget.itemsPerPageOptions,
-                            value: _selectedItemsPerPage,
-                            onChanged: (value) =>
-                                setState(() => _selectedItemsPerPage = value),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dialogMaxHeight = preferredMaxHeight < constraints.maxHeight
+              ? preferredMaxHeight
+              : constraints.maxHeight;
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: dialogWidth,
+              maxHeight: dialogMaxHeight,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FilterDialogHeader(),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _ItemsPerPageSection(
+                                  options: widget.itemsPerPageOptions,
+                                  value: _selectedItemsPerPage,
+                                  onChanged: (value) => setState(
+                                    () => _selectedItemsPerPage = value,
+                                  ),
+                                ),
+                                const Divider(height: 1),
+                                _VisitStatusSection(
+                                  selectedStatuses: _visitedStatuses,
+                                  onChanged: (status, value) {
+                                    setState(() {
+                                      if (value) {
+                                        _visitedStatuses.add(status);
+                                      } else {
+                                        _visitedStatuses.remove(status);
+                                      }
+                                    });
+                                  },
+                                ),
+                                const Divider(height: 1),
+                                _CategorySection(
+                                  controller: _categoryController,
+                                ),
+                                const Divider(height: 1),
+                                _PurposeSection(
+                                  selectedPurposes: _selectedPurposes,
+                                  onChanged: (purpose, value) {
+                                    setState(() {
+                                      if (value) {
+                                        _selectedPurposes.add(purpose);
+                                      } else {
+                                        _selectedPurposes.remove(purpose);
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                          const Divider(height: 1),
-                          _VisitStatusSection(
-                            selectedStatuses: _visitedStatuses,
-                            onChanged: (status, value) {
-                              setState(() {
-                                if (value) {
-                                  _visitedStatuses.add(status);
-                                } else {
-                                  _visitedStatuses.remove(status);
-                                }
-                              });
-                            },
-                          ),
-                          const Divider(height: 1),
-                          _CategorySection(controller: _categoryController),
-                          const Divider(height: 1),
-                          _PurposeSection(
-                            selectedPurposes: _selectedPurposes,
-                            onChanged: (purpose, value) {
-                              setState(() {
-                                if (value) {
-                                  _selectedPurposes.add(purpose);
-                                } else {
-                                  _selectedPurposes.remove(purpose);
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 12),
+                        _FilterDialogActions(
+                          onReset: () {
+                            Navigator.of(context).pop<FilterResult>((
+                              itemsPerPage: widget.defaultItemsPerPage,
+                              visitStatuses: const <VisitStatus>{},
+                              category: '',
+                              purposes: const <PurposeIcon>{},
+                            ));
+                          },
+                          onApply: () {
+                            Navigator.of(context).pop<FilterResult>((
+                              itemsPerPage: _selectedItemsPerPage,
+                              visitStatuses: _visitedStatuses,
+                              category: _categoryController.text,
+                              purposes: _selectedPurposes,
+                            ));
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _FilterDialogActions(
-                    onReset: () {
-                      Navigator.of(context).pop<FilterResult>((
-                        itemsPerPage: widget.defaultItemsPerPage,
-                        visitStatuses: const <VisitStatus>{},
-                        category: '',
-                        purposes: const <PurposeIcon>{},
-                      ));
-                    },
-                    onApply: () {
-                      Navigator.of(context).pop<FilterResult>((
-                        itemsPerPage: _selectedItemsPerPage,
-                        visitStatuses: _visitedStatuses,
-                        category: _categoryController.text,
-                        purposes: _selectedPurposes,
-                      ));
-                    },
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -182,7 +194,7 @@ class _FilterDialogActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
@@ -208,7 +220,7 @@ class _FilterDialogHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       color: Theme.of(context).colorScheme.primary,
@@ -243,7 +255,7 @@ class _ItemsPerPageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -279,7 +291,7 @@ class _PurposeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +333,7 @@ class _CategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
