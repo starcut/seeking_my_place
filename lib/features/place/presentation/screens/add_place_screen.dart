@@ -201,9 +201,13 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
         _isFetching = false;
         _fetchingUrl = null;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoFetchError)));
+      final message = !_urlController.text.contains(l10n.tabelogDomain)
+          ? l10n.validationUrlTabelogRequired
+          : l10n.placeInfoFetchError;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+      );
     }
   }
 

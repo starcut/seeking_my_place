@@ -322,6 +322,18 @@ abstract class AppLocalizations {
   /// **'正しい URL 形式で入力してください'**
   String get validationUrlFormat;
 
+  /// No description provided for @validationUrlTabelogRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'食べログのページ（「tabelog.com」が含まれているURL）を入力してください'**
+  String get validationUrlTabelogRequired;
+
+  /// No description provided for @tabelogDomain.
+  ///
+  /// In ja, this message translates to:
+  /// **'tabelog.com'**
+  String get tabelogDomain;
+
   /// No description provided for @validationLatitudeFormat.
   ///
   /// In ja, this message translates to:

@@ -127,6 +127,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get validationUrlFormat => '正しい URL 形式で入力してください';
 
   @override
+  String get validationUrlTabelogRequired =>
+      '食べログのページ（「tabelog.com」が含まれているURL）を入力してください';
+
+  @override
+  String get tabelogDomain => 'tabelog.com';
+
+  @override
   String get validationLatitudeFormat => '緯度は数値で入力してください';
 
   @override

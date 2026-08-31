@@ -127,6 +127,12 @@
   "validationUrlFormat": "正しい URL 形式で入力してください",
   "@validationUrlFormat": {},
 
+  "validationUrlTabelogRequired": "食べログのページ（「tabelog.com」が含まれているURL）を入力してください",
+  "@validationUrlTabelogRequired": {},
+
+  "tabelogDomain": "tabelog.com",
+  "@tabelogDomain": {},
+
   "validationLatitudeFormat": "緯度は数値で入力してください",
   "@validationLatitudeFormat": {},
 
