@@ -290,6 +290,14 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
       return;
     }
 
+    if (!_urlController.text.contains(l10n.tabelogDomain)) {
+      clearPlaceInfo();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.validationUrlTabelogRequired)),
+      );
+      return;
+    }
+
     FocusScope.of(context).unfocus();
     setState(() {
       _isFetching = true;
@@ -327,32 +335,17 @@ class _PlaceDetailBodyState extends ConsumerState<_PlaceDetailBody> {
         _isFetching = false;
         _fetchingUrl = null;
       });
-      final message = !_urlController.text.contains(l10n.tabelogDomain)
-          ? l10n.validationUrlTabelogRequired
-          : l10n.placeInfoFetchError;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      clearPlaceInfo();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoFetchError)));
     }
   }
 
-  /// 実行中の取得処理をキャンセルする。
-  ///
-  /// 対象プロバイダを [Ref.invalidate] で破棄することで、
-  /// UseCase 側の [Ref.onDispose] が発火し、進行中の HTTP 通信が
-  /// `CancelToken` によって中断される。
-  void _cancelFetch() {
-    final url = _fetchingUrl;
-    if (url != null) {
-      const service = PlaceInfoFetchService();
-      service.cancel(
-        ref: ref,
-        url: url,
-      );
-    }
-    _isFetching = false;
-    _fetchingUrl = null;
+  void clearPlaceInfo() {
+    _addressController.clear();
+    _latitudeController.clear();
+    _longitudeController.clear();
   }
 
   // ---------------------------------------------------------------------------

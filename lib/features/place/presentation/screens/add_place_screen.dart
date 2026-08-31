@@ -163,6 +163,14 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
       return;
     }
 
+    if (!_urlController.text.contains(l10n.tabelogDomain)) {
+      clearPlaceInfo();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.validationUrlTabelogRequired)),
+      );
+      return;
+    }
+
     FocusScope.of(context).unfocus();
     setState(() {
       _isFetching = true;
@@ -201,13 +209,11 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
         _isFetching = false;
         _fetchingUrl = null;
       });
-      final message = !_urlController.text.contains(l10n.tabelogDomain)
-          ? l10n.validationUrlTabelogRequired
-          : l10n.placeInfoFetchError;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-      );
+      clearPlaceInfo();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.placeInfoFetchError)));
     }
   }
 
@@ -227,6 +233,12 @@ class _AddPlaceBodyState extends ConsumerState<_AddPlaceBody> {
     }
     _isFetching = false;
     _fetchingUrl = null;
+  }
+
+  void clearPlaceInfo() {
+    _addressController.clear();
+    _latitudeController.clear();
+    _longitudeController.clear();
   }
 
   // ---------------------------------------------------------------------------
