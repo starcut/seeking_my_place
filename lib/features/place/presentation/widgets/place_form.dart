@@ -114,6 +114,10 @@ class _PlaceFormState extends ConsumerState<PlaceForm> {
             controller: widget.urlController,
             decoration: InputDecoration(
               labelText: l10n.url,
+              hintText: l10n.urlHint,
+              hintStyle: TextStyle(
+                color: Theme.of(context).hintColor.withValues(alpha: 0.5),
+              ),
               suffixIcon: _clearSuffix(
                 widget.urlController,
                 readOnly,

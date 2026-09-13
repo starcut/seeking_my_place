@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
@@ -89,6 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Set<PurposeIcon> _selectedPurposes = {};
 
   Position? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   /// GoogleMap 上に現在地 (青い点) と現在地ボタンを表示するかどうか。
   bool _showCurrentLocation = true;
@@ -135,6 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    _positionStreamSubscription?.cancel();
     _mapController?.dispose();
     _searchController.dispose();
     _placeListScrollController.dispose();
@@ -172,6 +176,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 現在地取得完了後に明示的にカメラを移動させる。
     final target = LatLng(position.latitude, position.longitude);
     _mapController?.moveCamera(CameraUpdate.newLatLngZoom(target, 14));
+
+    _positionStreamSubscription = Geolocator.getPositionStream().listen((
+      updatedPosition,
+    ) {
+      if (!mounted) return;
+      setState(() => _currentPosition = updatedPosition);
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -260,9 +271,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
             : BitmapDescriptor.defaultMarker,
         infoWindow: InfoWindow(title: place.placeName, snippet: place.address),
-        onTap: () {
-          ref.read(selectedPlaceStateProvider.notifier).select(place.placeId);
-        },
+        onTap: () => _selectPlace(place),
       );
     }).toSet();
   }
@@ -285,6 +294,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _mapController?.animateCamera(
       CameraUpdate.newLatLng(LatLng(place.latitude, place.longitude)),
     );
+  }
+
+  /// Place を選択し、Map カメラ移動 + リストスクロールを行う (spec 5.1.4)。
+  ///
+  /// selectedPlaceStateProvider の変化を ref.listen で監視する方式だと、
+  /// 同じ placeId を再選択した場合に状態が変化しないためコールバックが
+  /// 発火せずカメラが移動しない。そのため、状態変化の検知に頼らず、
+  /// マーカー / リストセルのタップという実イベント発生時に直接呼び出す。
+  void _selectPlace(Place place) {
+    ref.read(selectedPlaceStateProvider.notifier).select(place.placeId);
+    _moveCameraTo(place);
+    final targetIndex = _lastFilteredPlaces.indexWhere(
+      (p) => p.placeId == place.placeId,
+    );
+    if (targetIndex == -1) return;
+    _scrollToIndex(targetIndex);
   }
 
   // -------------------------------------------------------------------------
@@ -322,7 +347,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     final headerHeight = _headerHeight;
     if (headerHeight != null) {
-      final minPixelHeight = headerHeight + _listItemHeight * 2;
+      final minPixelHeight = headerHeight;
       _minChildSize = (minPixelHeight / containerHeight).clamp(
         0.05,
         _maxChildSize,
@@ -331,7 +356,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _minChildSize = _minChildSize.clamp(0.05, _maxChildSize);
     }
 
-    _initialChildSize = 0.4.clamp(_minChildSize, _maxChildSize);
+    _initialChildSize = 0.2.clamp(_minChildSize, _maxChildSize);
   }
 
   void _onFlingTick() {
@@ -501,17 +526,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final placesAsync = ref.watch(getPlaceListUseCaseProvider);
     final selectedId = ref.watch(selectedPlaceStateProvider);
-
-    // selectedPlaceId が変化したとき Map カメラ移動 + リストスクロール (spec 5.1.4)
-    ref.listen<String?>(selectedPlaceStateProvider, (previousId, nextId) {
-      if (nextId == null || nextId == previousId) return;
-      final targetIndex = _lastFilteredPlaces.indexWhere(
-        (place) => place.placeId == nextId,
-      );
-      if (targetIndex < 0) return;
-      _moveCameraTo(_lastFilteredPlaces[targetIndex]);
-      _scrollToIndex(targetIndex);
-    });
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -916,8 +930,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             place: place,
             isSelected: isSelected,
             distanceInMeters: distanceInMeters,
-            onTap: () =>
-                ref.read(selectedPlaceStateProvider.notifier).select(place.placeId),
+            onTap: () => _selectPlace(place),
             onCopyUrl: () => _copyUrl(place),
             onDeleteRequested: (actionContext) =>
                 _onTapDeleteAction(actionContext, place.placeId),

@@ -262,6 +262,12 @@ abstract class AppLocalizations {
   /// **'URL'**
   String get url;
 
+  /// No description provided for @urlHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'食べログのページ https://s.tabelog.com/...'**
+  String get urlHint;
+
   /// No description provided for @memo.
   ///
   /// In ja, this message translates to:
@@ -315,6 +321,18 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'正しい URL 形式で入力してください'**
   String get validationUrlFormat;
+
+  /// No description provided for @validationUrlTabelogRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'食べログのページ（「tabelog.com」が含まれているURL）を入力してください'**
+  String get validationUrlTabelogRequired;
+
+  /// No description provided for @tabelogDomain.
+  ///
+  /// In ja, this message translates to:
+  /// **'tabelog.com'**
+  String get tabelogDomain;
 
   /// No description provided for @validationLatitudeFormat.
   ///
