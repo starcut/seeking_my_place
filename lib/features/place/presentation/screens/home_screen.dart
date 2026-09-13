@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
@@ -89,6 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Set<PurposeIcon> _selectedPurposes = {};
 
   Position? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   /// GoogleMap 上に現在地 (青い点) と現在地ボタンを表示するかどうか。
   bool _showCurrentLocation = true;
@@ -135,6 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    _positionStreamSubscription?.cancel();
     _mapController?.dispose();
     _searchController.dispose();
     _placeListScrollController.dispose();
@@ -172,6 +176,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 現在地取得完了後に明示的にカメラを移動させる。
     final target = LatLng(position.latitude, position.longitude);
     _mapController?.moveCamera(CameraUpdate.newLatLngZoom(target, 14));
+
+    _positionStreamSubscription = Geolocator.getPositionStream().listen((
+      updatedPosition,
+    ) {
+      if (!mounted) return;
+      setState(() => _currentPosition = updatedPosition);
+    });
   }
 
   // -------------------------------------------------------------------------
